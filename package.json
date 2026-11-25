@@ -1,0 +1,30 @@
+{
+  "name": "erp-system",
+  "version": "1.0.0",
+  "description": "نظام إدارة متكامل",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "com.erp.system",
+    "productName": "Store Manager",
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerLanguages": [
+        "ar"
+      ],
+      "language": "1025"
+    }
+  },
+  "devDependencies": {
+    "electron": "^45.5.0",
+    "electron-builder": "^24.13.3"
+  }
+}
