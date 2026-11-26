@@ -112,6 +112,68 @@
     });
   }
 
+  // ---- Template grid geometry (pure) ----
+  // columns = products per row (null = auto-fill), rows = rows shown
+  // before "show more" (null = show all). The rows cap is rows ×
+  // columns, or rows × 4 when auto-fill (the storefront's fallback
+  // column count). Null when rows is null (show all).
+  function gridCap(grid) {
+    var g = grid || {};
+    if (g.rows == null) return null;
+    return g.rows * (g.columns || 4);
+  }
+
+  function computeStoreProfit(orders, products, opts) {
+    var o = opts || {};
+    var from = o.from || null;
+    var to = o.to || null;
+    var byProduct = {};
+    var revenue = 0;
+    var cogs = 0;
+    var missing = [];
+    var missingCount = 0;
+    var prodById = {};
+    (products || []).forEach(function (p) { if (p && p.id) prodById[p.id] = p; });
+    (orders || []).forEach(function (ord) {
+      if (!ord) return;
+      // Revenue counts only realised sales: delivered, or paid
+      // (cod_paid) even if not yet marked delivered. Cancelled /
+      // expired / still-open orders are not revenue.
+      var realised = ord.status === 'delivered' || ord.paymentStatus === 'cod_paid';
+      if (!realised) return;
+      var d = null;
+      if (ord.createdAt) {
+        if (ord.createdAt.toDate) { try { d = ord.createdAt.toDate(); } catch (e) { d = null; } }
+        else if (typeof ord.createdAt === 'object' && typeof ord.createdAt.seconds === 'number') d = new Date(ord.createdAt.seconds * 1000);
+        else d = new Date(ord.createdAt);
+        if (d && isNaN(d.getTime())) d = null;
+      }
+      if (from && d && d < new Date(from + 'T00:00:00')) return;
+      if (to && d && d > new Date(to + 'T23:59:59')) return;
+      revenue += (ord.total || 0);
+      (ord.items || []).forEach(function (it) {
+        var qty = it.qty || 0;
+        var pid = it.productId || '';
+        var unitCost = (it.unitCost > 0) ? it.unitCost : ((prodById[pid] && prodById[pid].costPrice) || 0);
+        if (!byProduct[pid]) byProduct[pid] = { qty: 0, rev: 0, cost: 0, missingCost: false, name: it.name || (prodById[pid] && prodById[pid].name) || pid };
+        byProduct[pid].qty += qty;
+        byProduct[pid].rev += (it.subtotal || ((it.price || 0) * qty));
+        if (unitCost > 0) {
+          byProduct[pid].cost += unitCost * qty;
+          cogs += unitCost * qty;
+        } else {
+          // No cost anywhere for this item: never invent one.
+          // Exclude it from the cost total and flag it so the UI
+          // shows a dash instead of a number.
+          byProduct[pid].missingCost = true;
+          missingCount += qty;
+          missing.push({ orderId: ord.id || '', productId: pid, name: it.name || pid, qty: qty });
+        }
+      });
+    });
+    return { revenue: revenue, cogs: cogs, gross: revenue - cogs, missingCount: missingCount, missing: missing, byProduct: byProduct };
+  }
+
   // ---- Template validation gateway (pure) ----
   // Mirrors validateTemplateDoc in lib/services/templates_service.dart:
   // a template is a card only when every check passes.
@@ -403,6 +465,22 @@
       return firebaseNs.auth().signOut();
     }
 
+    // Remember-me: LOCAL persistence keeps the session across app
+    // restarts (the user is never asked again); SESSION ends it when
+    // the app closes. Called before signIn; a failure to set it is
+    // non-fatal (the SDK default is LOCAL).
+    function setPersistenceMode(remember) {
+      if (!app) return Promise.resolve();
+      try {
+        var authNs = firebaseNs.auth;
+        var modes = authNs && authNs.Auth && authNs.Auth.Persistence;
+        if (!modes || typeof firebaseNs.auth().setPersistence !== 'function') return Promise.resolve();
+        return firebaseNs.auth().setPersistence(remember ? modes.LOCAL : modes.SESSION).catch(function () {});
+      } catch (e) {
+        return Promise.resolve();
+      }
+    }
+
     function _subscribe(query, cb) {
       requireAdmin();
       return query.onSnapshot(function (snap) {
@@ -566,6 +644,36 @@
       }).then(function () { return true; });
     }
 
+    // Edit a template's grid geometry (columns/rows) from the
+    // templates page. Validates the merged doc through the same
+    // gateway the activation path uses, then saves it as one audited
+    // write (operation 'template_grid'). A bad grid is rejected
+    // before anything is written.
+    function updateTemplateGrid(templateId, grid) {
+      requireAdmin();
+      var nextGrid = {
+        columns: (grid && grid.columns != null) ? grid.columns : null,
+        rows: (grid && grid.rows != null) ? grid.rows : null,
+        minColumnWidthPx: (grid && grid.minColumnWidthPx != null) ? grid.minColumnWidthPx : 250
+      };
+      return db().collection('templates').doc(templateId).get().then(function (snap) {
+        if (!snap.exists) throw new Error('القالب مش موجود');
+        var data = snap.data() || {};
+        var merged = {};
+        Object.keys(data).forEach(function (k) { merged[k] = data[k]; });
+        merged.grid = nextGrid;
+        var report = validateTemplateDoc(merged);
+        if (!report.passed) throw new Error('الشبكة مش صالحة: ' + report.failedChecks.join('، '));
+        return auditedWrite({
+          writes: { ['templates/' + templateId]: { grid: nextGrid } },
+          sensitive: {},
+          operation: 'template_grid',
+          oldValues: { ['templates/' + templateId]: { grid: data.grid || null } },
+          topNewValues: { templateId: templateId }
+        });
+      }).then(function () { return true; });
+    }
+
     function ensureClassicTemplateDoc() {
       var ref = db().collection('templates').doc('classic');
       return ref.get().then(function (snap) {
@@ -652,6 +760,8 @@
       init: init,
       signIn: signIn,
       signOut: signOut,
+      setPersistenceMode: setPersistenceMode,
+      updateTemplateGrid: updateTemplateGrid,
       subscribeOrders: subscribeOrders,
       subscribeTemplates: subscribeTemplates,
       subscribeFeedback: subscribeFeedback,
@@ -684,6 +794,8 @@
     isAllowedOrderTransition: isAllowedOrderTransition,
     isAllowedFeedbackTransition: isAllowedFeedbackTransition,
     validateTemplateDoc: validateTemplateDoc,
+    gridCap: gridCap,
+    computeStoreProfit: computeStoreProfit,
     buildAuditEntry: buildAuditEntry,
     friendlyCallableError: friendlyCallableError,
     friendlyAuthError: friendlyAuthError,

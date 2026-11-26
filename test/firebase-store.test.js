@@ -85,6 +85,9 @@ function createFakeFirebase() {
       authState.user = null;
       authState.cbs.forEach((cb) => cb(null));
     },
+    setPersistence: async (mode) => {
+      authState.persistence = mode;
+    },
     onAuthStateChanged: (cb) => {
       authState.cbs.push(cb);
       cb(authState.user);
@@ -115,6 +118,8 @@ function createFakeFirebase() {
     _callableHandlers: callableHandlers,
     _setRole: (uid, role) => { store['admins/' + uid] = { role }; }
   };
+  fake.auth.Auth = { Persistence: { LOCAL: 'local', SESSION: 'session' } };
+  fake._authState = authState;
   return fake;
 }
 
@@ -337,4 +342,91 @@ test('friendlyCallableError: maps the structured codes', () => {
   assert.equal(StoreFB.friendlyCallableError({ details: { code: 'PRICE_CHANGED' } }), 'اتغير سعر منتج من اللي شفتهم — راجع الأسعار وحاول تاني');
   assert.equal(StoreFB.friendlyCallableError({ details: { code: 'DISCOUNT_USED' } }), 'كود الخصم ده اتستخدم قبل كده');
   assert.equal(StoreFB.friendlyCallableError({ code: 'not-found' }), 'حصل خطأ: not-found');
+});
+
+test('updateOrderStatus: cancelling is an audited write with the audit entry', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['orders/o1'] = { status: 'preparing', total: 250 };
+  assert.equal(await fb.updateOrderStatus({ id: 'o1', status: 'preparing' }, 'cancelled'), true);
+  assert.equal(fake._store['orders/o1'].status, 'cancelled');
+  assert.ok(fake._store['orders/o1'].operationId);
+  const auditKeys = Object.keys(fake._store).filter((k) => k.startsWith('audit/'));
+  assert.equal(auditKeys.length, 1);
+  const audit = fake._store[auditKeys[0]];
+  assert.equal(audit.operation, 'order_status');
+  assert.equal(audit.operationId, fake._store['orders/o1'].operationId);
+  assert.deepEqual(audit.newValuesByDoc['orders/o1'], { status: 'cancelled' });
+  assert.deepEqual(audit.oldValues, { status: 'preparing' });
+});
+
+test('updateOrderPaymentStatus: paid/unpaid is an audited write', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['orders/o1'] = { status: 'delivered', paymentStatus: 'cod_pending' };
+  assert.equal(await fb.updateOrderPaymentStatus({ id: 'o1', paymentStatus: 'cod_pending' }, 'cod_paid'), true);
+  assert.equal(fake._store['orders/o1'].paymentStatus, 'cod_paid');
+  const auditKeys = Object.keys(fake._store).filter((k) => k.startsWith('audit/'));
+  assert.equal(auditKeys.length, 1);
+  const audit = fake._store[auditKeys[0]];
+  assert.equal(audit.operation, 'order_payment');
+  assert.deepEqual(audit.newValuesByDoc['orders/o1'], { paymentStatus: 'cod_paid' });
+  assert.equal(await fb.updateOrderPaymentStatus({ id: 'o1', paymentStatus: 'cod_paid' }, 'cod_paid'), false);
+  assert.equal(Object.keys(fake._store).filter((k) => k.startsWith('audit/')).length, 1); // no-op wrote nothing
+});
+
+test('updateTemplateGrid: validates, then saves one audited write', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['templates/dark'] = { ...StoreFB.CLASSIC_TEMPLATE, id: 'dark', name: 'داكن', grid: { columns: null, rows: null, minColumnWidthPx: 250 } };
+  await assert.rejects(fb.updateTemplateGrid('dark', { columns: 13, rows: 2 }), /مش صالحة/);
+  await assert.rejects(fb.updateTemplateGrid('dark', { columns: 3, rows: 0 }), /مش صالحة/);
+  await assert.rejects(fb.updateTemplateGrid('ghost', { columns: 3, rows: 2 }), /مش موجود/);
+  assert.equal(fake._store['templates/dark'].grid.columns, null); // nothing written by the rejects
+  assert.equal(await fb.updateTemplateGrid('dark', { columns: 3, rows: 2 }), true);
+  assert.deepEqual(fake._store['templates/dark'].grid, { columns: 3, rows: 2, minColumnWidthPx: 250 });
+  const auditKeys = Object.keys(fake._store).filter((k) => k.startsWith('audit/'));
+  assert.equal(auditKeys.length, 1);
+  assert.equal(fake._store[auditKeys[0]].operation, 'template_grid');
+  assert.equal(await fb.updateTemplateGrid('dark', { columns: null, rows: null }), true);
+  assert.deepEqual(fake._store['templates/dark'].grid, { columns: null, rows: null, minColumnWidthPx: 250 });
+});
+
+test('gridCap: rows x columns, rows x 4 when auto-fill, null when show-all', () => {
+  assert.equal(StoreFB.gridCap({ columns: 3, rows: 2 }), 6);
+  assert.equal(StoreFB.gridCap({ columns: null, rows: 2 }), 8);
+  assert.equal(StoreFB.gridCap({ columns: 4, rows: null }), null);
+  assert.equal(StoreFB.gridCap(null), null);
+});
+
+test('computeStoreProfit: delivered/paid count, cancelled does not, missing cost is excluded and flagged', () => {
+  const products = [
+    { id: 'p1', name: 'منتج 1', costPrice: 40 },
+    { id: 'p2', name: 'منتج 2' } // no cost anywhere
+  ];
+  const orders = [
+    { id: 'o1', status: 'delivered', paymentStatus: 'cod_paid', total: 300, createdAt: '2026-11-20T10:00:00',
+      items: [{ productId: 'p1', qty: 2, price: 100, subtotal: 200 }, { productId: 'p2', qty: 1, price: 100, subtotal: 100 }] },
+    { id: 'o2', status: 'cancelled', paymentStatus: 'cod_pending', total: 500, createdAt: '2026-11-20T11:00:00',
+      items: [{ productId: 'p1', qty: 5, price: 100, subtotal: 500 }] },
+    { id: 'o3', status: 'in_transit', paymentStatus: 'cod_paid', total: 150, createdAt: '2026-11-21T10:00:00',
+      items: [{ productId: 'p1', qty: 1, price: 150, subtotal: 150, unitCost: 60 }] }
+  ];
+  const r = StoreFB.computeStoreProfit(orders, products, {});
+  assert.equal(r.revenue, 450); // o1 + o3; the cancelled o2 is not revenue
+  assert.equal(r.cogs, 140); // p1: 2×40 + 1×60; the p2 item has no cost and is excluded
+  assert.equal(r.gross, 310);
+  assert.equal(r.missingCount, 1);
+  assert.equal(r.missing[0].productId, 'p2');
+  assert.equal(r.byProduct.p1.cost, 140);
+  assert.equal(r.byProduct.p2.missingCost, true);
+  // Date range filters by createdAt.
+  const ranged = StoreFB.computeStoreProfit(orders, products, { from: '2026-11-21', to: '2026-11-21' });
+  assert.equal(ranged.revenue, 150);
+  assert.equal(ranged.cogs, 60);
+});
+
+test('setPersistenceMode: remember-me picks LOCAL, otherwise SESSION', async () => {
+  const { fake, fb } = await signedInFb();
+  await fb.setPersistenceMode(true);
+  assert.equal(fake._authState.persistence, 'local');
+  await fb.setPersistenceMode(false);
+  assert.equal(fake._authState.persistence, 'session');
 });

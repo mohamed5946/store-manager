@@ -18,17 +18,17 @@ contextBridge.exposeInMainWorld('api', {
   // Sales
   getSales: () => ipcRenderer.invoke('get-sales'),
   saveSale: (s) => ipcRenderer.invoke('save-sale', s),
-  deleteSale: (id) => ipcRenderer.invoke('delete-sale', id),       // ✅ كان ناقص
+  deleteSale: (id) => ipcRenderer.invoke('delete-sale', id),       // was missing
 
   // Purchases
   getPurchases: () => ipcRenderer.invoke('get-purchases'),
   savePurchase: (p) => ipcRenderer.invoke('save-purchase', p),
-  deletePurchase: (id) => ipcRenderer.invoke('delete-purchase', id), // ✅ كان ناقص
+  deletePurchase: (id) => ipcRenderer.invoke('delete-purchase', id), // was missing
 
   // Returns
   getReturns: () => ipcRenderer.invoke('get-returns'),
   saveReturn: (r) => ipcRenderer.invoke('save-return', r),
-  deleteReturn: (id) => ipcRenderer.invoke('delete-return', id),    // ✅ كان ناقص
+  deleteReturn: (id) => ipcRenderer.invoke('delete-return', id),    // was missing
 
   // Customers
   getCustomers: () => ipcRenderer.invoke('get-customers'),
@@ -47,8 +47,8 @@ contextBridge.exposeInMainWorld('api', {
 
   // Orders
   getOrders: () => ipcRenderer.invoke('get-orders'),
-  saveOrder: (o) => ipcRenderer.invoke('save-order', o),           // ✅ كان ناقص
-  deleteOrder: (id) => ipcRenderer.invoke('delete-order', id),     // ✅ كان ناقص
+  saveOrder: (o) => ipcRenderer.invoke('save-order', o),           // was missing
+  deleteOrder: (id) => ipcRenderer.invoke('delete-order', id),     // was missing
 
   // Write full snapshot (local disk persistence)
   writeLocalSnapshot: (data) => ipcRenderer.invoke('write-local-snapshot', data),

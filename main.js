@@ -29,7 +29,7 @@ function writeDB(name, data) {
 }
 function readConfig() {
   const file = path.join(dataDir, 'config.json');
-  if (!fs.existsSync(file)) return { companyName: 'SMART BULSE', currency: 'ج.م', lowStockLimit: 5 };
+  if (!fs.existsSync(file)) return { companyName: 'Store Manager', currency: 'ج.م', lowStockLimit: 5 };
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return {}; }
 }
 function writeConfig(cfg) {
