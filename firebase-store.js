@@ -960,6 +960,17 @@
               tx.set(db().collection('inventory').doc(it.productId), { reserved: newReserved, operationId: opId, updatedAt: now }, { merge: true });
               writes['inventory/' + it.productId] = { reserved: newReserved };
               sensitive['inventory/' + it.productId] = { reserved: newReserved };
+              // Refresh products.inStock in the SAME transaction (the
+              // flag is (stock - reserved) > 0 after the release, so an
+              // expired order can never leave a stale flag behind).
+              // Budget: order hasAudit (1) + one hasAudit per product
+              // write (same audit doc) + the admin-role get — at most
+              // 7 lines, so this stays under the 10-call budget even
+              // without getAfter dedup.
+              var inStock = computeInStock(stock, newReserved);
+              tx.set(db().collection('products').doc(it.productId), { inStock: inStock, operationId: opId, updatedAt: now }, { merge: true });
+              writes['products/' + it.productId] = { inStock: inStock };
+              sensitive['products/' + it.productId] = { inStock: inStock };
               var mvRef = db().collection('movements').doc();
               tx.set(mvRef, {
                 productId: it.productId, type: 'reservation_expire', qty: it.qty || 0,

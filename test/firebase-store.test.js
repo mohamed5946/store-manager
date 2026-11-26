@@ -476,7 +476,7 @@ test('updateOrderStatus: reopen throws with the available count when stock is sh
 test('runLazySweep: expires only new orders older than 24h and releases their reservations', async () => {
   const { fake, fb } = await signedInFb();
   const nowSec = Math.floor(Date.now() / 1000);
-  fake._store['products/p1'] = { name: 'منتج 1', price: 100, inStock: true };
+  fake._store['products/p1'] = { name: 'منتج 1', price: 100, inStock: false };
   fake._store['inventory/p1'] = { stock: 5, reserved: 1 };
   fake._store['orders/o-old'] = { status: 'new', total: 100, createdAt: { seconds: nowSec - 25 * 3600 }, items: [{ productId: 'p1', qty: 1 }] };
   fake._store['orders/o-fresh'] = { status: 'new', total: 100, createdAt: { seconds: nowSec - 3600 }, items: [{ productId: 'p1', qty: 1 }] };
@@ -487,6 +487,9 @@ test('runLazySweep: expires only new orders older than 24h and releases their re
   assert.equal(fake._store['orders/o-old'].status, 'expired');
   assert.equal(fake._store['orders/o-old'].cancelReason, 'reservation_expired');
   assert.equal(fake._store['inventory/p1'].reserved, 0);
+  // The stale inStock flag is corrected in the same transaction
+  // (stock 5, reserved 0 → available 5 → in stock).
+  assert.equal(fake._store['products/p1'].inStock, true);
   assert.equal(fake._store['orders/o-fresh'].status, 'new');
   assert.equal(fake._store['orders/o-acc'].status, 'accepted');
   const mv = Object.values(fake._store).find((v) => v.type === 'reservation_expire');

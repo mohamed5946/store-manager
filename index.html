@@ -3161,7 +3161,7 @@ function cancelledStoreCustomers(){
   const out=[];
   storeOrders.forEach(function(o){
     if((o.status||'new')!=='cancelled') return;
-    const c=o.customer||{};
+    const c=storeCust(o);
     const cust={name:c.name||'',phone:c.phone||'',email:c.email||'',address:c.address||'',source:'store',orderId:o.id||''};
     const k=storeCustKey(cust);
     if(k&&seen[k]) return;
@@ -3639,7 +3639,7 @@ function rStoreFeedback(){
         <div style="font-weight:800;font-size:14px">${escHtml(f.name||'(بدون اسم)')}</div>
         <span style="font-size:12px;color:var(--t3)">${fbDateStr(f.createdAt)}</span>
       </div>
-      <div style="font-size:12px;color:var(--t3);margin:6px 0">${escHtml(f.email||'-')}${(f.phone||f.address)?' · '+escHtml(f.phone||f.address):''}</div>
+      <div style="font-size:12px;color:var(--t3);margin:6px 0">${escHtml(f.email||'—')}${(f.phone||f.address)?' · '+escHtml(f.phone||f.address):''}</div>
       <div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${escHtml(f.message||'')}</div>
       <div style="display:flex;gap:8px;margin-top:12px">
         <button class="btn btn-g btn-sm" onclick="deleteFeedbackCard('${f.id}')">${icOrDot('trash')} حذف (سبام)</button>
