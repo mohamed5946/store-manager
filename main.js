@@ -253,13 +253,16 @@ ipcMain.handle('write-local-snapshot', (_, data) => {
 // repo the in-app download may fail without auth, in which case the
 // renderer opens the link in the browser (where the user is logged
 // into GitHub).
+// The EXE download itself lives in update-download.js: it streams the
+// body with a 15s time-to-first-byte timeout, then aborts ONLY if no
+// bytes arrive for ~60s (stall-based, no hard total cap — a 130 MB file
+// on a slow connection may finish as long as bytes keep flowing), and
+// reports live progress to the renderer via 'update-download-progress'.
 // ════════════════════════════════════════
 const MANIFEST_URL = 'https://store-3384c.web.app/updates/version.json';
 const os = require('os');
-const crypto = require('crypto');
 const { shell } = require('electron');
-const { pipeline } = require('stream/promises');
-const { Readable } = require('stream');
+const { downloadUpdateFile } = require('./update-download');
 
 function compareVersions(a, b) {
   const pa = String(a).split('.').map(function (x) { return parseInt(x, 10) || 0; });
@@ -312,22 +315,21 @@ ipcMain.handle('download-update', async () => {
     const exe = manifest && manifest.exe;
     if (!exe || !exe.url) return { ok: false, error: 'مفيش رابط تنزيل في ملف التحديثات' };
     const dest = path.join(os.tmpdir(), 'Store.Manager.Setup.' + String(exe.version || 'latest').replace(/[^0-9A-Za-z.-]/g, '') + '.exe');
-    const dl = await fetchWithTimeout(exe.url, 120000);
-    if (!dl.ok || !dl.body) return { ok: false, error: 'تعذر تنزيل المثبّت (HTTP ' + dl.status + ')' };
-    await pipeline(Readable.fromWeb(dl.body), fs.createWriteStream(dest));
-    // verify size + SHA-256 before trusting the file
-    const stat = fs.statSync(dest);
-    if (exe.size && stat.size !== exe.size) {
-      try { fs.unlinkSync(dest); } catch (e) {}
-      return { ok: false, error: 'حجم الملف مش مطابق — التنزيل ناقص' };
-    }
-    if (exe.sha256) {
-      const hash = crypto.createHash('sha256').update(fs.readFileSync(dest)).digest('hex');
-      if (hash.toLowerCase() !== String(exe.sha256).toLowerCase()) {
-        try { fs.unlinkSync(dest); } catch (e) {}
-        return { ok: false, error: 'بصمة الملف مش مطابقة — الملف تالف' };
+    // Streaming download with stall timeout + live progress (see
+    // update-download.js). Size + SHA-256 are verified inside, and a
+    // bad file is deleted there, never installed.
+    const result = await downloadUpdateFile({
+      url: exe.url,
+      dest,
+      expectedSize: exe.size || 0,
+      expectedSha256: exe.sha256 || '',
+      onProgress: function (p) {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('update-download-progress', p);
+        }
       }
-    }
+    });
+    if (!result.ok) return result;
     updateDownloadPath = dest;
     return { ok: true, path: dest };
   } catch (e) {

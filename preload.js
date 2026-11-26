@@ -57,5 +57,8 @@ contextBridge.exposeInMainWorld('api', {
   checkUpdate: () => ipcRenderer.invoke('check-update'),
   downloadUpdate: () => ipcRenderer.invoke('download-update'),
   installUpdate: () => ipcRenderer.invoke('install-update'),
+  // Live download progress: main sends {received, total} while the EXE
+  // streams in. The renderer subscribes once (see downloadAndInstallUpdate).
+  onUpdateDownloadProgress: (cb) => ipcRenderer.on('update-download-progress', (_, p) => cb(p)),
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
 });
