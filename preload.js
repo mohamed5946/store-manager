@@ -50,6 +50,12 @@ contextBridge.exposeInMainWorld('api', {
   saveOrder: (o) => ipcRenderer.invoke('save-order', o),           // ✅ كان ناقص
   deleteOrder: (id) => ipcRenderer.invoke('delete-order', id),     // ✅ كان ناقص
 
-  // Write full snapshot (Firebase sync)
+  // Write full snapshot (local disk persistence)
   writeLocalSnapshot: (data) => ipcRenderer.invoke('write-local-snapshot', data),
+
+  // In-app update (Hosting manifest, /updates/)
+  checkUpdate: () => ipcRenderer.invoke('check-update'),
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
+  installUpdate: () => ipcRenderer.invoke('install-update'),
+  openExternal: (url) => ipcRenderer.invoke('open-external', url),
 });

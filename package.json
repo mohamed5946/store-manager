@@ -5,7 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win --x64"
+    "build": "electron-builder --win --x64",
+    "test": "node --test test/*.test.js"
   },
   "build": {
     "appId": "com.erp.system",
@@ -26,5 +27,8 @@
   "devDependencies": {
     "electron": "^45.5.0",
     "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "firebase": "^12.19.0"
   }
 }

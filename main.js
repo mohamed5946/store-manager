@@ -88,10 +88,10 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false, contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
-      // webSecurity مفعّل: لا حاجة لتعطيله — الخطوط والـ Firebase والصور كلها https
+      // webSecurity مفعّل: كل الموارد الخارجية https (الخطوط، Firebase، الصور)
       webSecurity: true
     },
-    title: 'SMART BULSE', backgroundColor: '#070d16',
+    title: 'Store Manager', backgroundColor: '#070d16',
     show: false, frame: true, titleBarStyle: 'default'
   });
   mainWindow.loadFile('index.html');
@@ -231,11 +231,126 @@ ipcMain.handle('save-order', (_, order) => {
 });
 ipcMain.handle('delete-order', (_, id) => { writeDB('orders', readDB('orders').filter(o => o.id !== id)); return true; });
 
-// Write full snapshot for Firebase sync
+// Write full snapshot for local disk persistence
 ipcMain.handle('write-local-snapshot', (_, data) => {
   Object.entries(data).forEach(([key, val]) => {
     if (key === 'config') writeConfig(val);
     else writeDB(key, val);
   });
+  return true;
+});
+
+// ════════════════════════════════════════
+// In-app update (Hosting manifest, /updates/)
+// The manifest is the same file the Flutter app reads:
+// https://store-3384c.web.app/updates/version.json
+// It carries an `exe` entry {url, sha256, size, version}. The check
+// compares versions; the download verifies SHA-256 + size before the
+// installer is launched. A failed or interrupted download leaves the
+// installed version untouched; a corrupted file is deleted, never
+// installed. The manifest fetch works without GitHub auth (Hosting is
+// public); the artifact URL is the GitHub release link — for a private
+// repo the in-app download may fail without auth, in which case the
+// renderer opens the link in the browser (where the user is logged
+// into GitHub).
+// ════════════════════════════════════════
+const MANIFEST_URL = 'https://store-3384c.web.app/updates/version.json';
+const os = require('os');
+const crypto = require('crypto');
+const { shell } = require('electron');
+const { pipeline } = require('stream/promises');
+const { Readable } = require('stream');
+
+function compareVersions(a, b) {
+  const pa = String(a).split('.').map(function (x) { return parseInt(x, 10) || 0; });
+  const pb = String(b).split('.').map(function (x) { return parseInt(x, 10) || 0; });
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d !== 0) return d;
+  }
+  return 0;
+}
+
+async function fetchWithTimeout(url, ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(function () { ctrl.abort(); }, ms || 15000);
+  try {
+    return await fetch(url, { signal: ctrl.signal, redirect: 'follow' });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+ipcMain.handle('check-update', async () => {
+  try {
+    const res = await fetchWithTimeout(MANIFEST_URL, 15000);
+    if (!res.ok) return { updateAvailable: false, error: 'تعذر تحميل ملف التحديثات (HTTP ' + res.status + ')' };
+    const manifest = await res.json();
+    const exe = manifest && manifest.exe;
+    if (!exe || !exe.version || !exe.url) return { updateAvailable: false, error: 'ملف التحديثات مش فيه إصدار EXE' };
+    const current = app.getVersion();
+    return {
+      updateAvailable: compareVersions(exe.version, current) > 0,
+      currentVersion: current,
+      latestVersion: exe.version,
+      url: exe.url,
+      size: exe.size || 0,
+      sha256: exe.sha256 || ''
+    };
+  } catch (e) {
+    return { updateAvailable: false, error: e.name === 'AbortError' ? 'انتهت المهلة — مفيش اتصال؟' : (e.message || 'تعذر الفحص') };
+  }
+});
+
+let updateDownloadPath = null;
+
+ipcMain.handle('download-update', async () => {
+  try {
+    const res = await fetchWithTimeout(MANIFEST_URL, 15000);
+    if (!res.ok) return { ok: false, error: 'تعذر تحميل ملف التحديثات (HTTP ' + res.status + ')' };
+    const manifest = await res.json();
+    const exe = manifest && manifest.exe;
+    if (!exe || !exe.url) return { ok: false, error: 'مفيش رابط تنزيل في ملف التحديثات' };
+    const dest = path.join(os.tmpdir(), 'Store.Manager.Setup.' + String(exe.version || 'latest').replace(/[^0-9A-Za-z.-]/g, '') + '.exe');
+    const dl = await fetchWithTimeout(exe.url, 120000);
+    if (!dl.ok || !dl.body) return { ok: false, error: 'تعذر تنزيل المثبّت (HTTP ' + dl.status + ')' };
+    await pipeline(Readable.fromWeb(dl.body), fs.createWriteStream(dest));
+    // verify size + SHA-256 before trusting the file
+    const stat = fs.statSync(dest);
+    if (exe.size && stat.size !== exe.size) {
+      try { fs.unlinkSync(dest); } catch (e) {}
+      return { ok: false, error: 'حجم الملف مش مطابق — التنزيل ناقص' };
+    }
+    if (exe.sha256) {
+      const hash = crypto.createHash('sha256').update(fs.readFileSync(dest)).digest('hex');
+      if (hash.toLowerCase() !== String(exe.sha256).toLowerCase()) {
+        try { fs.unlinkSync(dest); } catch (e) {}
+        return { ok: false, error: 'بصمة الملف مش مطابقة — الملف تالف' };
+      }
+    }
+    updateDownloadPath = dest;
+    return { ok: true, path: dest };
+  } catch (e) {
+    return { ok: false, error: e.name === 'AbortError' ? 'انتهت المهلة أثناء التنزيل' : (e.message || 'تعذر التنزيل') };
+  }
+});
+
+ipcMain.handle('install-update', async () => {
+  if (!updateDownloadPath || !fs.existsSync(updateDownloadPath)) return { ok: false, error: 'مفيش ملف منزّل' };
+  try {
+    const { spawn } = require('child_process');
+    const child = spawn(updateDownloadPath, [], { detached: true, stdio: 'ignore' });
+    child.unref();
+    // The installer takes over; quit so it can replace the app.
+    setTimeout(function () { app.quit(); }, 500);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.message || 'تعذر تشغيل المثبّت' };
+  }
+});
+
+ipcMain.handle('open-external', async (_, url) => {
+  if (typeof url !== 'string' || url.indexOf('https://') !== 0) return false;
+  await shell.openExternal(url);
   return true;
 });

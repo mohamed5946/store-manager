@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>SMART BULSE — نظام الإدارة</title>
+<title>Store Manager</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 /* ═══ APPLE-STYLE DESIGN SYSTEM ═══ */
@@ -992,7 +992,7 @@ const SFX = (function(){
 <div id="splash">
   <div class="splash-logo">SB</div>
   <div class="splash-name"><span>SMART</span> BULSE</div>
-  <div class="splash-sub">نظام الإدارة المتكامل</div>
+  <div class="splash-sub">Store Manager</div>
   <div class="splash-bar"><div class="splash-fill"></div></div>
 </div>
 
@@ -1087,6 +1087,10 @@ const SFX = (function(){
   </div>
   <div class="ng"><div class="ng-t" data-i18n="nav_orders_grp">الطلبات والشحن</div>
     <div class="ni" data-p="orders"><div class="ni-ic">🚚</div><span class="ni-lbl" data-i18n="nav_orders">الطلبات والتوصيل</span><span class="ni-badge" id="pendBadge" style="display:none">0</span></div>
+  </div>
+  <div class="ng" id="storeNavGroup" style="display:none"><div class="ng-t">🏪 المتجر</div>
+    <div class="ni" data-p="templates"><div class="ni-ic">🎨</div><span class="ni-lbl">قوالب المتجر</span></div>
+    <div class="ni" data-p="feedback"><div class="ni-ic">💬</div><span class="ni-lbl">الشكاوى والاقتراحات</span><span class="ni-badge" id="fbBadge" style="display:none">0</span></div>
   </div>
   <div class="ng"><div class="ng-t" data-i18n="nav_purchases_grp">المشتريات</div>
     <div class="ni" data-p="purchases"><div class="ni-ic">📦</div><span class="ni-lbl" data-i18n="nav_purchases">فواتير الشراء</span></div>
@@ -1207,6 +1211,12 @@ const SFX = (function(){
     <div><div class="pg-t" data-i18n="pg_orders">🚚 الطلبات والتوصيل</div><div class="pg-s" data-i18n="pg_orders_sub">متابعة الشحن والاستلام ومواعيد التسليم</div></div>
     <div class="hda"><button class="btn btn-p" onclick="openOrderM()">＋ طلب جديد</button></div>
   </div>
+  <div class="fr" style="margin-bottom:14px">
+    <button class="btn btn-sm" id="ordSrcStoreBtn" onclick="setOrdersSource('store')">🏪 طلبات المتجر (مباشر)</button>
+    <button class="btn btn-g btn-sm" id="ordSrcLocalBtn" onclick="setOrdersSource('local')">💾 الطلبات المحلية</button>
+    <span id="storeOrdersStatus" style="font-size:12px;color:var(--t3)"></span>
+  </div>
+  <div id="localOrdersWrap">
   <div id="ordReport" style="margin-bottom:16px"></div>
   <div class="fr">
     <label data-i18n="lbl_status">الحالة</label>
@@ -1233,6 +1243,67 @@ const SFX = (function(){
     <tbody id="undelList"></tbody>
     </table>
   </div>
+  </div><!-- /localOrdersWrap -->
+  <div id="storeOrdersWrap" class="hidden">
+    <div id="storeOrdReport" style="margin-bottom:16px"></div>
+    <div class="fr">
+      <label>الحالة</label>
+      <select id="storeOrdFilter" onchange="rStoreOrders()" style="width:auto;padding:6px 12px">
+        <option value="">الكل</option>
+        <option value="new">جديد</option>
+        <option value="accepted">مقبول</option>
+        <option value="preparing">قيد التحضير</option>
+        <option value="ready">جاهز</option>
+        <option value="in_transit">في الطريق</option>
+        <option value="delivered">تم التوصيل ✅</option>
+        <option value="cancelled">ملغي</option>
+        <option value="expired">منتهي</option>
+      </select>
+      <button class="btn btn-g btn-sm" onclick="storeOrdFilter.value='';rStoreOrders()">✕</button>
+    </div>
+    <div class="cd"><table>
+      <thead><tr><th>رقم الطلب</th><th>العميل</th><th>الأصناف</th><th>الإجمالي</th><th>الحالة</th><th>الدفع</th><th>شركة الشحن</th><th>موعد التسليم</th><th>ملاحظات</th><th></th></tr></thead>
+      <tbody id="storeOrdList"></tbody>
+    </table></div>
+    <div class="cd">
+      <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(232,69,69,.12)">⛔</div><span>الطلبات غير المستلمة (المتجر)</span></div></div>
+      <table><thead><tr><th>رقم الطلب</th><th>العميل</th><th>موعد التسليم</th><th>الحالة</th><th>الإجمالي</th></tr></thead>
+      <tbody id="storeUndelList"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- STORE TEMPLATES -->
+<div id="pg-templates" class="pg hidden">
+  <div class="pg-hd">
+    <div><div class="pg-t">🎨 قوالب المتجر</div><div class="pg-s">اختار القالب اللي يظهر على الموقع — التفعيل فوري، والرجوع بضغطة واحدة</div></div>
+  </div>
+  <div id="storeTplStatus" style="font-size:12px;color:var(--t3);margin-bottom:14px"></div>
+  <div id="tplList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px"></div>
+</div>
+
+<!-- STORE FEEDBACK -->
+<div id="pg-feedback" class="pg hidden">
+  <div class="pg-hd">
+    <div><div class="pg-t">💬 الشكاوى والاقتراحات</div><div class="pg-s">رسائل العملاء من الموقع — رد عليها وغيّر حالتها</div></div>
+  </div>
+  <div id="storeFbStatus" style="font-size:12px;color:var(--t3);margin-bottom:14px"></div>
+  <div class="fr" style="margin-bottom:14px">
+    <label>الحالة</label>
+    <select id="storeFbFilter" onchange="rStoreFeedback()" style="width:auto;padding:6px 12px">
+      <option value="">الكل</option>
+      <option value="new">جديدة</option>
+      <option value="in_review">قيد المراجعة</option>
+      <option value="awaiting_customer">بانتظار العميل</option>
+      <option value="resolved">تم الحل</option>
+      <option value="rejected">مرفوضة</option>
+      <option value="spam">سبام</option>
+      <option value="closed">مغلقة</option>
+    </select>
+    <button class="btn btn-g btn-sm" onclick="storeFbFilter.value='';rStoreFeedback()">✕</button>
+  </div>
+  <div id="fbList" style="display:grid;grid-template-columns:1fr;gap:12px"></div>
 </div>
 
 <!-- RETURNS -->
@@ -1332,6 +1403,32 @@ const SFX = (function(){
         <div class="fgr full"><label>📝 ملاحظة ثابتة في الفاتورة</label><input id="cfgInvNote" placeholder="مثال: شكراً لتعاملكم معنا — البضاعة المباعة لا تُرد"></div>
       </div>
       <div style="margin-top:20px"><button class="btn btn-p" onclick="saveCfg()" data-i18n="btn_save_settings">💾 حفظ الإعدادات</button></div>
+    </div>
+  </div>
+  <div class="cd" style="max-width:500px;margin-top:16px">
+    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(16,185,129,.12)">🏪</div><span>اتصال المتجر</span></div><span id="storeConnBadge" class="bx bx-r">غير متصل</span></div>
+    <div style="padding:22px">
+      <div style="font-size:12px;color:var(--t3);margin-bottom:12px">سجّل دخول بحساب الأدمن بتاع المتجر (نفس حساب تطبيق الموبايل) عشان الطلبات والقوالب والشكاوى تظهر هنا مباشرة. الجلسة بتفضل محفوظة — بتسجّل مرة واحدة بس.</div>
+      <div class="fg">
+        <div class="fgr full"><label>📧 الإيميل</label><input id="storeEmail" type="email" placeholder="admin@store.com" autocomplete="off"></div>
+        <div class="fgr full"><label>🔑 كلمة السر</label><input id="storePass" type="password" placeholder="••••••••" autocomplete="off"></div>
+      </div>
+      <div id="storeConnMsg" style="font-size:12px;color:var(--t3);margin:8px 0;min-height:16px"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-p" id="storeSignInBtn" onclick="storeSignIn()">🔐 تسجيل دخول المتجر</button>
+        <button class="btn btn-g" id="storeSignOutBtn" onclick="storeSignOut()" style="display:none">تسجيل خروج</button>
+      </div>
+    </div>
+  </div>
+  <div class="cd" style="max-width:500px;margin-top:16px">
+    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(59,143,255,.12)">⬆️</div><span>التحديثات</span></div><span id="updVerBadge" class="bx">الإصدار الحالي</span></div>
+    <div style="padding:22px">
+      <div id="updStatus" style="font-size:12px;color:var(--t3);margin-bottom:12px">افحص لو فيه إصدار جديد من Store Manager.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-p" id="updCheckBtn" onclick="checkForUpdate()">🔍 افحص التحديثات</button>
+        <button class="btn btn-g" id="updDlBtn" onclick="downloadAndInstallUpdate()" style="display:none">⬇️ تنزيل وتثبيت</button>
+      </div>
+      <div id="updProgress" style="font-size:12px;color:var(--t3);margin-top:10px;min-height:16px"></div>
     </div>
   </div>
 </div>
@@ -1649,13 +1746,23 @@ const SFX = (function(){
   <input type="hidden" id="ordId">
   <input type="hidden" id="ordSaleId">
   <div class="fg">
-    <div class="fgr"><label>👤 العميل *</label><select id="ordCust" onchange="filterSalesByCustomer()"></select></div>
+    <div class="fgr"><label>👤 العميل *</label><select id="ordCust" onchange="filterSalesByCustomer();fillOrderAddress()"></select></div>
     <div class="fgr"><label>🧾 ربط بفاتورة بيع</label><select id="ordSaleLink" onchange="fillOrderFromSale()"><option value="">-- بدون ربط --</option></select></div>
-    <div class="fgr"><label>💰 قيمة الطلب</label><input id="ordVal" type="number" step="0.01" placeholder="0.00"></div>
+    <div class="fgr full" id="ordAddrRow" style="display:none"><label>📍 عنوان العميل *</label><input id="ordAddr" placeholder="عنوان التوصيل"></div>
+    <div class="fgr full" id="ordItemsRow" style="display:none">
+      <label>🛒 أصناف الطلب *</label>
+      <div class="iv-hd"><span>المنتج</span><span style="text-align:center">الكمية</span><span style="text-align:center">السعر</span><span style="text-align:center">الإجمالي</span><span></span></div>
+      <div id="ordItems"></div>
+      <button class="btn btn-g btn-sm" style="margin-top:7px" onclick="addOrderItemRow()">➕ إضافة صنف</button>
+      <div class="iv-sum"><div class="iv-lbl">الإجمالي (قبل الخصم — الخصم بيتحسب من المتجر)</div><div class="iv-val"><span id="ordSubtotal">0.00</span> <span id="ordCur" style="font-size:13px;opacity:.7"></span></div></div>
+    </div>
+    <div class="fgr" id="ordDiscRow" style="display:none"><label>🏷️ كود الخصم</label><input id="ordDisc" placeholder="اختياري — كود لمرة واحدة"></div>
+    <div class="fgr" id="ordShipCoRow" style="display:none"><label>🚚 شركة الشحن</label><select id="ordShipCo"><option value="">-- بدون شركة --</option></select></div>
+    <div class="fgr" id="ordValRow"><label>💰 قيمة الطلب</label><input id="ordVal" type="number" step="0.01" placeholder="0.00"></div>
     <div class="fgr"><label>🚚 تاريخ الشحن</label><input type="date" id="ordShip"></div>
     <div class="fgr"><label>📅 موعد التسليم المحدد *</label><input type="date" id="ordDue"></div>
     <div class="fgr"><label>✅ تاريخ الاستلام الفعلي</label><input type="date" id="ordRecv"></div>
-    <div class="fgr"><label>📦 حالة الطلب</label>
+    <div class="fgr" id="ordStatRow"><label>📦 حالة الطلب</label>
       <select id="ordStat" onchange="toggleDelayFields()">
         <option value="pending">قيد التحضير</option>
         <option value="shipped">تم الشحن</option>
@@ -1668,7 +1775,14 @@ const SFX = (function(){
     <div class="fgr" id="delayRow" style="display:none"><label>📆 مؤجل حتى تاريخ</label><input type="date" id="ordDelayTo"></div>
     <div class="fgr full"><label>📝 ملاحظات</label><textarea id="ordNt" rows="2" placeholder="ملاحظات إضافية"></textarea></div>
   </div>
-  <div class="md-ft"><button class="btn btn-g" onclick="closeM('mOrder')">إلغاء</button><button class="btn btn-p" onclick="saveOrder()">💾 حفظ الطلب</button></div>
+  <div class="md-ft"><button class="btn btn-g" onclick="closeM('mOrder')">إلغاء</button><button class="btn btn-p" id="ordSaveBtn" onclick="saveOrder()">💾 حفظ الطلب</button></div>
+</div></div>
+
+<!-- INFO Modal (generic details) -->
+<div id="mInfo" class="mo hidden"><div class="md md-w">
+  <div class="md-t" id="mInfoT">التفاصيل</div>
+  <div id="mInfoBody" style="padding:4px 2px"></div>
+  <div class="md-ft"><button class="btn btn-g" onclick="closeM('mInfo')">إغلاق</button></div>
 </div></div>
 
 <!-- Return Modal -->
@@ -1700,6 +1814,30 @@ const SFX = (function(){
   <div class="md-ft"><button class="btn btn-g" onclick="closeM('mExp')">إلغاء</button><button class="btn btn-p" onclick="saveExp()">💾 حفظ</button></div>
 </div></div>
 
+<!-- Firebase (store-3384c) — compat builds from node_modules, so the SDK is
+     available offline; only the connection needs the network. The web app
+     config is the storefront's public config (identifiers any visitor's
+     browser receives — not a secret; the security lives in firestore.rules). -->
+<script src="node_modules/firebase/firebase-app-compat.js"></script>
+<script src="node_modules/firebase/firebase-auth-compat.js"></script>
+<script src="node_modules/firebase/firebase-firestore-compat.js"></script>
+<script src="node_modules/firebase/firebase-functions-compat.js"></script>
+<script src="firebase-store.js"></script>
+<script>
+window.STORE_FIREBASE_CONFIG={
+  apiKey:'AIzaSyA-66Gg5n92-wqyVJcjatmUJUYnQG_b7Qg',
+  authDomain:'store-3384c.firebaseapp.com',
+  projectId:'store-3384c',
+  storageBucket:'store-3384c.firebasestorage.app',
+  messagingSenderId:'766975771796',
+  appId:'1:766975771796:web:7e746d8f9c236513e8e081'
+};
+// The store connection (null when the SDK did not load — the ERP keeps
+// working offline; the store sections just stay disconnected).
+window.StoreFB=(window.StoreFBFactory&&window.firebase)
+  ? window.StoreFBFactory.create(window.firebase,window.STORE_FIREBASE_CONFIG)
+  : null;
+</script>
 <script>
 
 
@@ -1731,7 +1869,7 @@ applyTheme();
 // ════════════════════════════════════════
 const TRANSLATIONS={
   ar:{
-    subtitle:'نظام الإدارة المتكامل',
+    subtitle:'Store Manager',
     nav_main:'الرئيسية',nav_dashboard:'لوحة التحكم',
     nav_sales_grp:'المبيعات',nav_sales:'فواتير البيع',nav_customers:'العملاء',
     nav_orders_grp:'الطلبات والشحن',nav_orders:'الطلبات والتوصيل',
@@ -1776,7 +1914,7 @@ const TRANSLATIONS={
     no_orders_pending:'لا توجد طلبات معلقة 🎉',no_orders:'لا توجد طلبات توصيل',
   },
   en:{
-    subtitle:'Integrated Management System',
+    subtitle:'Store Manager',
     nav_main:'Main',nav_dashboard:'Dashboard',
     nav_sales_grp:'Sales',nav_sales:'Sales Invoices',nav_customers:'Customers',
     nav_orders_grp:'Orders & Shipping',nav_orders:'Orders & Delivery',
@@ -1921,11 +2059,11 @@ async function init(){
   loadLocal();
   if(window.api){
     cfg=await window.api.getConfig();
-    [products,sales,purchases,customers,suppliers,returns,expenses]=await Promise.all([
+    [products,sales,purchases,customers,suppliers,returns,expenses,orders]=await Promise.all([
       window.api.getProducts(),window.api.getSales(),window.api.getPurchases(),
-      window.api.getCustomers(),window.api.getSuppliers(),window.api.getReturns(),window.api.getExpenses()
+      window.api.getCustomers(),window.api.getSuppliers(),window.api.getReturns(),window.api.getExpenses(),
+      window.api.getOrders()
     ]);
-    // orders not in API yet, keep from localStorage
   }
   applyCfg();nav('dashboard');updatePendBadge();patchLoggers();
 }
@@ -1971,6 +2109,10 @@ function nav(p){
   const navMap={dashboard:'dashboard',sales:'sales_view',customers:'customers',purchases:'purchases_view',suppliers:'suppliers',inventory:'inventory_view',orders:'orders',returns:'returns',profits:'profits',expenses:'expenses',settings:'settings',activitylog:'dashboard',adminpanel:'dashboard'};
   const key=navMap[p];
   if(key && currentUser && !hasPerm(key)){ toast('ليس لديك صلاحية لهذا القسم','err'); return; }
+  // store pages need the Firebase connection (admin/manager)
+  if((p==='templates'||p==='feedback')&&(!window.StoreFB||!window.StoreFB.state.connected)){
+    toast('سجّل دخول المتجر الأول من الإعدادات','err'); return;
+  }
 
   // animate out current page
   const current=document.querySelector('.pg:not(.hidden)');
@@ -2000,7 +2142,7 @@ function showPage(p){
     });
   }
   const ni=document.querySelector(`[data-p="${p}"]`);if(ni)ni.classList.add('active');
-  ({dashboard:rDash,inventory:rProds,sales:rSales,purchases:rPurchs,customers:rCusts,suppliers:rSups,returns:rRets,profits:()=>{calcPr();},expenses:rExps,settings:applyCfg,orders:rOrders,adminpanel:rAdminPanel,activitylog:rFullActLog})[p]?.();
+  ({dashboard:rDash,inventory:rProds,sales:rSales,purchases:rPurchs,customers:rCusts,suppliers:rSups,returns:rRets,profits:()=>{calcPr();},expenses:rExps,settings:applyCfg,orders:()=>{ storeOrdersSource==='store'?rStoreOrders():rOrders(); },adminpanel:rAdminPanel,activitylog:rFullActLog,templates:rStoreTemplates,feedback:rStoreFeedback})[p]?.();
 }
 
 // ════════════════════════════════════════
@@ -2510,14 +2652,78 @@ function rOrders(){
   }).join(''):`<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--t3)">${t('no_orders_pending')}</td></tr>`;
 }
 
+let orderMode='store'; // 'store' = new store order via createManualOrder; 'local' = edit a local order
 function openOrderM(){
+  if(!window.StoreFB||!window.StoreFB.state.connected){
+    toast('سجّل دخول المتجر الأول من الإعدادات عشان تعمل طلب','err');
+    return;
+  }
+  orderMode='store';
   $('ordId').value='';$('ordSaleId').value='';
   $('ordShip').value='';$('ordDue').value='';$('ordRecv').value='';
   $('ordNt').value='';$('ordReason').value='';$('ordDelayTo').value='';
   $('ordVal').value='';$('ordStat').value='pending';toggleDelayFields();
   $('ordCust').innerHTML='<option value="">-- اختر عميل --</option>'+customers.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
   $('ordSaleLink').innerHTML='<option value="">-- بدون ربط --</option>';
-  $('mOrderT').textContent='🚚 طلب توصيل جديد';$('mOrder').classList.remove('hidden');
+  // store mode: items + discount + shipping + address; the local-only
+  // fields (manual value, local status, delay reason) stay hidden.
+  $('ordAddrRow').style.display='';
+  $('ordItemsRow').style.display='';
+  $('ordDiscRow').style.display='';
+  $('ordShipCoRow').style.display='';
+  $('ordValRow').style.display='none';
+  $('ordStatRow').style.display='none';
+  $('reasonRow').style.display='none';
+  $('delayRow').style.display='none';
+  $('ordAddr').value='';
+  $('ordDisc').value='';
+  $('ordItems').innerHTML='';
+  fillShipCoSelect();
+  addOrderItemRow();
+  $('ordCur').textContent=cfg.currency||'ج.م';
+  $('mOrderT').textContent='🛒 طلب متجر جديد';$('mOrder').classList.remove('hidden');
+}
+function fillOrderAddress(){
+  const cid=$('ordCust').value;
+  const c=customers.find(function(x){return x.id===cid;});
+  if(c&&c.address) $('ordAddr').value=c.address||'';
+}
+function fillShipCoSelect(){
+  const sel=$('ordShipCo'); if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">-- بدون شركة --</option>'+storeShipping.map(function(s){
+    return `<option value="${s.id}">${s.name||s.id}</option>`;
+  }).join('');
+  if(cur) sel.value=cur;
+}
+function addOrderItemRow(item){
+  const d=document.createElement('div');d.className='iv-row';
+  const opts=products.map(function(p){
+    const avail=storeInvAvail(p.id);
+    const avTxt=avail==null?'':(' — متاح '+avail);
+    return `<option value="${p.id}" data-price="${p.price||0}">${p.name}${avTxt}</option>`;
+  }).join('');
+  d.innerHTML=`<select class="rp" onchange="updOrderItemPrice(this)">${opts}</select><input type="number" class="rq" value="${item?.qty||1}" min="1" oninput="updOrderItemsTotal()"><input type="number" class="rpr" step="0.01" readonly><div class="iv-tot rt">0.00</div><button class="ra del" style="width:30px;height:30px" onclick="this.parentElement.remove();updOrderItemsTotal()">✕</button>`;
+  $('ordItems').appendChild(d);
+  if(item) d.querySelector('.rp').value=item.productId||'';
+  updOrderItemPrice(d.querySelector('.rp'));
+  updOrderItemsTotal();
+}
+function updOrderItemPrice(sel){
+  const opt=sel.options[sel.selectedIndex];
+  sel.closest('.iv-row').querySelector('.rpr').value=opt?opt.dataset.price||0:0;
+  updOrderItemsTotal();
+}
+function updOrderItemsTotal(){
+  let t=0;
+  document.querySelectorAll('#ordItems .iv-row').forEach(function(r){
+    const q=parseFloat(r.querySelector('.rq').value)||0;
+    const p=parseFloat(r.querySelector('.rpr').value)||0;
+    const s=q*p;
+    r.querySelector('.rt').textContent=fmt(s);
+    t+=s;
+  });
+  const el=$('ordSubtotal'); if(el) el.textContent=fmt(t);
 }
 function filterSalesByCustomer(){
   const cid=$('ordCust').value;
@@ -2530,15 +2736,28 @@ function filterSalesByCustomer(){
 }
 function fillOrderFromSale(){
   const sid=$('ordSaleLink').value;
-  if(!sid){$('ordVal').value='';return;}
+  if(!sid){ if(orderMode==='local') $('ordVal').value=''; return; }
   const s=sales.find(x=>x.id===sid);
   if(!s)return;
+  if(orderMode==='store'){
+    // prefill the items from the sale (the server reprices them from
+    // the database — the local prices are only a preview)
+    $('ordItems').innerHTML='';
+    (s.items||[]).forEach(function(it){ addOrderItemRow(it); });
+    if(!(s.items||[]).length) addOrderItemRow();
+    $('ordCust').value=s.customerId||'';
+    fillOrderAddress();
+    $('ordSaleId').value=sid;
+    updOrderItemsTotal();
+    return;
+  }
   $('ordVal').value=s.total||'';
   $('ordCust').value=s.customerId||'';
   $('ordSaleId').value=sid;
 }
 function editOrder(id){
   const o=orders.find(x=>x.id===id);if(!o)return;
+  orderMode='local';
   $('ordId').value=o.id;$('ordSaleId').value=o.saleId||'';
   $('ordVal').value=o.value||'';$('ordShip').value=o.shipDate||'';
   $('ordDue').value=o.dueDate||'';$('ordRecv').value=o.receivedDate||'';
@@ -2556,6 +2775,13 @@ function editOrder(id){
     }
     $('ordSaleLink').value=o.saleId;
   }
+  // local mode: the local fields back, the store fields hidden
+  $('ordAddrRow').style.display='none';
+  $('ordItemsRow').style.display='none';
+  $('ordDiscRow').style.display='none';
+  $('ordShipCoRow').style.display='none';
+  $('ordValRow').style.display='';
+  $('ordStatRow').style.display='';
   toggleDelayFields();
   $('mOrderT').textContent='✏️ تعديل الطلب';$('mOrder').classList.remove('hidden');
 }
@@ -2571,6 +2797,10 @@ function markDelivered(id){
   saveAll();rOrders();updatePendBadge();SFX.success();toast('✅ تم تأكيد استلام الطلب');
 }
 function saveOrder(){
+  // A new order always goes through the trusted function (the server
+  // reprices from the database, checks the stock, claims the discount
+  // and reserves — the client never sets a price or a total).
+  if(orderMode==='store'){ saveStoreOrder(); return; }
   const cid=$('ordCust').value;
   if(!cid){toast('اختر عميلاً','err');return;}
   const dueDate=$('ordDue').value;
@@ -2592,7 +2822,513 @@ function saveOrder(){
   if(id){const i=orders.findIndex(x=>x.id===id);if(i!==-1)orders[i]=o;}else{orders.push(o);}
   closeM('mOrder');rOrders();saveAll();updatePendBadge();SFX.success();toast('✅ تم حفظ الطلب');
 }
+async function saveStoreOrder(){
+  const fb=window.StoreFB;
+  if(!fb||!fb.state.connected){ toast('سجّل دخول المتجر الأول','err'); return; }
+  const cid=$('ordCust').value;
+  if(!cid){ toast('اختر عميلاً','err'); return; }
+  const ct=customers.find(function(c){return c.id===cid;});
+  const address=($('ordAddr').value||'').trim();
+  if(!address){ toast('اكتب عنوان العميل','err'); return; }
+  const dueDate=$('ordDue').value;
+  if(!dueDate){ toast('موعد التسليم مطلوب','err'); return; }
+  const items=[];
+  let bad=false;
+  document.querySelectorAll('#ordItems .iv-row').forEach(function(r){
+    const pid=r.querySelector('.rp').value;
+    const qty=parseInt(r.querySelector('.rq').value)||0;
+    if(pid&&qty>0) items.push({productId:pid,qty:qty});
+    else bad=true;
+  });
+  if(!items.length){ toast('أضف صنف واحد على الأقل','err'); return; }
+  if(bad){ toast('في صنف بكمية مش صحيحة','err'); return; }
+  const phone=String((ct&&ct.phone)||'').replace(/\D/g,'');
+  if(phone.length<10){ toast('رقم موبايل العميل ناقص — عدّله من صفحة العملاء','err'); return; }
+  const btn=$('ordSaveBtn'); if(btn) btn.disabled=true;
+  try{
+    const input={
+      clientOrderId: fb.newUuid(),
+      items: items,
+      discountCode: ($('ordDisc').value||'').trim()||null,
+      customer: { name: (ct&&ct.name)||'-', phone: phone, address: address },
+      shippingCompanyId: $('ordShipCo').value||null,
+      notes: ($('ordNt').value||'').trim()||null
+    };
+    const res=await fb.createManualOrder(input);
+    // Attach the ERP-side metadata the callable does not store (the
+    // sale link + the delivery dates the form keeps) in one audited
+    // update after the order is created.
+    const meta={};
+    const saleId=$('ordSaleLink')?.value||'';
+    if(saleId) meta.saleId=saleId;
+    if($('ordShip').value) meta.shipDate=$('ordShip').value;
+    if(dueDate) meta.dueDate=dueDate;
+    if($('ordRecv').value) meta.receivedDate=$('ordRecv').value;
+    if(res&&res.order&&res.order.id){
+      try{ await fb.attachOrderMeta(res.order.id, meta); }
+      catch(e){ console.warn('attach meta failed', e); toast('تم إنشاء الطلب، بس الربط بالفاتورة/التواريخ ما اتحفظش: '+(e.message||e),'err'); }
+    }
+    closeM('mOrder');
+    toast('✅ تم إنشاء الطلب في المتجر');
+    SFX.success();
+    if(storeOrdersSource==='store') rStoreOrders();
+  }catch(e){
+    toast(e.message||'تعذر إنشاء الطلب','err');
+  }finally{
+    if(btn) btn.disabled=false;
+  }
+}
 async function delOrder(id){const ok=await confirmAction('هل تريد حذف هذا الطلب؟',{ico:'🗑️',ok:'حذف',danger:true});if(!ok)return;if(window.api)await window.api.deleteOrder(id);orders=orders.filter(o=>o.id!==id);rOrders();saveAll();updatePendBadge();SFX.del();toast('تم الحذف');}
+
+// ════════════════════════════════════════
+// STORE (FIREBASE) — live orders, templates, feedback, updates
+// The store sections read Firestore (project store-3384c) and call
+// the same Phase 2 Cloud Functions the phone app uses. The ERP data
+// stays local; nothing here touches the local accounts or the local
+// JSON files. All admin writes go through StoreFB.auditedWrite()
+// (the audit entry the rules enforce). The store connection is
+// independent of the local sign-in: it needs a Firebase admin/manager
+// account, and the session persists (Firebase Auth, localStorage).
+// ════════════════════════════════════════════════════════════════
+let storeOrders=[],storeTemplates=[],storeFeedback=[],storeShipping=[],storeInventoryMap={};
+let storeOrdersSource='store';
+let storeUnsubs=[];
+let storeFbStarted=false;
+
+const STORE_STATUS_LABEL={new:'جديد',accepted:'مقبول',preparing:'قيد التحضير',ready:'جاهز',in_transit:'في الطريق',delivered:'تم التوصيل ✅',cancelled:'ملغي',expired:'منتهي'};
+const STORE_STATUS_CLASS={new:'ds-pend',accepted:'ds-pend',preparing:'ds-ship',ready:'ds-ship',in_transit:'ds-ship',delivered:'ds-done',cancelled:'ds-delay',expired:'ds-late'};
+const STORE_PAY_LABEL={cod_pending:'بانتظار الدفع',cod_paid:'مدفوع ✅',cod_refused:'مرفوض',cod_failed:'فشل'};
+const FB_STATUS_LABEL={new:'جديدة',in_review:'قيد المراجعة',awaiting_customer:'بانتظار العميل',resolved:'تم الحل',rejected:'مرفوضة',spam:'سبام',closed:'مغلقة'};
+// Firestore Timestamp / ISO string / number → Date (or null).
+function fbDate(v){
+  if(!v) return null;
+  if(v.toDate) { try{ return v.toDate(); }catch(e){ return null; } }
+  if(typeof v==='object'&&typeof v.seconds==='number') return new Date(v.seconds*1000);
+  const d=new Date(v);
+  return isNaN(d)?null:d;
+}
+function fbDateStr(v){const d=fbDate(v);return d?d.toLocaleDateString('en-US',{year:'numeric',month:'2-digit',day:'2-digit'}):'-';}
+function storeShipName(id){const s=storeShipping.find(x=>x.id===id);return s?(s.name||id):(id||'-');}
+function storeInvAvail(pid){const inv=storeInventoryMap[pid];return inv?Math.max(0,(inv.stock||0)-(inv.reserved||0)):null;}
+
+function initStoreFirebase(){
+  if(!window.StoreFB){ renderStoreConnection(); return; }
+  if(storeFbStarted) return;
+  storeFbStarted=true;
+  window.StoreFB.onStateChange(onStoreStateChange);
+  window.StoreFB.init().catch(function(e){ console.warn('store init failed', e); });
+}
+
+function onStoreStateChange(snap){
+  renderStoreConnection();
+  const grp=$('storeNavGroup');
+  if(grp) grp.style.display=snap.connected?'':'none';
+  if(snap.connected){
+    startStoreListeners();
+    if(storeOrdersSource==='store') rStoreOrders();
+    rStoreTemplates(); rStoreFeedback();
+  }else{
+    stopStoreListeners();
+    storeOrders=[]; storeTemplates=[]; storeFeedback=[]; storeShipping=[]; storeInventoryMap={};
+    if(storeOrdersSource==='store'){ setOrdersSource('local'); }
+    rStoreTemplates(); rStoreFeedback();
+  }
+  updateFbBadge();
+}
+
+function startStoreListeners(){
+  if(!window.StoreFB||!window.StoreFB.state.connected) return;
+  stopStoreListeners();
+  const fb=window.StoreFB;
+  storeUnsubs.push(fb.subscribeOrders(function(list,err){
+    if(err){ $('storeOrdersStatus').textContent='تعذر تحميل طلبات المتجر: '+(err.message||err); return; }
+    storeOrders=list||[];
+    $('storeOrdersStatus').textContent='متصل — '+storeOrders.length+' طلب من المتجر';
+    if(storeOrdersSource==='store') rStoreOrders();
+  }));
+  storeUnsubs.push(fb.subscribeTemplates(function(list,err){
+    if(err) return;
+    storeTemplates=list||[];
+    rStoreTemplates();
+  }));
+  storeUnsubs.push(fb.subscribeFeedback(function(list,err){
+    if(err) return;
+    storeFeedback=list||[];
+    rStoreFeedback(); updateFbBadge();
+  }));
+  storeUnsubs.push(fb.subscribeShippingCompanies(function(list,err){
+    if(err) return;
+    storeShipping=list||[];
+    fillShipCoSelect();
+  }));
+  storeUnsubs.push(fb.subscribeInventory(function(map,err){
+    if(err) return;
+    storeInventoryMap=map||{};
+  }));
+  storeUnsubs.push(fb.subscribeActiveTemplate(function(templateId,err){
+    if(err||!templateId) return;
+    window._storeLiveTemplateId=templateId;
+    rStoreTemplates();
+  }));
+}
+
+function stopStoreListeners(){
+  storeUnsubs.forEach(function(u){ try{ u(); }catch(e){} });
+  storeUnsubs=[];
+}
+
+function updateFbBadge(){
+  const b=$('fbBadge'); if(!b) return;
+  const n=storeFeedback.filter(function(f){return f.status==='new';}).length;
+  if(n>0){ b.style.display='inline-block'; b.textContent=n; } else { b.style.display='none'; }
+}
+
+function renderStoreConnection(){
+  const badge=$('storeConnBadge'), msg=$('storeConnMsg');
+  const inBtn=$('storeSignInBtn'), outBtn=$('storeSignOutBtn');
+  if(!badge) return;
+  const fb=window.StoreFB;
+  if(!fb){
+    badge.textContent='المكتبة غير متوفرة'; badge.className='bx bx-r';
+    if(msg) msg.textContent='مكتبة Firebase مش متوفرة في النسخة دي — حدّث البرنامج.';
+    return;
+  }
+  const st=fb.state;
+  if(st.connected){
+    badge.textContent='متصل ✓ '+(st.role||''); badge.className='bx bx-g';
+    if(msg) msg.textContent='متصل بالمتجر بحساب '+(st.user?st.user.email:'')+' — الطلبات والقوالب والشكاوى بتتحدث لحظياً.';
+    if(inBtn) inBtn.style.display='none';
+    if(outBtn) outBtn.style.display='';
+    const em=$('storeEmail'); if(em&&st.user) em.value=st.user.email;
+  }else{
+    badge.textContent='غير متصل'; badge.className='bx bx-r';
+    if(msg) msg.textContent=st.error||'سجّل دخول بحساب الأدمن بتاع المتجر.';
+    if(inBtn) inBtn.style.display='';
+    if(outBtn) outBtn.style.display='none';
+  }
+}
+
+async function storeSignIn(){
+  const fb=window.StoreFB;
+  if(!fb){ toast('مكتبة Firebase مش متوفرة','err'); return; }
+  const email=($('storeEmail').value||'').trim();
+  const pass=$('storePass').value||'';
+  if(!email||!pass){ toast('اكتب الإيميل وكلمة السر','err'); return; }
+  const btn=$('storeSignInBtn'); if(btn) btn.disabled=true;
+  try{
+    localStorage.setItem('sb_store_email',email);
+    await fb.signIn(email,pass);
+    $('storePass').value='';
+    toast('✅ تم الاتصال بالمتجر');
+  }catch(e){
+    toast(e.message||'تعذر تسجيل الدخول','err');
+    renderStoreConnection();
+  }finally{
+    if(btn) btn.disabled=false;
+  }
+}
+
+async function storeSignOut(){
+  const fb=window.StoreFB;
+  if(!fb) return;
+  try{ await fb.signOut(); toast('تم تسجيل خروج المتجر'); }
+  catch(e){ toast(e.message||'تعذر تسجيل الخروج','err'); }
+}
+
+// ---- Store orders ----
+function setOrdersSource(src){
+  storeOrdersSource=src;
+  const lw=$('localOrdersWrap'), sw=$('storeOrdersWrap');
+  const sb=$('ordSrcStoreBtn'), lb=$('ordSrcLocalBtn');
+  if(lw) lw.classList.toggle('hidden',src!=='local');
+  if(sw) sw.classList.toggle('hidden',src!=='store');
+  if(sb){ sb.className='btn btn-sm'+(src==='store'?' btn-p':' btn-g'); }
+  if(lb){ lb.className='btn btn-sm'+(src==='local'?' btn-p':' btn-g'); }
+  if(src==='store'){
+    if(!window.StoreFB||!window.StoreFB.state.connected){
+      $('storeOrdersStatus').textContent='غير متصل — سجّل دخول المتجر من الإعدادات';
+    }
+    rStoreOrders();
+  }else{
+    rOrders();
+  }
+}
+
+function rStoreOrders(){
+  const listEl=$('storeOrdList'); if(!listEl) return;
+  const filt=$('storeOrdFilter')?.value||'';
+  let l=[...storeOrders];
+  if(filt) l=l.filter(function(o){return (o.status||'new')===filt;});
+  // report strip (same shape as the local one, from the store orders)
+  const total=storeOrders.length;
+  const del=storeOrders.filter(function(o){return o.status==='delivered';}).length;
+  const undel=storeOrders.filter(function(o){return o.status!=='delivered'&&o.status!=='cancelled'&&o.status!=='expired';}).length;
+  const pend=storeOrders.filter(function(o){return o.status==='new';}).length;
+  const rate=total?Math.round((del/total)*100):0;
+  $('storeOrdReport').innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:4px">
+    <div class="sc cg" style="padding:14px 16px;cursor:default"><div class="sc-iw" style="width:36px;height:36px;font-size:18px;margin-bottom:8px">✅</div><div class="sc-v" style="font-size:18px">${del}</div><div class="sc-l">تم التوصيل</div><div class="sc-bar"></div></div>
+    <div class="sc cr" style="padding:14px 16px;cursor:default"><div class="sc-iw" style="width:36px;height:36px;font-size:18px;margin-bottom:8px">⏳</div><div class="sc-v mr" style="font-size:18px">${undel}</div><div class="sc-l">غير مستلمة</div><div class="sc-bar"></div></div>
+    <div class="sc co" style="padding:14px 16px;cursor:default"><div class="sc-iw" style="width:36px;height:36px;font-size:18px;margin-bottom:8px">🆕</div><div class="sc-v" style="font-size:18px">${pend}</div><div class="sc-l">جديدة</div><div class="sc-bar"></div></div>
+    <div class="sc cb" style="padding:14px 16px;cursor:default"><div class="sc-iw" style="width:36px;height:36px;font-size:18px;margin-bottom:8px">📊</div><div class="sc-v mb" style="font-size:18px">${rate}%</div><div class="sc-l">نسبة التوصيل</div><div class="sc-bar"></div></div>
+  </div>`;
+  listEl.innerHTML=l.length?l.map(function(o){
+    const st=o.status||'new';
+    const next=(window.StoreFBFactory?window.StoreFBFactory.ORDER_TRANSITIONS[st]:[])||[];
+    const items=(o.items||[]).map(function(it){return (it.name||it.productId)+' ×'+(it.qty||0);}).join('<br>');
+    const pay=o.paymentStatus||'cod_pending';
+    return`<tr>
+      <td><span class="ci">#${String(o.id||'').slice(-6)}</span>${o.source==='admin_manual'?'<br><span class="bx bx-b" style="font-size:9px;margin-top:3px">يدوي</span>':''}</td>
+      <td style="font-weight:700">${(o.customer&&o.customer.name)||'-'}<br><span style="font-weight:400;font-size:11px;color:var(--t3)">${(o.customer&&o.customer.phone)||''}</span></td>
+      <td style="font-size:12px">${items||'-'}</td>
+      <td class="mn-t mo2">${curr(o.total||0)}</td>
+      <td><span class="ds ${STORE_STATUS_CLASS[st]||'ds-pend'}"><span class="ds-dot"></span>${STORE_STATUS_LABEL[st]||st}</span>
+        ${next.length?`<br><select style="margin-top:6px;padding:4px 8px;font-size:11px" onchange="setStoreOrderStatus('${o.id}','${st}',this.value)"><option value="">نقل إلى…</option>${next.map(function(n){return `<option value="${n}">${STORE_STATUS_LABEL[n]||n}</option>`;}).join('')}</select>`:''}
+      </td>
+      <td><select style="padding:4px 8px;font-size:11px" onchange="setStoreOrderPayment('${o.id}','${pay}',this.value)">${['cod_pending','cod_paid','cod_refused','cod_failed'].map(function(p){return `<option value="${p}"${p===pay?' selected':''}>${STORE_PAY_LABEL[p]}</option>`;}).join('')}</select></td>
+      <td style="font-size:12px">${storeShipName(o.shippingCompanyId)}</td>
+      <td style="font-size:12px">${o.dueDate?fdt(o.dueDate):'-'}</td>
+      <td style="color:var(--t2);font-size:12px">${o.notes||'-'}</td>
+      <td><div class="row-acts">
+        <button class="ra view" onclick="showStoreOrderDetail('${o.id}')" title="التفاصيل">👁️</button>
+      </div></td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="10">'+es('🚚','لا توجد طلبات من المتجر')+'</td></tr>';
+  // undelivered report
+  const und=storeOrders.filter(function(o){return o.status!=='delivered'&&o.status!=='cancelled'&&o.status!=='expired';});
+  $('storeUndelList').innerHTML=und.length?und.map(function(o){
+    return`<tr>
+      <td><span class="ci">#${String(o.id||'').slice(-6)}</span></td>
+      <td style="font-weight:700">${(o.customer&&o.customer.name)||'-'}</td>
+      <td>${o.dueDate?fdt(o.dueDate):'-'}</td>
+      <td><span class="ds ${STORE_STATUS_CLASS[o.status||'new']||'ds-pend'}"><span class="ds-dot"></span>${STORE_STATUS_LABEL[o.status||'new']||o.status}</span></td>
+      <td class="mn-t mo2">${curr(o.total||0)}</td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--t3)">لا توجد طلبات غير مستلمة</td></tr>`;
+}
+
+async function setStoreOrderStatus(id,from,to){
+  if(!to) return;
+  const fb=window.StoreFB; if(!fb) return;
+  const o=storeOrders.find(function(x){return x.id===id;});
+  if(!o) return;
+  try{
+    await fb.updateOrderStatus(o,to);
+    toast('✅ تم تحديث حالة الطلب');
+  }catch(e){
+    toast(e.message||'تعذر تحديث الحالة','err');
+    rStoreOrders();
+  }
+}
+
+async function setStoreOrderPayment(id,from,to){
+  if(!to||to===from) return;
+  const fb=window.StoreFB; if(!fb) return;
+  const o=storeOrders.find(function(x){return x.id===id;});
+  if(!o) return;
+  try{
+    await fb.updateOrderPaymentStatus(o,to);
+    toast('✅ تم تحديث حالة الدفع');
+  }catch(e){
+    toast(e.message||'تعذر تحديث الدفع','err');
+    rStoreOrders();
+  }
+}
+
+function showStoreOrderDetail(id){
+  const o=storeOrders.find(function(x){return x.id===id;});
+  if(!o) return;
+  const items=(o.items||[]).map(function(it){
+    return `<tr><td>${it.name||it.productId}</td><td style="text-align:center">${it.qty||0}</td><td class="mn-t">${curr(it.price||0)}</td><td class="mn-t">${curr(it.subtotal||((it.price||0)*(it.qty||0)))}</td></tr>`;
+  }).join('');
+  const disc=o.discount&&o.discount.code?`<div style="font-size:13px">🏷️ خصم ${o.discount.code} (${o.discount.percent||0}%) — ${curr(o.discount.amount||0)}</div>`:'';
+  showInfoModal('طلب #'+String(o.id||'').slice(-6),
+    `<div style="font-size:13px;line-height:1.9">
+      <div>👤 ${(o.customer&&o.customer.name)||'-'} — ${(o.customer&&o.customer.phone)||''}</div>
+      <div>📍 ${(o.customer&&o.customer.address)||'-'}</div>
+      <div>🚚 ${storeShipName(o.shippingCompanyId)} · ${o.dueDate?('موعد التسليم '+fdt(o.dueDate)):'بدون موعد'}</div>
+      ${o.saleId?`<div>🧾 مرتبط بفاتورة بيع #${String(o.saleId).slice(-6)}</div>`:''}
+      ${o.notes?`<div>📝 ${o.notes}</div>`:''}
+      ${disc}
+      <div>💰 الإجمالي: <b>${curr(o.total||0)}</b> · الدفع: ${STORE_PAY_LABEL[o.paymentStatus||'cod_pending']}</div>
+      <div>📅 ${fbDateStr(o.createdAt)}</div>
+    </div>
+    <table style="margin-top:12px"><thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead><tbody>${items||'<tr><td colspan="4">—</td></tr>'}</tbody></table>`);
+}
+
+// ---- Store templates ----
+function rStoreTemplates(){
+  const el=$('tplList'); if(!el) return;
+  const st=$('storeTplStatus');
+  if(!window.StoreFB||!window.StoreFB.state.connected){
+    if(st) st.textContent='غير متصل — سجّل دخول المتجر من الإعدادات عشان تشوف القوالب.';
+    el.innerHTML='';
+    return;
+  }
+  if(st) st.textContent=storeTemplates.length?storeTemplates.length+' قالب': 'لا توجد قوالب بعد — أول تفعيل بيضيف قالب التصميم الحالي.';
+  el.innerHTML=storeTemplates.length?storeTemplates.map(function(t){
+    const rep=window.StoreFBFactory?window.StoreFBFactory.validateTemplateDoc(t):{passed:true,failedChecks:[]};
+    const live=window._storeLiveTemplateId===t.id;
+    const grid=t.grid||{};
+    const cols=grid.columns?grid.columns+' في الصف':'تلقائي';
+    const rows=grid.rows?grid.rows+' صفوف':'كل المنتجات';
+    const tokens=t.tokens||{};
+    return`<div class="cd" style="padding:16px;${live?'border:2px solid var(--grn)':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="font-size:15px;font-weight:800">${t.name||t.id}</div>
+        ${live?'<span class="bx bx-g">● مباشر</span>':''}
+      </div>
+      <div style="font-size:12px;color:var(--t3);margin:6px 0">${t.description||''}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0">
+        <span class="bx">الشبكة: ${cols} · ${rows}</span>
+        <span class="bx">الإصدار ${t.version||1}</span>
+        <span class="bx">${t.status||''}</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;margin:8px 0">
+        ${['bg','accent','text'].map(function(k){return tokens[k]?`<span style="display:inline-block;width:22px;height:22px;border-radius:6px;background:${tokens[k]};border:1px solid var(--br)" title="${k}"></span>`:'';}).join('')}
+        <span style="font-size:11px;color:var(--t3)">${tokens.accent||''}</span>
+      </div>
+      ${rep.passed?'':`<div style="font-size:12px;color:var(--red)">⚠️ القالب مش صالح: ${rep.failedChecks.join('، ')}</div>`}
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-p btn-sm" ${live||!rep.passed?'disabled':''} onclick="activateStoreTemplate('${t.id}')">✅ تفعيل على الموقع</button>
+      </div>
+    </div>`;
+  }).join(''):es('🎨','لا توجد قوالب');
+}
+
+async function activateStoreTemplate(id){
+  const fb=window.StoreFB; if(!fb) return;
+  const ok=await confirmAction('تفعيل القالب ده على الموقع؟',{ico:'🎨',ok:'تفعيل'});
+  if(!ok) return;
+  try{
+    const res=await fb.activateTemplate(id);
+    window._storeLiveTemplateId=id;
+    toast('✅ تم تفعيل القالب على الموقع');
+    rStoreTemplates();
+  }catch(e){
+    toast(e.message||'تعذر التفعيل','err');
+  }
+}
+
+// ---- Store feedback ----
+function rStoreFeedback(){
+  const el=$('fbList'); if(!el) return;
+  const st=$('storeFbStatus');
+  if(!window.StoreFB||!window.StoreFB.state.connected){
+    if(st) st.textContent='غير متصل — سجّل دخول المتجر من الإعدادات عشان تشوف الشكاوى.';
+    el.innerHTML='';
+    return;
+  }
+  const filt=$('storeFbFilter')?.value||'';
+  let l=[...storeFeedback];
+  if(filt) l=l.filter(function(f){return (f.status||'new')===filt;});
+  if(st) st.textContent=storeFeedback.length?storeFeedback.length+' رسالة': 'لا توجد رسائل بعد.';
+  el.innerHTML=l.length?l.map(function(f){
+    const stt=f.status||'new';
+    const next=(window.StoreFBFactory?window.StoreFBFactory.FEEDBACK_TRANSITIONS[stt]:[])||[];
+    const typeLbl=f.type==='complaint'?'شكوى':(f.type==='suggestion'?'اقتراح':(f.type||''));
+    return`<div class="cd" style="padding:16px">
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <div style="font-weight:800;font-size:14px">${f.title||'(بدون عنوان)'}</div>
+        <span class="bx">${FB_STATUS_LABEL[stt]||stt}</span>
+      </div>
+      <div style="font-size:12px;color:var(--t3);margin:6px 0">${typeLbl}${f.category?' · '+f.category:''} · كود التتبع: <b>${f.trackingCode||'-'}</b>${f.phone?' · '+f.phone:''}${f.orderId?' · طلب #'+String(f.orderId).slice(-6):''} · ${fbDateStr(f.createdAt)}</div>
+      <div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${f.message||''}</div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">
+        ${next.length?`<select id="fbSt-${f.id}" style="padding:6px 10px;font-size:12px"><option value="">نقل الحالة إلى…</option>${next.map(function(n){return `<option value="${n}">${FB_STATUS_LABEL[n]||n}</option>`;}).join('')}</select>
+        <button class="btn btn-p btn-sm" onclick="setFeedbackStatus('${f.id}')">تأكيد</button>`:''}
+        <input id="fbReply-${f.id}" placeholder="اكتب رد للعميل…" style="flex:1;min-width:180px;padding:8px 10px;border:1px solid var(--br);border-radius:8px;background:var(--bg2);color:var(--t1)">
+        <button class="btn btn-g btn-sm" onclick="sendFeedbackReply('${f.id}')">💬 إرسال الرد</button>
+      </div>
+    </div>`;
+  }).join(''):es('💬','لا توجد رسائل');
+}
+
+async function setFeedbackStatus(id){
+  const sel=$('fbSt-'+id);
+  const to=sel?sel.value:'';
+  if(!to) return;
+  const fb=window.StoreFB; if(!fb) return;
+  const f=storeFeedback.find(function(x){return x.id===id;});
+  if(!f) return;
+  try{
+    await fb.updateFeedbackStatus(f,to);
+    toast('✅ تم تحديث الحالة');
+  }catch(e){
+    toast(e.message||'تعذر تحديث الحالة','err');
+    rStoreFeedback();
+  }
+}
+
+async function sendFeedbackReply(id){
+  const inp=$('fbReply-'+id);
+  const text=inp?inp.value.trim():'';
+  if(!text){ toast('اكتب الرد الأول','err'); return; }
+  const fb=window.StoreFB; if(!fb) return;
+  try{
+    await fb.replyToFeedback(id,text);
+    if(inp) inp.value='';
+    toast('✅ تم إرسال الرد');
+  }catch(e){
+    toast(e.message||'تعذر إرسال الرد','err');
+  }
+}
+
+function showInfoModal(title,html){
+  $('mInfoT').textContent=title;
+  $('mInfoBody').innerHTML=html;
+  $('mInfo').classList.remove('hidden');
+}
+
+// ---- In-app update (Hosting manifest, /updates/) ----
+let _updInfo=null;
+async function checkForUpdate(){
+  const st=$('updStatus'), btn=$('updCheckBtn'), dl=$('updDlBtn');
+  if(!window.api||!window.api.checkUpdate){
+    if(st) st.textContent='فحص التحديثات غير متوفر في النسخة دي.';
+    return;
+  }
+  if(st) st.textContent='جارٍ الفحص…';
+  if(btn) btn.disabled=true;
+  try{
+    const res=await window.api.checkUpdate();
+    _updInfo=res;
+    if(res.error){ if(st) st.textContent='تعذر الفحص: '+res.error; }
+    else if(res.updateAvailable){
+      if(st) st.innerHTML='✅ فيه إصدار جديد: <b>'+res.latestVersion+'</b> (الحالي '+res.currentVersion+') — الحجم '+((res.size||0)/1048576).toFixed(1)+' MB';
+      if(dl) dl.style.display='';
+    }else{
+      if(st) st.textContent='✅ البرنامج محدّث — الإصدار '+res.currentVersion+' هو الأحدث.';
+      if(dl) dl.style.display='none';
+    }
+  }catch(e){
+    if(st) st.textContent='تعذر الفحص: '+(e.message||e);
+  }finally{
+    if(btn) btn.disabled=false;
+  }
+}
+
+async function downloadAndInstallUpdate(){
+  const prog=$('updProgress'), dl=$('updDlBtn');
+  if(!_updInfo||!_updInfo.updateAvailable){ toast('مفيش تحديث متاح','err'); return; }
+  if(!window.api||!window.api.downloadUpdate){ toast('التنزيل غير متوفر في النسخة دي','err'); return; }
+  if(prog) prog.textContent='جارٍ التنزيل…';
+  if(dl) dl.disabled=true;
+  try{
+    const res=await window.api.downloadUpdate();
+    if(!res.ok){
+      if(prog) prog.textContent='تعذر التنزيل: '+(res.error||'')+' — حمّل المثبّت من الرابط: '+(_updInfo.url||'');
+      if(_updInfo.url&&window.api.openExternal) window.api.openExternal(_updInfo.url);
+      return;
+    }
+    if(prog) prog.textContent='تم التنزيل والتحقق ✅ — جارٍ تشغيل المثبّت…';
+    const r2=await window.api.installUpdate();
+    if(!r2.ok&&prog) prog.textContent='تعذر تشغيل المثبّت: '+(r2.error||'');
+  }catch(e){
+    if(prog) prog.textContent='تعذر التنزيل: '+(e.message||e);
+  }finally{
+    if(dl) dl.disabled=false;
+  }
+}
 
 // ════════════════════════════════════════
 // RETURNS
@@ -3965,6 +4701,7 @@ function applyUserSession(){
   const hasWrite=hasPerm('sales_write')||hasPerm('purchases_write')||hasPerm('inventory_write')||hasPerm('orders')||hasPerm('returns')||hasPerm('expenses');
   document.querySelectorAll('.fab,.fab-menu').forEach(el=>el.style.display=hasWrite?'':'none');
 
+  initStoreFirebase();
   init();
   // ملخص اليوم بعد ثانية من تسجيل الدخول
   setTimeout(showDailySummary, 800);
