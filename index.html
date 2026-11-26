@@ -6,29 +6,55 @@
 <title>Store Manager</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-/* ═══ APPLE-STYLE DESIGN SYSTEM ═══ */
+/* ═══ STORE DESIGN SYSTEM — 60-30-10 palette (cream #F7F2EA / navy #1C285A / orange #FF7A1A) ═══
+   Tokens mirror the Flutter store's StoreGlassTokens (lib/theme/store_design.dart):
+   dark = Liquid Gloss (base #0B1430, tint #0E163C, cards navy #1C285A, border #2A3A66,
+   gold #F0C75E, danger #EF4444, success #22C55E); light = cream bg, navy text.
+   Contrast (WCAG, computed — see test/contrast-check.py): t1 ≥ 7:1, t2/t3 ≥ 4.5:1
+   and every coloured text token ≥ 4.5:1 on bg/surf/card/hov in BOTH themes.
+   Two token families: --acc/--gold/--pur/--grn/--red/--orn are the BRAND values
+   (fills, gradients, dots, chart segments); --acctx/--goldtx/--purtx are the
+   TEXT-SAFE versions of the same hues (any text sitting on a surface uses the
+   -tx token, because brand orange/gold on a light surface fails 4.5:1).
+   --accb/--redb/--purb/--goldb/--grnb/--blueb are decorative-only brand fills
+   (same in both themes) for the FAB mini-buttons and status dots, with navy
+   --onacc icons/text on them. --redbtn is the solid-red background white text
+   sits on (badges, danger confirm). --bg2/--bg3/--br were used but never
+   defined before — they are defined here now. */
 :root{--spd:.2s;--ease:cubic-bezier(.4,0,.2,1);--spring:cubic-bezier(.34,1.56,.64,1);--r1:10px;--r2:14px;--r3:20px;--r4:28px}
 
 [data-theme="dark"]{
-  --bg:#1c1c1e;--surf:#2c2c2e;--card:#3a3a3c;--hov:#48484a;--act:#636366;
-  --bdr:rgba(255,255,255,.09);--bdr2:rgba(255,255,255,.16);--bdr3:rgba(255,255,255,.25);
-  --t1:#f5f5f7;--t2:#98989d;--t3:#48484a;
-  --acc:#0a84ff;--accg:rgba(10,132,255,.22);--acc2:#0071e3;
-  --gold:#ffd60a;--goldg:rgba(255,214,10,.18);
-  --grn:#30d158;--grng:rgba(48,209,88,.18);
-  --red:#ff453a;--redg:rgba(255,69,58,.18);
-  --orn:#ff9f0a;--pur:#bf5af2;
+  --bg:#0B1430;--surf:#0E163C;--card:#1C285A;--hov:#18224C;--act:#223063;
+  --bg2:#0E163C;--bg3:#1C285A;--br:#2A3A66;
+  --bdr:rgba(247,242,234,.12);--bdr2:rgba(247,242,234,.20);--bdr3:rgba(247,242,234,.30);
+  --t1:#F7F2EA;--t2:#B1B1BC;--t3:#9FA1B0;
+  --acc:#FF7A1A;--accg:rgba(255,122,26,.12);--acc2:#FF8A3D;--onacc:#1C285A;
+  --acctx:#FF7A1A;
+  --gold:#F0C75E;--goldg:rgba(240,199,94,.18);--goldtx:#F0C75E;
+  --grn:#22C55E;--grng:rgba(34,197,94,.12);
+  --red:#F87171;--redg:rgba(248,113,113,.08);--redbtn:#DC2626;
+  --orn:#FF7A1A;--orng:rgba(255,122,26,.10);
+  --pur:#B04BFF;--purg:rgba(216,180,254,.14);--purtx:#D8B4FE;
+  --bronz:#F5B544;
+  --accb:#FF7A1A;--redb:#EF4444;--purb:#B04BFF;--goldb:#F0C75E;--grnb:#22C55E;--blueb:#3B5BFF;
+  --ornD:#C45A00;--redD:#A01818;--purD:#5C28B8;--goldD:#A06800;--grnD:#0A6E2A;
   --sw:240px;--th:52px;--shd:0 2px 16px rgba(0,0,0,.4)
 }
 [data-theme="light"]{
-  --bg:#f2f2f7;--surf:#ffffff;--card:#ffffff;--hov:#f2f2f7;--act:#e5e5ea;
-  --bdr:rgba(0,0,0,.08);--bdr2:rgba(0,0,0,.14);--bdr3:rgba(0,0,0,.22);
-  --t1:#1d1d1f;--t2:#6e6e73;--t3:#aeaeb2;
-  --acc:#0071e3;--accg:rgba(0,113,227,.16);--acc2:#0077ed;
-  --gold:#b38600;--goldg:rgba(179,134,0,.14);
-  --grn:#1c8139;--grng:rgba(28,129,57,.14);
-  --red:#c9001a;--redg:rgba(201,0,26,.1);
-  --orn:#b35900;--pur:#7f38c8;
+  --bg:#F7F2EA;--surf:#FFFFFF;--card:#FFFFFF;--hov:#EFE7D8;--act:#E6DCC8;
+  --bg2:#FFFFFF;--bg3:#EFE7D8;--br:#DDD2BC;
+  --bdr:rgba(28,40,90,.12);--bdr2:rgba(28,40,90,.20);--bdr3:rgba(28,40,90,.30);
+  --t1:#1C285A;--t2:#454F6E;--t3:#5B6579;
+  --acc:#FF7A1A;--accg:rgba(255,122,26,.16);--acc2:#FF8A3D;--onacc:#1C285A;
+  --acctx:#9A3412;
+  --gold:#F0C75E;--goldg:rgba(240,199,94,.18);--goldtx:#854D0E;
+  --grn:#166534;--grng:rgba(22,101,52,.12);
+  --red:#B91C1C;--redg:rgba(185,28,28,.10);--redbtn:#B91C1C;
+  --orn:#9A3412;--orng:rgba(154,52,18,.10);
+  --pur:#B04BFF;--purg:rgba(126,34,206,.10);--purtx:#7E22CE;
+  --bronz:#8A4D00;
+  --accb:#FF7A1A;--redb:#EF4444;--purb:#B04BFF;--goldb:#F0C75E;--grnb:#22C55E;--blueb:#3B5BFF;
+  --ornD:#C45A00;--redD:#A01818;--purD:#5C28B8;--goldD:#A06800;--grnD:#0A6E2A;
   --sw:240px;--th:52px;--shd:0 1px 6px rgba(0,0,0,.08)
 }
 
@@ -53,7 +79,7 @@ body{
 .tbl{display:flex;align-items:center;gap:12px;-webkit-app-region:no-drag;direction:ltr}
 .tbr{display:flex;align-items:center;gap:8px;-webkit-app-region:no-drag;direction:ltr}
 .tb-brand{font-size:13px;font-weight:600;color:var(--t2);letter-spacing:-.1px;direction:ltr}
-.tb-brand span{color:var(--acc);font-weight:700}
+.tb-brand span{color:var(--acctx);font-weight:700}
 
 /* traffic lights */
 .wc{display:flex;gap:7px;align-items:center;direction:ltr}
@@ -80,6 +106,31 @@ body{
 .thm-i{position:absolute;top:50%;transform:translateY(-50%);font-size:9px;pointer-events:none}
 .thm-i.m{right:4px}[data-theme="light"] .thm-i.m{opacity:0}
 .thm-i.s{left:4px}[data-theme="dark"] .thm-i.s{opacity:0}
+
+/* ══ CUSTOM CHECKBOX (.cbx) — the ONE checkbox component for the whole app ══
+   Markup: <label class="cbx"><input type="checkbox" id="..."><span class="cbx-box">✓</span> label text</label>
+   The native input stays in the DOM (visually hidden but still focusable) so
+   every existing script reading or setting .checked keeps working untouched —
+   the checked state is pure CSS (:checked + sibling selector).
+   Unchecked: clearly empty box, 2px border in the theme text colour (navy on
+   cream, cream on navy) so the empty box reads on both themes.
+   Checked: solid orange fill + bold navy ✓ (navy-on-orange is 5.37:1; white-on-
+   orange is only 2.61:1, so the check is navy, not white — same treatment as
+   the primary buttons). Focus: orange outline on the box for keyboard users. */
+.cbx input[type="checkbox"]{position:absolute;opacity:0;width:0;height:0;margin:0;padding:0}
+.cbx .cbx-box{
+  flex-shrink:0;width:21px;height:21px;border-radius:6px;
+  border:2px solid var(--t1);background:transparent;color:transparent;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:900;line-height:1;
+  transition:background .15s,border-color .15s,color .15s;
+}
+.cbx input[type="checkbox"]:checked + .cbx-box{
+  background:var(--acc);border-color:var(--acc);color:var(--onacc);
+}
+.cbx input[type="checkbox"]:focus-visible + .cbx-box{
+  outline:2px solid var(--acctx);outline-offset:2px;
+}
 
 /* lang btn */
 .lang-btn{
@@ -133,7 +184,7 @@ body{
   margin-bottom:1px;position:relative;user-select:none;
 }
 .ni:hover{background:var(--hov);color:var(--t1)}
-.ni.active{background:var(--acc)!important;color:#fff!important}
+.ni.active{background:var(--acc)!important;color:var(--onacc)!important}
 .ni-ic{
   width:28px;height:28px;border-radius:8px;
   display:flex;align-items:center;justify-content:center;
@@ -152,15 +203,15 @@ body{
 .es-ic .ic-svg{width:42px;height:42px;vertical-align:0;opacity:.35}
 .md-t .ic-svg,.pg-t .ic-svg{width:1.1em;height:1.1em}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.dot-r{background:#ff453a}.dot-g{background:#30d158}.dot-b{background:#0a84ff}.dot-o{background:#ff9f0a}.dot-p{background:#bf5af2}.dot-y{background:#ffd60a}
+.dot-r{background:var(--redb)}.dot-g{background:var(--grnb)}.dot-b{background:var(--blueb)}.dot-o{background:var(--accb)}.dot-p{background:var(--purb)}.dot-y{background:var(--goldb)}
 .rank-badge{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;background:var(--hov);font-size:12px;font-weight:800;color:var(--t2);flex-shrink:0}
-.rank-badge.gold{background:rgba(255,214,10,.18);color:#b98a00}
-.rank-badge.silver{background:rgba(174,174,178,.16);color:#6e6e73}
-.rank-badge.bronze{background:rgba(255,159,10,.16);color:#a05a00}
+.rank-badge.gold{background:var(--goldg);color:var(--goldtx)}
+.rank-badge.silver{background:var(--hov);color:var(--t2)}
+.rank-badge.bronze{background:var(--orng);color:var(--bronz)}
 .ni:hover .ni-ic{transform:scale(1.08)}
 .ni.active .ni-ic{background:rgba(255,255,255,.2)!important}
 .ni-lbl{flex:1;letter-spacing:-.1px}
-.ni-badge{background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center}
+.ni-badge{background:var(--redbtn);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center}
 
 /* ══ MAIN ══ */
 #mn{flex:1;overflow-y:auto;padding:28px 32px;background:var(--bg);transition:background var(--spd)}
@@ -223,7 +274,7 @@ tbody tr{
   position:fixed;bottom:28px;left:28px;width:48px;height:48px;
   background:var(--acc);border-radius:50%;border:none;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
-  font-size:22px;color:#fff;
+  font-size:22px;color:var(--onacc);
   box-shadow:0 4px 18px var(--accg);
   transition:transform .2s var(--spring),box-shadow .2s;
   z-index:500;-webkit-app-region:no-drag;
@@ -240,7 +291,7 @@ tbody tr{
 .fab-mini{display:flex;align-items:center;gap:10px;cursor:pointer;-webkit-app-region:no-drag}
 .fab-mini-btn{
   width:38px;height:38px;border-radius:50%;border:none;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;font-size:16px;
+  display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--onacc);
   box-shadow:0 2px 10px rgba(0,0,0,.2);transition:transform .18s var(--spring);
 }
 .fab-mini-btn:hover{transform:scale(1.12)}
@@ -257,7 +308,7 @@ tbody tr{
 
 /* ══ DRAG & DROP ══ */
 .sc.dragging{opacity:.45;transform:scale(.97);box-shadow:none!important}
-.sc.drag-over{box-shadow:0 0 0 2px var(--acc),var(--shd)!important;transform:scale(1.02)}
+.sc.drag-over{box-shadow:0 0 0 2px var(--acctx),var(--shd)!important;transform:scale(1.02)}
 .sc[draggable="true"]{cursor:grab}
 .sc[draggable="true"]:active{cursor:grabbing}
 .sc .drag-handle{
@@ -354,11 +405,11 @@ tbody tr{
   /* background set per color via JS custom property */
   background:conic-gradient(
     from var(--ang, 0deg),
-    var(--c1, #0a84ff) 0%,
-    var(--c2, #bf5af2) 25%,
-    var(--c1, #0a84ff) 50%,
-    var(--c2, #bf5af2) 75%,
-    var(--c1, #0a84ff) 100%
+    var(--c1, #FF7A1A) 0%,
+    var(--c2, #B04BFF) 25%,
+    var(--c1, #FF7A1A) 50%,
+    var(--c2, #B04BFF) 75%,
+    var(--c1, #FF7A1A) 100%
   );
   animation:none;
 }
@@ -371,7 +422,7 @@ tbody tr{
   border-radius:var(--r3);
   background:radial-gradient(
     circle 80px at var(--mx,50%) var(--my,50%),
-    var(--glow, rgba(10,132,255,.18)) 0%,
+    var(--glow, rgba(255,122,26,.18)) 0%,
     transparent 70%
   );
   opacity:0;
@@ -398,23 +449,23 @@ tbody tr{
 .sc-iw,.sc-v,.sc-l{position:relative;z-index:1}
 
 .sc-iw{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:14px}
-.cb .sc-iw{background:rgba(10,132,255,.15)}
-.cg .sc-iw{background:rgba(48,209,88,.15)}
-.co .sc-iw{background:rgba(255,159,10,.15)}
-.cr .sc-iw{background:rgba(255,69,58,.15)}
-.cp .sc-iw{background:rgba(191,90,242,.15)}
-.cn .sc-iw{background:rgba(255,159,10,.12)}
+.cb .sc-iw{background:var(--glow)}
+.cg .sc-iw{background:var(--glow)}
+.co .sc-iw{background:var(--glow)}
+.cr .sc-iw{background:var(--glow)}
+.cp .sc-iw{background:var(--glow)}
+.cn .sc-iw{background:var(--glow)}
 .sc-v{font-size:22px;font-weight:700;color:var(--t1);letter-spacing:-.5px;font-family:-apple-system,'JetBrains Mono',monospace}
 .sc-l{font-size:11px;color:var(--t2);margin-top:3px;font-weight:500}
 .sc-bar{display:none}
 
 /* per-color glow & border colors */
-.cb{--c1:#0a84ff;--c2:#5ac8fa;--glow:rgba(10,132,255,.2)}
-.cg{--c1:#30d158;--c2:#34c759;--glow:rgba(48,209,88,.2)}
-.co{--c1:#ff9f0a;--c2:#ffd60a;--glow:rgba(255,159,10,.2)}
-.cr{--c1:#ff453a;--c2:#ff6961;--glow:rgba(255,69,58,.2)}
-.cp{--c1:#bf5af2;--c2:#9b59b6;--glow:rgba(191,90,242,.2)}
-.cn{--c1:#ff9f0a;--c2:#ff6b00;--glow:rgba(255,159,10,.2)}
+.cb{--c1:#3B5BFF;--c2:#60A5FA;--glow:rgba(59,91,255,.2)}
+.cg{--c1:#22C55E;--c2:#4ADE80;--glow:rgba(34,197,94,.2)}
+.co{--c1:#FF7A1A;--c2:#F0C75E;--glow:rgba(255,122,26,.2)}
+.cr{--c1:#EF4444;--c2:#F87171;--glow:rgba(239,68,68,.2)}
+.cp{--c1:#B04BFF;--c2:#C084FC;--glow:rgba(176,75,255,.2)}
+.cn{--c1:#FF7A1A;--c2:#FF8A3D;--glow:rgba(255,122,26,.2)}
 
 /* ══ CARD ══ */
 .cd{
@@ -452,15 +503,15 @@ tr:hover .row-acts{opacity:1}
   font-size:12px;transition:all .12s;flex-shrink:0;
 }
 .ra:hover{transform:scale(1.1)}
-.ra.edit:hover{background:var(--accg);border-color:var(--acc)}
+.ra.edit:hover{background:var(--accg);border-color:var(--acctx)}
 .ra.del:hover{background:var(--redg);border-color:var(--red)}
 .ra.view:hover{background:var(--grng);border-color:var(--grn)}
 
 /* ══ BADGES ══ */
 .bx{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;letter-spacing:.1px}
 .bx-g{background:var(--grng);color:var(--grn)}.bx-r{background:var(--redg);color:var(--red)}
-.bx-o{background:var(--goldg);color:var(--gold)}.bx-b{background:var(--accg);color:var(--acc)}
-.bx-p{background:rgba(191,90,242,.15);color:var(--pur)}.bx-n{background:rgba(255,159,10,.15);color:var(--orn)}
+.bx-o{background:var(--goldg);color:var(--goldtx)}.bx-b{background:var(--accg);color:var(--acctx)}
+.bx-p{background:var(--purg);color:var(--purtx)}.bx-n{background:var(--orng);color:var(--orn)}
 .bx-gray{background:var(--hov);color:var(--t2)}
 
 /* ══ BUTTONS ══ */
@@ -472,12 +523,12 @@ tr:hover .row-acts{opacity:1}
   display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
 }
 .btn:active{transform:scale(.97)}
-.btn-p{background:var(--acc);color:#fff;box-shadow:0 2px 8px var(--accg)}
+.btn-p{background:var(--acc);color:var(--onacc);box-shadow:0 2px 8px var(--accg)}
 .btn-p:hover{background:var(--acc2);box-shadow:0 4px 14px var(--accg)}
 .btn-g{background:var(--hov);color:var(--t2);border:1px solid var(--bdr2)}
 .btn-g:hover{background:var(--act);color:var(--t1)}
 .btn-d{background:var(--redg);color:var(--red)}
-.btn-d:hover{background:rgba(255,69,58,.25)}
+.btn-d:hover{background:var(--redg)}
 .btn-sm{padding:6px 12px;font-size:12px;border-radius:8px}
 
 /* ══ INPUTS ══ */
@@ -490,7 +541,7 @@ input,select,textarea{
   -webkit-appearance:none;letter-spacing:-.1px;
 }
 input:focus,select:focus,textarea:focus{
-  border-color:var(--acc);
+  border-color:var(--acctx);
   box-shadow:0 0 0 3px var(--accg);
   background:var(--card);
 }
@@ -533,10 +584,10 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:flex;align-items:ce
 @keyframes iiIn{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
 .iv-row input{background:var(--card);text-align:center;padding:6px;border-radius:8px}
 .iv-row select{background:var(--card);border-radius:8px}
-.iv-tot{font-weight:700;color:var(--gold);font-size:13px;text-align:center;font-family:'JetBrains Mono',monospace}
+.iv-tot{font-weight:700;color:var(--goldtx);font-size:13px;text-align:center;font-family:'JetBrains Mono',monospace}
 .iv-sum{background:var(--hov);border:1px solid var(--bdr2);border-radius:14px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;margin-top:12px}
 .iv-lbl{font-size:13px;font-weight:600;color:var(--t2)}
-.iv-val{font-size:22px;font-weight:700;color:var(--gold);font-family:'JetBrains Mono',monospace;letter-spacing:-.5px}
+.iv-val{font-size:22px;font-weight:700;color:var(--goldtx);font-family:'JetBrains Mono',monospace;letter-spacing:-.5px}
 
 /* ══ CHART ══ */
 .ch-w{height:155px;display:flex;align-items:flex-end;gap:4px;padding:8px 12px 0}
@@ -551,18 +602,18 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:flex;align-items:ce
 .pr-g{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
 .pr-c{background:var(--card);border-radius:var(--r3);padding:20px;transition:transform .18s;box-shadow:var(--shd)}
 .pr-c:hover{transform:translateY(-2px)}
-.pr-c.gld{background:linear-gradient(145deg,var(--card),rgba(255,214,10,.05));border:1px solid rgba(255,214,10,.2)}
+.pr-c.gld{background:linear-gradient(145deg,var(--card),var(--goldg));border:1px solid var(--goldg)}
 .pr-l{font-size:11px;font-weight:600;color:var(--t3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px}
 .pr-v{font-size:23px;font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:-.5px}
-.pr-v.up{color:var(--grn)}.pr-v.dn{color:var(--red)}.pr-v.gl{color:var(--gold)}
+.pr-v.up{color:var(--grn)}.pr-v.dn{color:var(--red)}.pr-v.gl{color:var(--goldtx)}
 
 /* ══ DELIVERY STATUS ══ */
 .ds{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600}
-.ds-pend{background:rgba(255,159,10,.14);color:var(--orn)}
+.ds-pend{background:var(--orng);color:var(--orn)}
 .ds-done{background:var(--grng);color:var(--grn)}
 .ds-late{background:var(--redg);color:var(--red)}
-.ds-ship{background:var(--accg);color:var(--acc)}
-.ds-delay{background:rgba(191,90,242,.14);color:var(--pur)}
+.ds-ship{background:var(--accg);color:var(--acctx)}
+.ds-delay{background:var(--purg);color:var(--purtx)}
 .ds-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.65)}}
 
@@ -601,13 +652,13 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:flex;align-items:ce
   backdrop-filter:blur(16px);letter-spacing:-.1px;
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-#toast.suc{border-color:rgba(48,209,88,.35)}
+#toast.suc{border-color:var(--grng)}
 .td{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 #toast.suc .td{background:var(--grn)}
-#toast.err{border-color:rgba(255,69,58,.35)}
+#toast.err{border-color:var(--redg)}
 
 /* ══ AUTOSAVE ══ */
-#autosave{position:fixed;top:var(--th);right:16px;margin-top:8px;background:var(--card);border:1px solid rgba(48,209,88,.28);color:var(--grn);font-size:11px;font-weight:600;padding:5px 11px;border-radius:20px;display:flex;align-items:center;gap:5px;z-index:300;opacity:0;transition:all .32s;pointer-events:none}
+#autosave{position:fixed;top:var(--th);right:16px;margin-top:8px;background:var(--card);border:1px solid var(--grng);color:var(--grn);font-size:11px;font-weight:600;padding:5px 11px;border-radius:20px;display:flex;align-items:center;gap:5px;z-index:300;opacity:0;transition:all .32s;pointer-events:none}
 #autosave.show{opacity:1}
 .as-dot{width:5px;height:5px;border-radius:50%;background:var(--grn);animation:pulse 1.5s infinite}
 
@@ -618,22 +669,22 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:flex;align-items:ce
 
 .hidden{display:none!important}
 .mn-t{font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:-.3px}
-.mg{color:var(--grn)}.mr{color:var(--red)}.mo2{color:var(--gold)}.mb{color:var(--acc)}.mp{color:var(--pur)}
+.mg{color:var(--grn)}.mr{color:var(--red)}.mo2{color:var(--goldtx)}.mb{color:var(--acctx)}.mp{color:var(--purtx)}
 .ci{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t3);letter-spacing:-.2px}
 .divider{height:1px;background:var(--bdr);margin:12px 0}
 
 /* ══ GLASSMORPHISM SIDEBAR ══ */
 [data-theme="dark"] #sb{
-  background:rgba(28,28,30,.75);
+  background:rgba(14,22,60,.75);
   backdrop-filter:blur(28px) saturate(180%);
   -webkit-backdrop-filter:blur(28px) saturate(180%);
-  border-left:1px solid rgba(255,255,255,.07);
+  border-left:1px solid var(--bdr);
 }
 [data-theme="light"] #sb{
-  background:rgba(255,255,255,.78);
+  background:rgba(247,242,234,.78);
   backdrop-filter:blur(28px) saturate(200%);
   -webkit-backdrop-filter:blur(28px) saturate(200%);
-  border-left:1px solid rgba(0,0,0,.06);
+  border-left:1px solid var(--bdr);
 }
 
 /* ══ SPOTLIGHT ══ */
@@ -678,13 +729,13 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:flex;align-items:ce
 }
 .sp-item:hover,.sp-item.sp-sel{background:var(--hov)}
 .sp-item.sp-sel{background:var(--acc)!important}
-.sp-item.sp-sel .sp-name,.sp-item.sp-sel .sp-sub{color:#fff!important}
+.sp-item.sp-sel .sp-name,.sp-item.sp-sel .sp-sub{color:var(--onacc)!important}
 .sp-item.sp-sel .sp-ico{background:rgba(255,255,255,.2)!important}
 .sp-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;background:var(--hov)}
 .sp-info{flex:1;min-width:0}
 .sp-name{font-size:13px;font-weight:600;color:var(--t1);letter-spacing:-.1px}
 .sp-sub{font-size:11px;color:var(--t3);margin-top:1px}
-.sp-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;background:var(--accg);color:var(--acc);flex-shrink:0}
+.sp-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;background:var(--accg);color:var(--acctx);flex-shrink:0}
 .sp-empty{padding:40px 20px;text-align:center;color:var(--t3);font-size:13px}
 .sp-footer{
   border-top:1px solid var(--bdr);padding:9px 18px;
@@ -722,7 +773,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:flex;align-items:ce
   border-bottom:1px solid var(--bdr);
   display:flex;align-items:center;justify-content:space-between;letter-spacing:-.2px;
 }
-.np-clr{font-size:12px;font-weight:600;color:var(--acc);cursor:pointer;opacity:.85}
+.np-clr{font-size:12px;font-weight:600;color:var(--acctx);cursor:pointer;opacity:.85}
 .np-clr:hover{opacity:1}
 .notif-item{
   display:flex;gap:12px;padding:12px 16px;
@@ -782,7 +833,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:flex;align-items:ce
   letter-spacing:-.5px;
   animation:fadeUp .5s .3s var(--ease) both;
 }
-.splash-name span{color:var(--acc)}
+.splash-name span{color:var(--acctx)}
 .splash-sub{
   font-size:13px;color:var(--t3);font-weight:400;
   animation:fadeUp .5s .45s var(--ease) both;
@@ -836,7 +887,7 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:flex;align-items:ce
   transition:border-color .15s,box-shadow .15s;
   direction:ltr;text-align:left;
 }
-.login-field input:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--accg)}
+.login-field input:focus{border-color:var(--acctx);box-shadow:0 0 0 3px var(--accg)}
 .md-w{width:min(780px,95vw)}
 </style>
 </style>
@@ -941,7 +992,7 @@ const SFX = (function(){
            straight into the program with no login screen. -->
       <div class="login-field"><label>إيميل المتجر</label><input type="email" id="loginStoreEmail" placeholder="admin@store.com" autocomplete="off" style="direction:ltr;text-align:left" onkeydown="if(event.key==='Enter')storeSignInFromLogin()"></div>
       <div class="login-field"><label>كلمة سر المتجر</label><input type="password" id="loginStorePass" placeholder="••••••••" autocomplete="off" onkeydown="if(event.key==='Enter')storeSignInFromLogin()"></div>
-      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t2);cursor:pointer;margin-top:6px"><input type="checkbox" id="loginStoreRemember" checked style="width:15px;height:15px;accent-color:var(--acc)"> تذكرني — لا تسألني مرة أخرى</label>
+      <label class="cbx" style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t2);cursor:pointer;margin-top:6px"><input type="checkbox" id="loginStoreRemember" checked><span class="cbx-box">✓</span> تذكرني — لا تسألني مرة أخرى</label>
       <div id="loginStoreMsg" style="font-size:12px;color:var(--t3);margin-top:8px;min-height:16px"></div>
       <button class="btn btn-p" id="loginStoreBtn" style="width:100%;justify-content:center;padding:12px;font-size:14px;border-radius:12px;margin-top:10px" onclick="storeSignInFromLogin()">دخول</button>
       <div style="font-size:11px;color:var(--t3);text-align:center;margin-top:12px;line-height:1.8">حساب الأدمن بتاع المتجر — نفس حساب تطبيق الموبايل.<br>من غير نت، الدخول الأول مش هينفع؛ الجلسة المحفوظة بتدخل على طول.</div>
@@ -1048,7 +1099,7 @@ const SFX = (function(){
   <!-- pinned user + logout -->
   <div style="flex-shrink:0;border-top:1px solid var(--bdr);padding:10px 12px;background:var(--surf)">
     <button onclick="openStoreSite()" title="افتح موقع المتجر في المتصفح" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--bdr2);background:var(--hov);color:var(--t2);cursor:pointer;font-family:-apple-system,'Cairo',sans-serif;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;transition:all .15s"
-      onmouseover="this.style.color='var(--acc)';this.style.borderColor='rgba(10,132,255,.4)'"
+      onmouseover="this.style.color='var(--acctx)';this.style.borderColor='var(--accg)'"
       onmouseout="this.style.color='var(--t2)';this.style.borderColor='var(--bdr2)'">
       <svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> فتح الموقع
     </button>
@@ -1060,7 +1111,7 @@ const SFX = (function(){
       </div>
     </div>
     <button onclick="doLogout()" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--bdr2);background:var(--hov);color:var(--t2);cursor:pointer;font-family:-apple-system,'Cairo',sans-serif;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;position:relative;overflow:hidden"
-      onmouseover="this.style.background='var(--redg)';this.style.color='var(--red)';this.style.borderColor='rgba(255,69,58,.3)'"
+      onmouseover="this.style.background='var(--redg)';this.style.color='var(--red)';this.style.borderColor='var(--redg)'"
       onmouseout="this.style.background='var(--hov)';this.style.color='var(--t2)';this.style.borderColor='var(--bdr2)'">
       <svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg> تسجيل الخروج
     </button>
@@ -1075,41 +1126,41 @@ const SFX = (function(){
   <div class="pg-hd"><div><div class="pg-t" data-i18n="pg_dashboard">لوحة التحكم </div><div class="pg-s" id="dDate"></div></div></div>
   <div class="sg" id="dStats"></div>
   <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:18px">
-    <div class="cd"><div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(59,143,255,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div><span data-i18n="dash_sales7">مبيعات آخر 7 أيام</span></div></div>
+    <div class="cd"><div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--accg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div><span data-i18n="dash_sales7">مبيعات آخر 7 أيام</span></div></div>
       <div class="ch-w" id="sCh"></div><div style="height:8px"></div>
     </div>
-    <div class="cd"><div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(232,69,69,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><span data-i18n="dash_lowstock">مخزون منخفض</span></div></div>
+    <div class="cd"><div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--redg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><span data-i18n="dash_lowstock">مخزون منخفض</span></div></div>
       <div id="lsList" style="max-height:190px;overflow-y:auto;padding:4px 0"></div>
     </div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
-    <div class="cd"><div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(240,120,32,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><span data-i18n="dash_delivery_today">حالة التوصيل اليوم</span></div></div>
+    <div class="cd"><div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--orng)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><span data-i18n="dash_delivery_today">حالة التوصيل اليوم</span></div></div>
       <div id="dDelivery" style="padding:8px 0"></div>
     </div>
-    <div class="cd"><div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(29,185,84,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div><span data-i18n="dash_delivery_rate">نسبة التسليم الإجمالية</span></div></div>
+    <div class="cd"><div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--grng)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div><span data-i18n="dash_delivery_rate">نسبة التسليم الإجمالية</span></div></div>
       <div id="dDeliveryRate" style="padding:18px 20px"></div>
     </div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
     <div class="cd">
-      <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(240,192,64,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg></div><span>أفضل 5 عملاء</span></div></div>
+      <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--goldg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg></div><span>أفضل 5 عملاء</span></div></div>
       <div id="dTopCusts" style="padding:8px 0"></div>
     </div>
     <div class="cd">
-      <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(10,132,255,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div><span>مقارنة الأشهر الثلاثة</span></div></div>
+      <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--accg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div><span>مقارنة الأشهر الثلاثة</span></div></div>
       <div id="dMonthComp" style="padding:12px 16px"></div>
     </div>
   </div>
-  <div class="cd"><div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(29,185,84,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="12" y2="15"/></svg></div><span data-i18n="dash_recent_sales">آخر المبيعات</span></div></div>
+  <div class="cd"><div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--grng)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="12" y2="15"/></svg></div><span data-i18n="dash_recent_sales">آخر المبيعات</span></div></div>
     <table><thead><tr><th data-i18n="th_invoice">رقم الفاتورة</th><th data-i18n="th_customer">العميل</th><th data-i18n="th_date">التاريخ</th><th data-i18n="th_total">الإجمالي</th><th data-i18n="th_status">الحالة</th></tr></thead><tbody id="rSales"></tbody></table>
   </div>
   <!-- Store orders on the dashboard (B3): every store order's full data -->
   <div class="cd" id="storeDashCard" style="margin-top:18px">
-    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(16,185,129,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><span>آخر طلبات المتجر</span></div><span id="storeDashCount" class="bx">غير متصل</span></div>
+    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--grng)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><span>آخر طلبات المتجر</span></div><span id="storeDashCount" class="bx">غير متصل</span></div>
     <div id="dStoreStats" style="display:flex;gap:12px;flex-wrap:wrap;padding:12px 16px 0;font-size:12px;color:var(--t2)"></div>
     <table><thead><tr><th>رقم الطلب</th><th>العميل</th><th>الأصناف</th><th>الإجمالي</th><th>الحالة</th><th>الدفع</th><th>التاريخ</th></tr></thead><tbody id="dStoreOrders"></tbody></table>
   <div class="cd" id="storeLowStockCard" style="margin-top:18px">
-    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(232,69,69,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><span>مخزون المتجر المنخفض</span></div><span id="storeLowStockCount" class="bx">غير متصل</span></div>
+    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--redg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><span>مخزون المتجر المنخفض</span></div><span id="storeLowStockCount" class="bx">غير متصل</span></div>
     <div id="storeLowStockBody" style="padding:12px 16px;font-size:13px"></div>
   </div>
   </div>
@@ -1186,7 +1237,7 @@ const SFX = (function(){
     <tbody id="ordList"></tbody>
   </table></div>
   <div class="cd" id="undelCard">
-    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(232,69,69,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><span data-i18n="undelivered_title">الطلبات غير المستلمة</span></div></div>
+    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--redg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><span data-i18n="undelivered_title">الطلبات غير المستلمة</span></div></div>
     <table><thead><tr><th data-i18n="th_order_num">رقم الطلب</th><th data-i18n="th_customer">العميل</th><th data-i18n="th_due_date">موعد التسليم</th><th data-i18n="th_reason">السبب</th><th data-i18n="th_delayed_to">مؤجل إلى</th><th data-i18n="th_status">الحالة</th><th data-i18n="th_value">القيمة</th></tr></thead>
     <tbody id="undelList"></tbody>
     </table>
@@ -1220,7 +1271,7 @@ const SFX = (function(){
       <tbody id="storeOrdList"></tbody>
     </table></div>
     <div class="cd">
-      <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(232,69,69,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><span>الطلبات غير المستلمة (المتجر)</span></div></div>
+      <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--redg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><span>الطلبات غير المستلمة (المتجر)</span></div></div>
       <table><thead><tr><th>رقم الطلب</th><th>العميل</th><th>موعد التسليم</th><th>الحالة</th><th>الإجمالي</th></tr></thead>
       <tbody id="storeUndelList"></tbody>
       </table>
@@ -1309,11 +1360,11 @@ const SFX = (function(){
         <div class="fgr full"><label>نص شريط الإعلان</label><input id="dsAnnouncement" placeholder="مثال: توصيل مجاني للطلبات فوق 500 ج.م"></div>
         <div class="fgr full"><label>الأقسام الظاهرة في الموقع</label>
           <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:13px">
-            <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="dsSecHero"> الواجهة</label>
-            <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="dsSecPromos"> العروض</label>
-            <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="dsSecFeatured"> المميز</label>
-            <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="dsSecDelivery"> التوصيل</label>
-            <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="dsSecContact"> التواصل</label>
+            <label class="cbx" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="dsSecHero"><span class="cbx-box">✓</span> الواجهة</label>
+            <label class="cbx" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="dsSecPromos"><span class="cbx-box">✓</span> العروض</label>
+            <label class="cbx" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="dsSecFeatured"><span class="cbx-box">✓</span> المميز</label>
+            <label class="cbx" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="dsSecDelivery"><span class="cbx-box">✓</span> التوصيل</label>
+            <label class="cbx" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="dsSecContact"><span class="cbx-box">✓</span> التواصل</label>
           </div>
         </div>
       </div>
@@ -1369,12 +1420,12 @@ const SFX = (function(){
   <!-- Store account (B6): realised store orders in the same period —
        revenue, cost of goods, gross; a missing cost is never invented -->
   <div class="cd" id="storeProfitCard" style="margin-bottom:16px">
-    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(16,185,129,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><span>حساب المتجر</span></div><span id="storeProfitBadge" class="bx">غير متصل</span></div>
+    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--grng)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><span>حساب المتجر</span></div><span id="storeProfitBadge" class="bx">غير متصل</span></div>
     <div id="storeProfitBody" style="padding:16px"></div>
   </div>
   <!-- Sales by period (contract §8): non-cancelled store-order totals -->
   <div class="cd" id="salesPeriodCard" style="margin-bottom:16px">
-    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(10,132,255,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div><span>مبيعات المتجر حسب الفترة</span></div>
+    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--accg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div><span>مبيعات المتجر حسب الفترة</span></div>
       <div style="display:flex;gap:6px">
         <button class="btn btn-sm" id="spDayBtn" onclick="setSalesPeriod('day')">يومي</button>
         <button class="btn btn-sm" id="spWeekBtn" onclick="setSalesPeriod('week')">أسبوعي</button>
@@ -1386,7 +1437,7 @@ const SFX = (function(){
   <!-- Donut chart row -->
   <div style="display:grid;grid-template-columns:280px 1fr;gap:16px;margin-bottom:16px">
     <div class="cd" id="donutCard">
-      <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(10,132,255,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div><span>توزيع التكاليف</span></div></div>
+      <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--accg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div><span>توزيع التكاليف</span></div></div>
       <div style="padding:18px;display:flex;flex-direction:column;align-items:center;gap:14px">
         <div style="position:relative;width:140px;height:140px">
           <svg id="donutSvg" width="140" height="140" viewBox="0 0 140 140"></svg>
@@ -1399,10 +1450,10 @@ const SFX = (function(){
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <div class="cd"><div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(240,192,64,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div><span data-i18n="profit_by_product">ربح حسب المنتج</span></div></div>
+      <div class="cd"><div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--goldg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div><span data-i18n="profit_by_product">ربح حسب المنتج</span></div></div>
         <table><thead><tr><th data-i18n="th_product">المنتج</th><th data-i18n="th_qty">الكمية</th><th data-i18n="th_revenue">الإيراد</th><th data-i18n="th_cost">التكلفة</th><th data-i18n="th_profit">الربح</th></tr></thead><tbody id="prByProd"></tbody></table>
       </div>
-      <div class="cd"><div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(232,69,69,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></div><span data-i18n="expense_summary">ملخص المصروفات</span></div></div>
+      <div class="cd"><div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--redg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></div><span data-i18n="expense_summary">ملخص المصروفات</span></div></div>
         <table><thead><tr><th data-i18n="th_category">الفئة</th><th data-i18n="th_amount">المبلغ</th></tr></thead><tbody id="expSum"></tbody></table>
       </div>
     </div>
@@ -1410,7 +1461,7 @@ const SFX = (function(){
   <!-- تقرير شهري -->
   <div class="cd" style="margin-top:16px">
     <div class="cd-hd">
-      <div class="cd-t"><div class="cd-ti" style="background:rgba(48,209,88,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><span>التقرير الشهري</span></div>
+      <div class="cd-t"><div class="cd-ti" style="background:var(--grng)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><span>التقرير الشهري</span></div>
       <div style="display:flex;gap:8px;align-items:center">
         <select id="monthlyYear" onchange="renderMonthly()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--br);background:var(--bg2);color:var(--t1);font-size:13px"></select>
         <button class="btn btn-g btn-sm" onclick="renderMonthly()"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
@@ -1421,7 +1472,7 @@ const SFX = (function(){
 
   <!-- تقرير الديون -->
   <div class="cd" style="margin-top:16px">
-    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(232,69,69,.12)"><span class="dot dot-r"></span></div><span>تقرير الديون — العملاء الآجلون</span></div></div>
+    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--redg)"><span class="dot dot-r"></span></div><span>تقرير الديون — العملاء الآجلون</span></div></div>
     <table><thead><tr><th>العميل</th><th>عدد الفواتير</th><th>الإجمالي</th><th>المدفوع</th><th>المتبقي</th><th></th></tr></thead><tbody id="debtList"></tbody></table>
   </div>
 </div>
@@ -1436,7 +1487,7 @@ const SFX = (function(){
 <div id="pg-settings" class="pg hidden">
   <div class="pg-hd"><div class="pg-t" data-i18n="pg_settings"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> الإعدادات</div></div>
   <div class="cd" style="max-width:500px">
-    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(59,143,255,.1)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="9" y1="22" x2="9" y2="18"/><line x1="15" y1="22" x2="15" y2="18"/><line x1="9" y1="6" x2="10" y2="6"/><line x1="14" y1="6" x2="15" y2="6"/><line x1="9" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="15" y2="14"/></svg></div><span data-i18n="settings_company">بيانات الشركة</span></div></div>
+    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--accg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="9" y1="22" x2="9" y2="18"/><line x1="15" y1="22" x2="15" y2="18"/><line x1="9" y1="6" x2="10" y2="6"/><line x1="14" y1="6" x2="15" y2="6"/><line x1="9" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="15" y2="14"/></svg></div><span data-i18n="settings_company">بيانات الشركة</span></div></div>
     <div style="padding:22px">
       <div class="fg">
         <div class="fgr full"><label data-i18n="lbl_company_name">اسم الشركة</label><input id="cfgCo"></div>
@@ -1466,10 +1517,10 @@ const SFX = (function(){
     </div>
   </div>
     <div class="cd" style="max-width:500px;margin-top:16px">
-    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(37,211,102,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div><span>الطلب عبر واتساب</span></div><span id="waStatus" class="bx">غير متصل</span></div>
+    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--grng)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div><span>الطلب عبر واتساب</span></div><span id="waStatus" class="bx">غير متصل</span></div>
     <div style="padding:22px">
       <div class="fg">
-        <div class="fgr full"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="waEnabled"> تفعيل زر «اطلب عبر واتساب» في الموقع</label>
+        <div class="fgr full"><label class="cbx" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="waEnabled"><span class="cbx-box">✓</span> تفعيل زر «اطلب عبر واتساب» في الموقع</label>
         <div style="font-size:11px;color:var(--t3);margin-top:6px">لما يكون مفعّل، صفحة مراجعة الطلب في الموقع بتعرض زر واتساب جنب «تأكيد الطلب».</div></div>
         <div class="fgr full"><label>رقم الواتساب (بالكود الدولي بدون +)</label><input id="waNumber" placeholder="201557887719" style="direction:ltr;text-align:left"></div>
       </div>
@@ -1477,7 +1528,7 @@ const SFX = (function(){
     </div>
   </div>
 <div class="cd" style="max-width:500px;margin-top:16px">
-    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:rgba(59,143,255,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></div><span>التحديثات</span></div><span id="updVerBadge" class="bx">الإصدار الحالي</span></div>
+    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--accg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></div><span>التحديثات</span></div><span id="updVerBadge" class="bx">الإصدار الحالي</span></div>
     <div style="padding:22px">
       <div id="updStatus" style="font-size:12px;color:var(--t3);margin-bottom:12px">افحص لو فيه إصدار جديد من Store Manager.</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1568,23 +1619,23 @@ const SFX = (function(){
 <div class="fab-bg" id="fabBg" onclick="closeFab()"></div>
 <div class="fab-menu" id="fabMenu">
   <div class="fab-mini" onclick="openOrderM();closeFab()">
-    <div class="fab-mini-btn" style="background:linear-gradient(135deg,var(--orn),#c45a00)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+    <div class="fab-mini-btn" style="background:linear-gradient(135deg,var(--accb),var(--ornD))"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
     <div class="fab-mini-lbl">طلب توصيل جديد</div>
   </div>
   <div class="fab-mini" onclick="openExpM();closeFab()">
-    <div class="fab-mini-btn" style="background:linear-gradient(135deg,var(--red),#a01818)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></div>
+    <div class="fab-mini-btn" style="background:linear-gradient(135deg,var(--redb),var(--redD))"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></div>
     <div class="fab-mini-lbl">مصروف جديد</div>
   </div>
   <div class="fab-mini" onclick="openRetM();closeFab()">
-    <div class="fab-mini-btn" style="background:linear-gradient(135deg,var(--pur),#5c28b8)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></div>
+    <div class="fab-mini-btn" style="background:linear-gradient(135deg,var(--purb),var(--purD))"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></div>
     <div class="fab-mini-lbl">مرتجع جديد</div>
   </div>
   <div class="fab-mini" onclick="openPurchM();closeFab()">
-    <div class="fab-mini-btn" style="background:linear-gradient(135deg,var(--gold),#a06800)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
+    <div class="fab-mini-btn" style="background:linear-gradient(135deg,var(--goldb),var(--goldD))"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
     <div class="fab-mini-lbl">فاتورة شراء</div>
   </div>
   <div class="fab-mini" onclick="openSaleM();closeFab()">
-    <div class="fab-mini-btn" style="background:linear-gradient(135deg,var(--grn),#0a6e2a)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
+    <div class="fab-mini-btn" style="background:linear-gradient(135deg,var(--grnb),var(--grnD))"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
     <div class="fab-mini-lbl">فاتورة بيع</div>
   </div>
   <div class="fab-mini" onclick="openProdM();closeFab()">
@@ -1774,7 +1825,7 @@ const SFX = (function(){
       </div>
       <div id="wpImgPreview" style="margin-top:8px"></div>
     </div>
-    <div class="fgr full"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="wpFeatured"> منتج مميز (يظهر في قسم «المميز» أول الصفحة)</label></div>
+    <div class="fgr full"><label class="cbx" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="wpFeatured"><span class="cbx-box">✓</span> منتج مميز (يظهر في قسم «المميز» أول الصفحة)</label></div>
   </div>
   <div class="md-ft"><button class="btn btn-g" onclick="closeM('mWebProduct')">إلغاء</button><button class="btn btn-p" onclick="saveWebProduct()">حفظ المنتج</button></div>
 </div></div>
@@ -1798,7 +1849,7 @@ const SFX = (function(){
     <div class="fgr full"><label>الكود *</label><input id="dcCode" placeholder="مثال: SAVE10" style="direction:ltr;text-align:left;text-transform:uppercase"></div>
     <div class="fgr"><label>النسبة % *</label><input id="dcPercent" type="number" min="1" max="100" placeholder="10"></div>
     <div class="fgr"><label>ينتهي في</label><input id="dcExpiry" type="date"></div>
-    <div class="fgr full"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="dcActive" checked> مفعّل</label></div>
+    <div class="fgr full"><label class="cbx" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="dcActive" checked><span class="cbx-box">✓</span> مفعّل</label></div>
   </div>
   <div class="md-ft"><button class="btn btn-g" onclick="closeM('mDiscount')">إلغاء</button><button class="btn btn-p" onclick="saveDiscount()">حفظ الكود</button></div>
 </div></div>
@@ -2205,7 +2256,7 @@ function brandInitials(name){
 function applyBrand(){
   const name=(cfg.companyName||'').trim()||'Store Manager';
   const first=name.split(/\s+/)[0], rest=name.slice(first.length).trim();
-  const html='<span style="color:var(--acc)">'+escHtml(first)+'</span>'+(rest?' '+escHtml(rest):'');
+  const html='<span style="color:var(--acctx)">'+escHtml(first)+'</span>'+(rest?' '+escHtml(rest):'');
   ['splashBrand','loginBrand','tbBrand','sbBrand'].forEach(function(id){const el=$(id); if(el) el.innerHTML=html;});
   const ini=brandInitials(name);
   document.querySelectorAll('.brand-av').forEach(function(el){ el.textContent=ini; });
@@ -2395,7 +2446,7 @@ function rDash(){
   // delivery rate
   const total=orders.length,delivered=orders.filter(o=>o.status==='delivered').length;
   const rate=total?Math.round((delivered/total)*100):0;
-  $('dDeliveryRate').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:14px;font-weight:700;color:var(--t2)">${t('delivery_rate_lbl')}</span><span style="font-size:28px;font-weight:900;font-family:'JetBrains Mono',monospace;color:${rate>=70?'var(--grn)':rate>=40?'var(--gold)':'var(--red)'}">${rate}%</span></div><div class="progress-wrap"><div class="progress-bar" style="width:${rate}%"></div></div><div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--t3)"><span>${icOrDot('check')} ${t('delivered_lbl')}: ${delivered}</span><span>${icOrDot('box')} ${t('total_lbl')}: ${total}</span></div>`;
+  $('dDeliveryRate').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:14px;font-weight:700;color:var(--t2)">${t('delivery_rate_lbl')}</span><span style="font-size:28px;font-weight:900;font-family:'JetBrains Mono',monospace;color:${rate>=70?'var(--grn)':rate>=40?'var(--goldtx)':'var(--red)'}">${rate}%</span></div><div class="progress-wrap"><div class="progress-bar" style="width:${rate}%"></div></div><div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--t3)"><span>${icOrDot('check')} ${t('delivered_lbl')}: ${delivered}</span><span>${icOrDot('box')} ${t('total_lbl')}: ${total}</span></div>`;
   // recent sales
   const rec=[...sales].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
   $('rSales').innerHTML=rec.length?rec.map(s=>{const c=customers.find(x=>x.id===s.customerId);return`<tr><td><span class="ci">#${s.id?.slice(-6)}</span></td><td style="font-weight:600">${c?.name||s.customerName||t('cash')}</td><td>${fdt(s.date)}</td><td class="mn-t mg">${curr(s.total)}</td><td><span class="bx bx-g">${icOrDot('check')} ${t('completed')}</span></td></tr>`;}).join(''):`<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--t3)">${t('no_sales_yet')}</td></tr>`;
@@ -2423,7 +2474,7 @@ function rDash(){
       <div style="flex:1">
         <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:4px">
           <span>${c?.name||custNames[cid]||'عميل محذوف'}</span>
-          <span style="color:var(--mg)">${curr(amt)}</span>
+          <span style="color:var(--grn)">${curr(amt)}</span>
         </div>
         <div style="height:5px;background:var(--bg3);border-radius:3px">
           <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--acc),var(--grn));border-radius:3px;transition:.6s ease"></div>
@@ -2603,8 +2654,8 @@ function updStockBadge(sel){
   const badge=sel.closest('.iv-row').querySelector('.stock-badge');
   if(!badge) return;
   badge.textContent='متاح:'+stock+' '+unit;
-  badge.style.background=stock<=0?'rgba(232,69,69,.15)':stock<=5?'rgba(255,159,10,.15)':'rgba(48,209,88,.15)';
-  badge.style.color=stock<=0?'var(--mr)':stock<=5?'var(--mo)':'var(--mg)';
+  badge.style.background=stock<=0?'var(--redg)':stock<=5?'var(--orng)':'var(--grng)';
+  badge.style.color=stock<=0?'var(--red)':stock<=5?'var(--acctx)':'var(--grn)';
 }
 function chkStock(qtyInput){
   const row=qtyInput.closest('.iv-row');
@@ -2612,7 +2663,7 @@ function chkStock(qtyInput){
   const opt=sel.options[sel.selectedIndex];
   const stock=parseInt(opt?.dataset.stock||0);
   const qty=parseFloat(qtyInput.value)||0;
-  if(qty>stock && stock>0){qtyInput.style.borderColor='var(--mr)';toast('الكمية أكبر من المخزون ('+stock+')','warn');}
+  if(qty>stock && stock>0){qtyInput.style.borderColor='var(--red)';toast('الكمية أكبر من المخزون ('+stock+')','warn');}
   else qtyInput.style.borderColor='';
 }
 function fSP(s){s.closest('.iv-row').querySelector('.spr').value=s.options[s.selectedIndex].dataset.pr||0;updStockBadge(s);updST();}
@@ -3871,7 +3922,7 @@ function fillWebProductSelects(forceHero){
     const hp=(storeWebsiteSettings.homepage||{});
     const sel=hp.heroProductIds||[];
     hpWrap.innerHTML=storeProducts.map(function(p){
-      return `<label style="display:flex;gap:6px;align-items:center;font-size:12px;border:1px solid var(--br);border-radius:8px;padding:6px 10px;cursor:pointer"><input type="checkbox" class="hpHeroChk" value="${p.id}"${sel.indexOf(p.id)!==-1?' checked':''}> ${escHtml(p.name||p.id)}</label>`;
+      return `<label class="cbx" style="display:flex;gap:6px;align-items:center;font-size:12px;border:1px solid var(--br);border-radius:8px;padding:6px 10px;cursor:pointer"><input type="checkbox" class="hpHeroChk" value="${p.id}"${sel.indexOf(p.id)!==-1?' checked':''}><span class="cbx-box">✓</span> ${escHtml(p.name||p.id)}</label>`;
     }).join('')||'<span style="font-size:12px;color:var(--t3)">لا توجد منتجات بعد.</span>';
   }
 }
@@ -4337,6 +4388,7 @@ async function delDiscount(code){
 
 // ---- In-app update (Hosting manifest, /updates/) ----
 let _updInfo=null;
+let _updProgSubscribed=false; // progress listener is attached once, not per click
 async function checkForUpdate(){
   const st=$('updStatus'), btn=$('updCheckBtn'), dl=$('updDlBtn');
   if(!window.api||!window.api.checkUpdate){
@@ -4369,6 +4421,21 @@ async function downloadAndInstallUpdate(){
   if(!window.api||!window.api.downloadUpdate){ toast('التنزيل غير متوفر في النسخة دي','err'); return; }
   if(prog) prog.textContent='جارٍ التنزيل…';
   if(dl) dl.disabled=true;
+  // Live progress from the main process (subscribed once): 'جارٍ التنزيل… 42٪ (55 MB من 130 MB)'.
+  // When the server gives no total, show the received MB only.
+  if(window.api.onUpdateDownloadProgress&&!_updProgSubscribed){
+    _updProgSubscribed=true;
+    window.api.onUpdateDownloadProgress(function(p){
+      if(!prog) return;
+      const mb=function(b){ return (b/1048576).toFixed(1); };
+      if(p&&p.total>0){
+        const pct=Math.round((p.received/p.total)*100);
+        prog.textContent='جارٍ التنزيل… '+pct+'٪ ('+mb(p.received)+' MB من '+mb(p.total)+' MB)';
+      }else if(p){
+        prog.textContent='جارٍ التنزيل… '+mb(p.received)+' MB';
+      }
+    });
+  }
   try{
     const res=await window.api.downloadUpdate();
     if(!res.ok){
@@ -5380,7 +5447,7 @@ function addSparklines(){
     weekSales.map(v=>v>0?1:0),
     Array.from({length:7},(_,i)=>customers.length+i*0.3),
   ];
-  const colors=['#0a84ff','#30d158','#ff9f0a','#bf5af2','#ff453a','#ff9f0a'];
+  const colors=['#FF7A1A','#22C55E','#F0C75E','#3B5BFF','#EF4444','#FF7A1A'];
 
   cards.forEach((card,ci)=>{
     const existing=card.querySelector('.sc-spark');
@@ -5543,8 +5610,8 @@ function confirmAction(msg, opts={}){
     $('confirmIco').innerHTML = ic(opts.ico||'alert');
     const btn=$('confirmOkBtn');
     btn.textContent = opts.ok||'تأكيد';
-    btn.style.background = opts.danger ? 'var(--red)' : 'var(--acc)';
-    btn.style.color = '#fff';
+    btn.style.background = opts.danger ? 'var(--redbtn)' : 'var(--acc)';
+    btn.style.color = opts.danger ? '#fff' : 'var(--onacc)';
     _confirmResolve = ()=>res(true);
     _confirmReject  = ()=>res(false);
     $('mConfirm').classList.remove('hidden');
@@ -5681,7 +5748,7 @@ function showDailySummary(){
 
   // مبيعات اليوم
   rows.push({
-    ico:'cart', color: 'rgba(48,209,88,.12)', textColor: 'var(--mg)',
+    ico:'cart', color: 'var(--grng)', textColor: 'var(--grn)',
     label: 'مبيعات اليوم',
     value: todaySales.length + 'فاتورة',
     sub: totalSalesRev > 0 ? 'إجمالي:' + curr(totalSalesRev) : 'لا توجد مبيعات اليوم',
@@ -5690,7 +5757,7 @@ function showDailySummary(){
 
   // طلبات متأخرة
   if(lateOrders.length > 0) rows.push({
-    ico:'alert', color: 'rgba(232,69,69,.12)', textColor: 'var(--mr)',
+    ico:'alert', color: 'var(--redg)', textColor: 'var(--red)',
     label: 'طلبات متأخرة',
     value: lateOrders.length + 'طلب',
     sub: 'يحتاج مراجعة فورية',
@@ -5699,7 +5766,7 @@ function showDailySummary(){
 
   // ديون مستحقة
   if(unpaidSales.length > 0) rows.push({
-    ico:'dot-r', color: 'rgba(232,69,69,.12)', textColor: 'var(--mr)',
+    ico:'dot-r', color: 'var(--redg)', textColor: 'var(--red)',
     label: 'ديون مستحقة',
     value: unpaidSales.length + 'فاتورة',
     sub: 'إجمالي:' + curr(totalDebt),
@@ -5708,7 +5775,7 @@ function showDailySummary(){
 
   // مخزون منخفض
   if(lowStock.length > 0) rows.push({
-    ico:'box', color: 'rgba(255,159,10,.12)', textColor: 'var(--mo)',
+    ico:'box', color: 'var(--orng)', textColor: 'var(--acctx)',
     label: 'مخزون منخفض',
     value: lowStock.length + 'منتج',
     sub: lowStock.slice(0,3).map(p=>p.name).join('،') + (lowStock.length>3?'...':''),
@@ -5717,7 +5784,7 @@ function showDailySummary(){
 
   // مشتريات اليوم
   if(todayPurchs.length > 0) rows.push({
-    ico:'download', color: 'rgba(10,132,255,.12)', textColor: 'var(--acc)',
+    ico:'download', color: 'var(--accg)', textColor: 'var(--acc)',
     label: 'مشتريات اليوم',
     value: todayPurchs.length + 'فاتورة',
     sub: 'إجمالي:' + curr(todayPurchs.reduce((a,p)=>a+(p.total||0),0)),
@@ -5726,7 +5793,7 @@ function showDailySummary(){
 
   // مصروفات اليوم
   if(todayExps.length > 0) rows.push({
-    ico:'wallet', color: 'rgba(255,159,10,.12)', textColor: 'var(--mo)',
+    ico:'wallet', color: 'var(--orng)', textColor: 'var(--acctx)',
     label: 'مصروفات اليوم',
     value: curr(todayExps.reduce((a,e)=>a+(parseFloat(e.amount)||0),0)),
     sub: todayExps.length + 'عملية',
@@ -5735,7 +5802,7 @@ function showDailySummary(){
 
   // إذا كل حاجة تمام
   if(!lateOrders.length && !unpaidSales.length && !lowStock.length) rows.push({
-    ico:'check', color: 'rgba(48,209,88,.12)', textColor: 'var(--mg)',
+    ico:'check', color: 'var(--grng)', textColor: 'var(--grn)',
     label: 'كل شيء على ما يرام',
     value: 'لا توجد تنبيهات',
     sub: 'استمر في العمل الرائع!',
@@ -5807,7 +5874,7 @@ function renderActLogPage(){
     const timeStr=t.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     return `<tr>
       <td style="white-space:nowrap;color:var(--t3);font-size:12px">${dateStr}<br><span style="color:var(--t2)">${timeStr}</span></td>
-      <td><span style="font-weight:700;color:var(--acc)">@${e.username||'-'}</span><br><span style="font-size:11px;color:var(--t3)">${e.user||''}</span></td>
+      <td><span style="font-weight:700;color:var(--acctx)">@${e.username||'-'}</span><br><span style="font-size:11px;color:var(--t3)">${e.user||''}</span></td>
       <td><span style="margin-left:6px">${icOrDot(icons[e.action]||'file')}</span>${e.action||'-'}</td>
       <td style="color:var(--t2);font-size:12px">${e.detail||'—'}</td>
     </tr>`;
