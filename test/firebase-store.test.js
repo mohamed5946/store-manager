@@ -138,7 +138,9 @@ test('order state machine: legal, illegal, same-state', () => {
   assert.equal(StoreFB.isAllowedOrderTransition('ready', 'in_transit'), true);
   assert.equal(StoreFB.isAllowedOrderTransition('in_transit', 'cancelled'), false);
   assert.equal(StoreFB.isAllowedOrderTransition('delivered', 'delivered'), true);
-  assert.equal(StoreFB.isAllowedOrderTransition('cancelled', 'new'), false);
+  assert.equal(StoreFB.isAllowedOrderTransition('cancelled', 'new'), true); // reopen
+  assert.equal(StoreFB.isAllowedOrderTransition('cancelled', 'in_transit'), false); // must go via new
+  assert.equal(StoreFB.isAllowedOrderTransition('cancelled', 'cancelled'), true); // same-state no-op
   assert.equal(StoreFB.isAllowedOrderTransition('new', 'expired'), true);
 });
 
@@ -357,6 +359,88 @@ test('updateOrderStatus: cancelling is an audited write with the audit entry', a
   assert.equal(audit.operationId, fake._store['orders/o1'].operationId);
   assert.deepEqual(audit.newValuesByDoc['orders/o1'], { status: 'cancelled' });
   assert.deepEqual(audit.oldValues, { status: 'preparing' });
+});
+
+test('updateOrderStatus: reopen cancelled -> new is an audited write; cancelled -> in_transit stays denied', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['orders/o1'] = { status: 'cancelled', total: 250 };
+  assert.equal(await fb.updateOrderStatus({ id: 'o1', status: 'cancelled' }, 'new'), true);
+  assert.equal(fake._store['orders/o1'].status, 'new');
+  assert.ok(fake._store['orders/o1'].operationId);
+  const auditKeys = Object.keys(fake._store).filter((k) => k.startsWith('audit/'));
+  assert.equal(auditKeys.length, 1);
+  const audit = fake._store[auditKeys[0]];
+  assert.equal(audit.operation, 'order_status');
+  assert.equal(audit.operationId, fake._store['orders/o1'].operationId);
+  assert.deepEqual(audit.newValuesByDoc['orders/o1'], { status: 'new' });
+  assert.deepEqual(audit.oldValues, { status: 'cancelled' });
+  // Direct jump to in_transit is still denied — reopen must go via new.
+  fake._store['orders/o2'] = { status: 'cancelled', total: 100 };
+  await assert.rejects(
+    fb.updateOrderStatus({ id: 'o2', status: 'cancelled' }, 'in_transit'),
+    /ماينفعش/);
+  assert.equal(fake._store['orders/o2'].status, 'cancelled'); // untouched
+  assert.equal(Object.keys(fake._store).filter((k) => k.startsWith('audit/')).length, 1); // no second audit
+});
+
+test('subscribeOrders: a website order flows through with every field (placeOrder output shape)', async () => {
+  const { fake, fb } = await signedInFb();
+  // The exact shape the Phase 2 placeOrder callable writes: customer
+  // block, priced items, totals, status + paymentStatus, createdAt.
+  // The PC subscription must not drop any of it — the orders table
+  // and the detail view render all of these fields.
+  fake._store['orders/web-1'] = {
+    status: 'new', paymentStatus: 'cod_pending',
+    customer: { name: 'أحمد محمد', phone: '01012345678', email: 'ahmed@test.com', address: 'القاهرة — مدينة نصر' },
+    items: [
+      { productId: 'p1', name: 'منتج 1', price: 150, qty: 2, subtotal: 300 },
+      { productId: 'p2', name: 'منتج 2', price: 150, qty: 1, subtotal: 150 }
+    ],
+    subtotal: 450, shippingFee: 0, discount: null, total: 450,
+    shippingCompanyId: 'ship-1', notes: 'ملاحظة', source: 'website',
+    createdAt: { seconds: 1795000000, nanoseconds: 0 }
+  };
+  const list = await new Promise((resolve) => fb.subscribeOrders((l) => resolve(l)));
+  assert.equal(list.length, 1);
+  const o = list[0];
+  assert.equal(o.id, 'web-1');
+  assert.equal(o.customer.name, 'أحمد محمد');
+  assert.equal(o.customer.phone, '01012345678');
+  assert.equal(o.customer.email, 'ahmed@test.com');
+  assert.equal(o.customer.address, 'القاهرة — مدينة نصر');
+  assert.equal(o.items.length, 2);
+  assert.deepEqual(o.items[0], { productId: 'p1', name: 'منتج 1', price: 150, qty: 2, subtotal: 300 });
+  assert.equal(o.items[1].productId, 'p2');
+  assert.equal(o.total, 450);
+  assert.equal(o.status, 'new');
+  assert.equal(o.paymentStatus, 'cod_pending');
+  assert.equal(o.createdAt.seconds, 1795000000);
+});
+
+test('subscribeFeedback: a submitted complaint flows through with every field', async () => {
+  const { fake, fb } = await signedInFb();
+  // The shape the Phase 3 submitFeedback callable writes: the form
+  // fields + the tracking code the customer uses for the lookup.
+  fake._store['feedback/fb-1'] = {
+    type: 'complaint', category: 'توصيل', title: 'تأخر الطلب',
+    message: 'الطلب اتأخر يومين', name: 'أحمد محمد', email: 'ahmed@test.com',
+    phone: '01012345678', orderId: 'web-1', trackingCode: 'FB-123456',
+    status: 'new', createdAt: { seconds: 1795000000, nanoseconds: 0 }
+  };
+  const list = await new Promise((resolve) => fb.subscribeFeedback((l) => resolve(l)));
+  assert.equal(list.length, 1);
+  const f = list[0];
+  assert.equal(f.id, 'fb-1');
+  assert.equal(f.type, 'complaint');
+  assert.equal(f.title, 'تأخر الطلب');
+  assert.equal(f.message, 'الطلب اتأخر يومين');
+  assert.equal(f.name, 'أحمد محمد');
+  assert.equal(f.email, 'ahmed@test.com');
+  assert.equal(f.phone, '01012345678');
+  assert.equal(f.orderId, 'web-1');
+  assert.equal(f.trackingCode, 'FB-123456');
+  assert.equal(f.status, 'new');
+  assert.equal(f.createdAt.seconds, 1795000000);
 });
 
 test('updateOrderPaymentStatus: paid/unpaid is an audited write', async () => {

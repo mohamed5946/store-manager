@@ -499,7 +499,7 @@ select option{background:var(--card)}
 textarea{resize:vertical;min-height:66px}
 .sb-w{position:relative}
 .sb-w input{padding-right:34px}
-.sb-w::before{content:'<svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;pointer-events:none;z-index:1}
+.sb-w svg{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--t3);pointer-events:none;z-index:1}
 label{font-size:12px;font-weight:600;color:var(--t2);display:flex;align-items:center;gap:4px;margin-bottom:6px;letter-spacing:-.1px}
 .fg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .fgr{display:flex;flex-direction:column}
@@ -1219,7 +1219,7 @@ const SFX = (function(){
 <div id="pg-inventory" class="pg hidden">
   <div class="pg-hd">
     <div><div class="pg-t" data-i18n="pg_inventory"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> إدارة المنتجات</div><div class="pg-s" data-i18n="pg_inventory_sub">المستودع وإدارة المخزون</div></div>
-    <div class="hda"><div class="sb-w"><input placeholder="ابحث..." data-i18n-ph="search_ph" id="pSearch" oninput="rProds()"></div><button class="btn btn-p" onclick="openProdM()">＋ منتج جديد</button></div>
+    <div class="hda"><div class="sb-w"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder="ابحث..." data-i18n-ph="search_ph" id="pSearch" oninput="rProds()"></div><button class="btn btn-p" onclick="openProdM()">＋ منتج جديد</button></div>
   </div>
   <div class="cd"><table>
     <thead><tr><th>#</th><th data-i18n="th_product">المنتج</th><th data-i18n="th_code">الكود</th><th data-i18n="th_category">الفئة</th><th data-i18n="th_buy_price">سعر الشراء</th><th data-i18n="th_sell_price">سعر البيع</th><th data-i18n="th_stock">المخزون</th><th data-i18n="th_unit">الوحدة</th><th></th></tr></thead>
@@ -1243,13 +1243,13 @@ const SFX = (function(){
 
 <!-- CUSTOMERS -->
 <div id="pg-customers" class="pg hidden">
-  <div class="pg-hd"><div><div class="pg-t" data-i18n="pg_customers"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> إدارة العملاء</div></div><div class="hda"><div class="sb-w"><input placeholder="ابحث في العملاء..." id="custSearch" oninput="rCusts()"></div><button class="btn btn-p" onclick="openCustM()">＋ إضافة عميل</button></div></div>
+  <div class="pg-hd"><div><div class="pg-t" data-i18n="pg_customers"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> إدارة العملاء</div></div><div class="hda"><div class="sb-w"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder="ابحث في العملاء..." id="custSearch" oninput="rCusts()"></div><button class="btn btn-p" onclick="openCustM()">＋ إضافة عميل</button></div></div>
   <div class="cd"><table><thead><tr><th>#</th><th data-i18n="th_name">الاسم</th><th data-i18n="th_phone">الهاتف</th><th data-i18n="th_email">البريد</th><th data-i18n="th_address">العنوان</th><th></th></tr></thead><tbody id="cList"></tbody></table></div>
 </div>
 
 <!-- SUPPLIERS -->
 <div id="pg-suppliers" class="pg hidden">
-  <div class="pg-hd"><div><div class="pg-t" data-i18n="pg_suppliers"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M17 18h1"/><path d="M12 18h1"/><path d="M7 18h1"/></svg> إدارة الموردين</div></div><div class="hda"><div class="sb-w"><input placeholder="ابحث في الموردين..." id="supSearch" oninput="rSups()"></div><button class="btn btn-p" onclick="openSupM()">＋ إضافة مورد</button></div></div>
+  <div class="pg-hd"><div><div class="pg-t" data-i18n="pg_suppliers"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M17 18h1"/><path d="M12 18h1"/><path d="M7 18h1"/></svg> إدارة الموردين</div></div><div class="hda"><div class="sb-w"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder="ابحث في الموردين..." id="supSearch" oninput="rSups()"></div><button class="btn btn-p" onclick="openSupM()">＋ إضافة مورد</button></div></div>
   <div class="cd"><table><thead><tr><th>#</th><th data-i18n="th_name">الاسم</th><th data-i18n="th_phone">الهاتف</th><th data-i18n="th_email">البريد</th><th data-i18n="th_address">العنوان</th><th></th></tr></thead><tbody id="spList"></tbody></table></div>
 </div>
 
@@ -2785,11 +2785,15 @@ function rCusts(){
   const q=($('custSearch')?.value||'').toLowerCase();
   const list=customers.filter(c=>!q||c.name?.toLowerCase().includes(q)||c.phone?.includes(q)||c.email?.toLowerCase().includes(q));
   // Cancelled-order store customers (B3): not in the local CRUD — they
-  // appear as read-only rows so they are never dropped, with a dash
-  // for any missing field.
+  // are listed so they are never dropped, with a dash for any missing
+  // field. The row is editable through its source order: the eye opens
+  // the order detail (status + payment controls) and the undo reopens
+  // the cancelled order (audited 'order_status' write). The customer
+  // data itself lives on the order document, so it is edited there —
+  // never copied into the local customers file.
   const storeList=cancelledStoreCustomers().filter(c=>!q||c.name?.toLowerCase().includes(q)||c.phone?.includes(q)||c.email?.toLowerCase().includes(q));
   const localHtml=list.map((c,i)=>`<tr data-id="${c.id}"><td class="ci">${i+1}</td><td style="font-weight:700;cursor:pointer" onclick="openCustHistory('${c.id}')" data-field="name" class="qe-cell" title="اضغط لعرض التاريخ">${c.name}</td><td data-field="phone" class="qe-cell" title="دبل كليك للتعديل">${c.phone||'-'}</td><td data-field="email" class="qe-cell" title="دبل كليك للتعديل">${c.email||'-'}</td><td>${c.address||'-'}</td><td><div class="row-acts"><button class="ra edit" onclick="editCust('${c.id}')">${icOrDot('edit')}</button><button class="ra del" onclick="delCust('${c.id}')">${icOrDot('trash')}</button></div></td></tr>`).join('');
-  const storeHtml=storeList.map((c,i)=>`<tr><td class="ci">${list.length+i+1}</td><td style="font-weight:700">${c.name||'—'} <span class="bx bx-b" style="font-size:9px">متجر · طلب ملغي</span></td><td>${c.phone||'—'}</td><td>${c.email||'—'}</td><td>${c.address||'—'}</td><td><span style="font-size:11px;color:var(--t3)">للقراءة فقط</span></td></tr>`).join('');
+  const storeHtml=storeList.map((c,i)=>`<tr><td class="ci">${list.length+i+1}</td><td style="font-weight:700">${c.name||'—'} <span class="bx bx-b" style="font-size:9px">متجر · طلب ملغي</span></td><td>${c.phone||'—'}</td><td>${c.email||'—'}</td><td>${c.address||'—'}</td><td><div class="row-acts"><button class="ra view" onclick="showStoreOrderDetail('${c.orderId}')" title="عرض الطلب">${icOrDot('eye')}</button><button class="ra edit" onclick="reopenStoreOrder('${c.orderId}')" title="إعادة فتح الطلب">${icOrDot('undo')}</button></div></td></tr>`).join('');
   $('cList').innerHTML=(list.length||storeList.length)?(localHtml+storeHtml):'<tr><td colspan="6">'+es(icOrDot('users'),q?'لا توجد نتائج':'لا يوجد عملاء بعد')+'</td></tr>';
   requestAnimationFrame(initQuickEdits);
 }
@@ -3380,8 +3384,8 @@ function rStoreOrders(){
     const items=(o.items||[]).map(function(it){return (it.name||it.productId)+' ×'+(it.qty||0);}).join('<br>');
     const pay=o.paymentStatus||'cod_pending';
     return`<tr>
-      <td><span class="ci">#${String(o.id||'').slice(-6)}</span>${o.source==='admin_manual'?'<br><span class="bx bx-b" style="font-size:9px;margin-top:3px">يدوي</span>':''}</td>
-      <td style="font-weight:700">${(o.customer&&o.customer.name)||'-'}<br><span style="font-weight:400;font-size:11px;color:var(--t3)">${(o.customer&&o.customer.phone)||''}</span></td>
+      <td><span class="ci">#${String(o.id||'').slice(-6)}</span>${o.source==='admin_manual'?'<br><span class="bx bx-b" style="font-size:9px;margin-top:3px">يدوي</span>':''}<br><span style="font-size:11px;color:var(--t3)">${fbDateStr(o.createdAt)}</span></td>
+      <td style="font-weight:700">${(o.customer&&o.customer.name)||'-'}<br><span style="font-weight:400;font-size:11px;color:var(--t3)">${(o.customer&&o.customer.phone)||''}</span>${(o.customer&&o.customer.email)?`<br><span style="font-weight:400;font-size:11px;color:var(--t3)">${o.customer.email}</span>`:''}</td>
       <td style="font-size:12px">${items||'-'}</td>
       <td class="mn-t mo2">${curr(o.total||0)}</td>
       <td><span class="ds ${STORE_STATUS_CLASS[st]||'ds-pend'}"><span class="ds-dot"></span>${STORE_STATUS_LABEL[st]||st}</span>
@@ -3416,7 +3420,9 @@ async function setStoreOrderStatus(id,from,to){
   if(!o) return;
   try{
     await fb.updateOrderStatus(o,to);
+    o.status=to; // optimistic — the live subscription confirms it
     toast('تم تحديث حالة الطلب');
+    rStoreOrders(); rRets(); rCusts();
   }catch(e){
     toast(e.message||'تعذر تحديث الحالة','err');
     rStoreOrders();
@@ -3430,24 +3436,61 @@ async function setStoreOrderPayment(id,from,to){
   if(!o) return;
   try{
     await fb.updateOrderPaymentStatus(o,to);
+    o.paymentStatus=to; // optimistic — the live subscription confirms it
     toast('تم تحديث حالة الدفع');
+    rStoreOrders();
   }catch(e){
     toast(e.message||'تعذر تحديث الدفع','err');
     rStoreOrders();
   }
 }
 
+// Reopen a cancelled store order (cancelled -> new) from any derived
+// row (customers / returns). Same audited 'order_status' write as the
+// orders table; the live subscription re-renders the lists.
+async function reopenStoreOrder(orderId){
+  const fb=window.StoreFB; if(!fb) return;
+  const o=storeOrders.find(function(x){return x.id===orderId;});
+  if(!o) return;
+  try{
+    await fb.updateOrderStatus(o,'new');
+    o.status='new';
+    toast('تمت إعادة فتح الطلب');
+    rCusts(); rRets(); rStoreOrders();
+  }catch(e){
+    toast(e.message||'تعذر إعادة فتح الطلب','err');
+  }
+}
+
+// Detail-modal wrappers: same audited writes as the table, then
+// re-open the modal so it shows the new state.
+async function setStoreOrderStatusFromDetail(id,from,to){
+  if(!to) return;
+  await setStoreOrderStatus(id,from,to);
+  const o=storeOrders.find(function(x){return x.id===id;});
+  if(o) showStoreOrderDetail(id);
+}
+async function setStoreOrderPaymentFromDetail(id,from,to){
+  if(!to||to===from) return;
+  await setStoreOrderPayment(id,from,to);
+  const o=storeOrders.find(function(x){return x.id===id;});
+  if(o) showStoreOrderDetail(id);
+}
+
 function showStoreOrderDetail(id){
   const o=storeOrders.find(function(x){return x.id===id;});
   if(!o) return;
+  const st=o.status||'new';
+  const next=(window.StoreFBFactory?window.StoreFBFactory.ORDER_TRANSITIONS[st]:[])||[];
+  const pay=o.paymentStatus||'cod_pending';
   const items=(o.items||[]).map(function(it){
-    return `<tr><td>${it.name||it.productId}</td><td style="text-align:center">${it.qty||0}</td><td class="mn-t">${curr(it.price||0)}</td><td class="mn-t">${curr(it.subtotal||((it.price||0)*(it.qty||0)))}</td></tr>`;
+    return `<tr><td>${it.name||it.productId}${(it.name&&it.productId)?`<br><span style="font-size:11px;color:var(--t3)">${it.productId}</span>`:''}</td><td style="text-align:center">${it.qty||0}</td><td class="mn-t">${curr(it.price||0)}</td><td class="mn-t">${curr(it.subtotal||((it.price||0)*(it.qty||0)))}</td></tr>`;
   }).join('');
   const disc=o.discount&&o.discount.code?`<div style="font-size:13px">${icOrDot('tag')} خصم ${o.discount.code} (${o.discount.percent||0}%) — ${curr(o.discount.amount||0)}</div>`:'';
   showInfoModal('طلب #'+String(o.id||'').slice(-6),
     `<div style="font-size:13px;line-height:1.9">
       <div>الحالة: <span class="ds ${STORE_STATUS_CLASS[o.status||'new']||'ds-pend'}"><span class="ds-dot"></span>${STORE_STATUS_LABEL[o.status||'new']||o.status}</span>${(o.status||'new')==='cancelled'?'· طلب ملغي — يُحسب مرتجع':''}</div>
-      <div>${icOrDot('user')} ${(o.customer&&o.customer.name)||'-'} — ${(o.customer&&o.customer.phone)||''}</div>
+      <div>${icOrDot('user')} ${(o.customer&&o.customer.name)||'-'} — ${(o.customer&&o.customer.phone)||''}${(o.customer&&o.customer.email)?' — '+o.customer.email:''}</div>
       <div>${icOrDot('pin')} ${(o.customer&&o.customer.address)||'-'}</div>
       <div>${icOrDot('truck')} ${storeShipName(o.shippingCompanyId)} · ${o.dueDate?('موعد التسليم'+fdt(o.dueDate)):'بدون موعد'}</div>
       ${o.saleId?`<div>${icOrDot('receipt')} مرتبط بفاتورة بيع #${String(o.saleId).slice(-6)}</div>`:''}
@@ -3455,6 +3498,10 @@ function showStoreOrderDetail(id){
       ${disc}
       <div>${icOrDot('money')} الإجمالي: <b>${curr(o.total||0)}</b> · الدفع: ${STORE_PAY_LABEL[o.paymentStatus||'cod_pending']}</div>
       <div>${icOrDot('calendar')} ${fbDateStr(o.createdAt)}</div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        ${next.length?`<select style="padding:6px 10px;font-size:12px" onchange="setStoreOrderStatusFromDetail('${o.id}','${st}',this.value)"><option value="">نقل الحالة إلى…</option>${next.map(function(n){return `<option value="${n}">${STORE_STATUS_LABEL[n]||n}</option>`;}).join('')}</select>`:''}
+        <select style="padding:6px 10px;font-size:12px" onchange="setStoreOrderPaymentFromDetail('${o.id}','${pay}',this.value)">${['cod_pending','cod_paid','cod_refused','cod_failed'].map(function(p){return `<option value="${p}"${p===pay?' selected':''}>${STORE_PAY_LABEL[p]}</option>`;}).join('')}</select>
+      </div>
     </div>
     <table style="margin-top:12px"><thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead><tbody>${items||'<tr><td colspan="4">—</td></tr>'}</tbody></table>`);
 }
@@ -3589,7 +3636,7 @@ function rStoreFeedback(){
         <div style="font-weight:800;font-size:14px">${f.title||'(بدون عنوان)'}</div>
         <span class="bx">${FB_STATUS_LABEL[stt]||stt}</span>
       </div>
-      <div style="font-size:12px;color:var(--t3);margin:6px 0">${typeLbl}${f.category?' · '+f.category:''} · كود التتبع: <b>${f.trackingCode||'-'}</b>${f.phone?' · '+f.phone:''}${f.orderId?'· طلب #'+String(f.orderId).slice(-6):''} · ${fbDateStr(f.createdAt)}</div>
+      <div style="font-size:12px;color:var(--t3);margin:6px 0">${typeLbl}${f.category?' · '+f.category:''} · كود التتبع: <b>${f.trackingCode||'-'}</b>${f.phone?' · '+f.phone:''}${f.name?' · '+f.name:''}${f.email?' · '+f.email:''}${f.orderId?'· طلب #'+String(f.orderId).slice(-6):''} · ${fbDateStr(f.createdAt)}</div>
       <div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${f.message||''}</div>
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">
         ${next.length?`<select id="fbSt-${f.id}" style="padding:6px 10px;font-size:12px"><option value="">نقل الحالة إلى…</option>${next.map(function(n){return `<option value="${n}">${FB_STATUS_LABEL[n]||n}</option>`;}).join('')}</select>
@@ -3692,13 +3739,19 @@ async function downloadAndInstallUpdate(){
 // RETURNS
 // ════════════════════════════════════════
 // Returns (B5): local returns + cancelled store orders, which count
-// as returns. The store rows are read-only (no delete — the order
-// itself lives in Firestore); the invoice/detail view of a cancelled
-// order still opens from the orders page.
+// as returns. The store rows are editable through their source order
+// (reopen select + detail view, same audited 'order_status' write as
+// the orders table) — no local delete, since the order itself lives
+// in Firestore; the detail view of a cancelled order still opens
+// from the orders page too.
 function rRets(){
   const cancRows=storeOrders.filter(function(o){return (o.status||'new')==='cancelled';});
   const localHtml=returns.length?[...returns].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(r=>{const pty=r.returnType==='sale'?customers.find(c=>c.id===r.partyId):suppliers.find(s=>s.id===r.partyId);return`<tr><td><span class="ci">#${r.id?.slice(-6)}</span></td><td><span class="bx ${r.returnType==='sale'?'bx-o':'bx-b'}">${r.returnType==='sale'?'مبيعات':'مشتريات'}</span></td><td style="font-weight:600">${pty?.name||r.partyName||'-'}</td><td>${fdt(r.date)}</td><td class="mn-t mo2">${curr(r.total)}</td><td style="color:var(--t2)">${r.reason||'-'}</td><td><div class="row-acts"><button class="ra del" onclick="delRet('${r.id}')">${icOrDot('trash')}</button></div></td></tr>`;}).join(''):'';
-  const cancHtml=cancRows.map(function(o){return`<tr><td><span class="ci">#${String(o.id||'').slice(-6)}</span></td><td><span class="bx bx-r">طلب ملغي</span></td><td style="font-weight:600">${(o.customer&&o.customer.name)||'-'}</td><td>${fbDateStr(o.createdAt)}</td><td class="mn-t mo2">${curr(o.total||0)}</td><td style="color:var(--t2)">طلب متجر ملغي — يُحسب مرتجع</td><td><span style="font-size:11px;color:var(--t3)">متجر · للقراءة فقط</span></td></tr>`;}).join('');
+  const cancHtml=cancRows.map(function(o){
+    const st=o.status||'new';
+    const next=(window.StoreFBFactory?window.StoreFBFactory.ORDER_TRANSITIONS[st]:[])||[];
+    return`<tr><td><span class="ci">#${String(o.id||'').slice(-6)}</span></td><td><span class="bx bx-r">طلب ملغي</span></td><td style="font-weight:600">${(o.customer&&o.customer.name)||'-'}</td><td>${fbDateStr(o.createdAt)}</td><td class="mn-t mo2">${curr(o.total||0)}</td><td style="color:var(--t2)">طلب متجر ملغي — يُحسب مرتجع</td><td><div style="display:flex;gap:6px;align-items:center">${next.length?`<select style="padding:4px 8px;font-size:11px" onchange="setStoreOrderStatus('${o.id}','${st}',this.value)"><option value="">نقل إلى…</option>${next.map(function(n){return `<option value="${n}">${STORE_STATUS_LABEL[n]||n}</option>`;}).join('')}</select>`:''}<button class="ra view" onclick="showStoreOrderDetail('${o.id}')" title="التفاصيل">${icOrDot('eye')}</button></div></td></tr>`;
+  }).join('');
   $('retList').innerHTML=(returns.length||cancRows.length)?(localHtml+cancHtml):'<tr><td colspan="7">'+es(icOrDot('undo'),'لا توجد مرتجعات')+'</td></tr>';
 }
 function openRetM(){$('retDt').value=td();$('retRs').value='';$('retItems').innerHTML='';$('retCr').textContent=cfg.currency||'ج.م';updRetPty();addRI();updRT();$('mRet').classList.remove('hidden');}

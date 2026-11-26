@@ -44,7 +44,7 @@
     ready: ['in_transit', 'cancelled'],
     in_transit: ['delivered'],
     delivered: [],
-    cancelled: [],
+    cancelled: ['new'], // reopen only — cancelled -> in_transit stays denied (must go via new)
     expired: []
   };
 
