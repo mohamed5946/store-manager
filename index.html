@@ -3618,11 +3618,11 @@ async function saveTemplateGrid(id){
   }
 }
 
-// ---- Store feedback ----
 // ---- Store feedback: one-way cards (contract §6) ----
-// A card shows name / email / address / complaint + date. No status,
+// A card shows name / email / phone / complaint + date. No status,
 // no priority, no replies, no tracking code. The only admin action
-// is deleting a card (spam).
+// is deleting a card (spam). Pre-change cards stored `address`
+// instead of `phone` — shown as a fallback until they age out.
 function rStoreFeedback(){
   const el=$('fbList'); if(!el) return;
   const st=$('storeFbStatus');
@@ -3639,7 +3639,7 @@ function rStoreFeedback(){
         <div style="font-weight:800;font-size:14px">${escHtml(f.name||'(بدون اسم)')}</div>
         <span style="font-size:12px;color:var(--t3)">${fbDateStr(f.createdAt)}</span>
       </div>
-      <div style="font-size:12px;color:var(--t3);margin:6px 0">${escHtml(f.email||'-')}${f.address?' · '+escHtml(f.address):''}</div>
+      <div style="font-size:12px;color:var(--t3);margin:6px 0">${escHtml(f.email||'-')}${(f.phone||f.address)?' · '+escHtml(f.phone||f.address):''}</div>
       <div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${escHtml(f.message||'')}</div>
       <div style="display:flex;gap:8px;margin-top:12px">
         <button class="btn btn-g btn-sm" onclick="deleteFeedbackCard('${f.id}')">${icOrDot('trash')} حذف (سبام)</button>

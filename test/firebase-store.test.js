@@ -716,11 +716,11 @@ test('subscribeOrders: a website order flows through with every field (placeOrde
 
 test('subscribeFeedback: a one-way card flows through with only its five fields', async () => {
   const { fake, fb } = await signedInFb();
-  // The no-functions shape (§3/§6): name / email / address / message /
+  // The no-functions shape (§3/§6): name / email / phone / message /
   // createdAt — no type, category, title, tracking code, status or
   // priority anywhere.
   fake._store['feedback/fb-1'] = {
-    name: 'أحمد محمد', email: 'ahmed@test.com', address: 'القاهرة — مدينة نصر',
+    name: 'أحمد محمد', email: 'ahmed@test.com', phone: '01012345678',
     message: 'الطلب اتأخر يومين', createdAt: { seconds: 1795000000, nanoseconds: 0 }
   };
   const list = await new Promise((resolve) => fb.subscribeFeedback((l) => resolve(l)));
@@ -730,7 +730,7 @@ test('subscribeFeedback: a one-way card flows through with only its five fields'
   assert.equal(f.message, 'الطلب اتأخر يومين');
   assert.equal(f.name, 'أحمد محمد');
   assert.equal(f.email, 'ahmed@test.com');
-  assert.equal(f.address, 'القاهرة — مدينة نصر');
+  assert.equal(f.phone, '01012345678');
   assert.equal(f.status, undefined);
   assert.equal(f.trackingCode, undefined);
   assert.equal(f.createdAt.seconds, 1795000000);

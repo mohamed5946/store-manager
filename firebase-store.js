@@ -53,7 +53,7 @@
   };
 
   // Feedback is one-way cards (no-functions contract §6): a card has
-  // name / email / address / message / createdAt and nothing else —
+  // name / email / phone / message / createdAt and nothing else —
   // no status, no priority, no replies, no tracking code. There is
   // no feedback state machine any more, and update/reply are gone;
   // an admin can only delete a card (spam).
