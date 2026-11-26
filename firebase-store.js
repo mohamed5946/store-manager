@@ -367,6 +367,30 @@
       waiters.forEach(function (w) { if (err) w.reject(err); else w.resolve(); });
     }
 
+    // Offline restore: a remembered session must enter without
+    // network, but the admins/{uid} role read needs it. The last
+    // confirmed role is cached locally (uid + role only) and used
+    // ONLY when the live read fails — the rules still enforce the
+    // role server-side on every read/write, so a stale cache can
+    // never grant real access, only the UI session.
+    var ROLE_CACHE_KEY = 'sb_store_role';
+    function readCachedRole(uid) {
+      try {
+        if (typeof localStorage === 'undefined') return null;
+        var raw = localStorage.getItem(ROLE_CACHE_KEY);
+        if (!raw) return null;
+        var c = JSON.parse(raw);
+        if (c && c.uid === uid && (c.role === 'admin' || c.role === 'manager')) return c.role;
+      } catch (e) { /* corrupted cache = no cache */ }
+      return null;
+    }
+    function cacheRole(uid, role) {
+      try {
+        if (typeof localStorage === 'undefined') return;
+        localStorage.setItem(ROLE_CACHE_KEY, JSON.stringify({ uid: uid, role: role }));
+      } catch (e) { /* storage unavailable — the online read still works */ }
+    }
+
     function onStateChange(cb) {
       stateCbs.push(cb);
       return function () {
@@ -426,10 +450,22 @@
               resolve(true);
               return;
             }
+            cacheRole(user.uid, role);
             setState({ connected: true, user: { uid: user.uid, email: user.email || '' }, role: role, error: null });
             settleAuthWaiters(null);
             resolve(true);
           }).catch(function (e) {
+            // Offline (or failing) role read: fall back to the last
+            // confirmed role for this user so a remembered session
+            // still enters. Without a cached role there is nothing
+            // to fall back to — the sign-in stays refused.
+            var cached = readCachedRole(user.uid);
+            if (cached) {
+              setState({ connected: true, user: { uid: user.uid, email: user.email || '' }, role: cached, error: null });
+              settleAuthWaiters(null);
+              resolve(true);
+              return;
+            }
             setState({ connected: false, user: null, role: null, error: 'تعذر قراءة صلاحيات الحساب: ' + (e.message || e) });
             settleAuthWaiters(new Error('تعذر قراءة صلاحيات الحساب'));
             resolve(true);

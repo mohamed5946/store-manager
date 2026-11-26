@@ -206,7 +206,7 @@ tbody tr{
 }
 
 /* ══ SMOOTH SCROLL ══ */
-#mn,#sb,.sp-results,#notifPanel,#adminActivityLog{
+#mn,#sb,.sp-results,#notifPanel{
   scroll-behavior:smooth;
   -webkit-overflow-scrolling:touch;
 }
@@ -826,14 +826,6 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:flex;align-items:ce
   padding:28px;
   box-shadow:0 8px 40px rgba(0,0,0,.25);
 }
-.login-err{
-  background:var(--redg);border:1px solid var(--red);
-  color:var(--red);font-size:12px;font-weight:600;
-  padding:10px 14px;border-radius:10px;
-  margin-bottom:16px;display:none;
-  animation:fadeUp .2s var(--ease);
-}
-.login-err.show{display:block}
 .login-field{margin-bottom:14px}
 .login-field label{font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px;display:block}
 .login-field input{
@@ -845,84 +837,6 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:flex;align-items:ce
   direction:ltr;text-align:left;
 }
 .login-field input:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--accg)}
-.login-users{
-  display:flex;flex-direction:column;gap:6px;margin-bottom:18px;
-}
-.login-user-btn{
-  display:flex;align-items:center;gap:10px;
-  padding:10px 12px;border-radius:12px;
-  background:var(--hov);border:1px solid var(--bdr);
-  cursor:pointer;transition:all .15s;
-  text-align:right;
-}
-.login-user-btn:hover{background:var(--act);border-color:var(--bdr2)}
-.lu-av{
-  width:36px;height:36px;border-radius:10px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:14px;font-weight:700;color:#fff;flex-shrink:0;
-}
-.lu-nm{font-size:13px;font-weight:600;color:var(--t1)}
-.lu-role{font-size:10px;color:var(--t3);margin-top:1px}
-.lu-badge{margin-right:auto;font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px}
-.lu-badge.admin{background:var(--accg);color:var(--acc)}
-.lu-badge.user{background:var(--hov);color:var(--t3)}
-.lock-info{font-size:11px;color:var(--red);text-align:center;margin-bottom:12px;display:none}
-.lock-info.show{display:block}
-
-/* ══ ADMIN PANEL ══ */
-.act-row{
-  display:flex;align-items:flex-start;gap:10px;
-  padding:11px 16px;border-bottom:1px solid var(--bdr);
-  transition:background .1s;
-}
-.act-row:hover{background:var(--hov)}
-.act-row:last-child{border-bottom:none}
-.act-ico{
-  width:32px;height:32px;border-radius:9px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:14px;flex-shrink:0;background:var(--hov);
-}
-.act-main{flex:1;min-width:0}
-.act-action{font-size:12px;font-weight:600;color:var(--t1)}
-.act-meta{font-size:11px;color:var(--t3);margin-top:2px}
-.act-time{font-size:10px;color:var(--t3);white-space:nowrap;font-family:'JetBrains Mono',monospace}
-
-/* user card in admin */
-.usr-card{
-  display:flex;align-items:center;gap:12px;
-  padding:12px 16px;border-bottom:1px solid var(--bdr);
-  transition:background .1s;
-}
-.usr-card:hover{background:var(--hov)}
-.usr-card:last-child{border-bottom:none}
-.usr-av{
-  width:38px;height:38px;border-radius:11px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:15px;font-weight:700;color:#fff;flex-shrink:0;
-}
-.usr-nm{font-size:13px;font-weight:600;color:var(--t1)}
-.usr-meta{font-size:11px;color:var(--t3);margin-top:1px}
-
-/* ══ PERM CHECKBOXES ══ */
-.perm-item{
-  display:flex;align-items:center;gap:9px;
-  padding:9px 11px;border-radius:10px;
-  background:var(--hov);border:1.5px solid var(--bdr);
-  cursor:pointer;transition:all .13s;user-select:none;
-}
-.perm-item:hover{border-color:var(--bdr2);background:var(--act)}
-.perm-item.checked{background:var(--accg);border-color:var(--acc)}
-.perm-item.checked .perm-label{color:var(--acc);font-weight:700}
-.perm-check{
-  width:18px;height:18px;border-radius:5px;flex-shrink:0;
-  border:1.5px solid var(--bdr3);background:var(--card);
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:700;transition:all .13s;
-}
-.perm-item.checked .perm-check{background:var(--acc);border-color:var(--acc);color:#fff}
-.perm-ico{font-size:15px;flex-shrink:0}
-.perm-label{font-size:12px;font-weight:600;color:var(--t2);flex:1;line-height:1.3}
-.perm-sub{font-size:10px;color:var(--t3);margin-top:1px;line-height:1.3}
 .md-w{width:min(780px,95vw)}
 </style>
 </style>
@@ -1019,39 +933,18 @@ const SFX = (function(){
     <div class="login-title" id="loginBrand">Store Manager</div>
     <div class="login-sub">سجّل دخولك للمتابعة</div>
     <div class="login-box">
-      <div id="loginErr" class="login-err"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> <span id="loginErrTxt"></span></div>
-      <div id="lockInfo" class="lock-info"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> <span id="lockTxt"></span></div>
-      <div style="font-size:11px;font-weight:600;color:var(--t3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">اختر الحساب</div>
-      <div class="login-users" id="loginUsers"></div>
-      <div class="login-field" id="pwField" style="display:none">
-        <label id="pwLabel">كلمة المرور</label>
-        <input type="password" id="pwInput" placeholder="أدخل كلمة المرور..." onkeydown="if(event.key==='Enter')doLogin()">
-      </div>
-      <button class="btn btn-p" id="loginBtn" style="width:100%;justify-content:center;padding:12px;font-size:14px;border-radius:12px;margin-top:4px;display:none" onclick="doLogin()">دخول <svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
-      <div id="forgotLink" style="display:none;text-align:center;margin-top:12px">
-        <span onclick="openForgotPw()" style="font-size:12px;color:var(--acc);cursor:pointer;font-weight:600;opacity:.8;transition:opacity .15s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.8"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> نسيت كلمة المرور؟</span>
-      </div>
-      <!-- ══ STORE SIGN-IN (startup) ══
-           The store (Firebase admin/manager) sign-in lives here, on the
-           startup login screen — one sign-in at startup takes you
-           straight into the program. The local ERP login above is
-           untouched; these credentials never touch local accounts.
-           Remember-me persists the Firebase session, so it never asks
-           again; the store sections unlock once this connects. -->
-      <div id="loginStoreBox" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--bdr)">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <div style="font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">المتجر</div>
-          <span id="loginStoreBadge" class="bx bx-r">غير متصل</span>
-        </div>
-        <div id="loginStoreFields">
-          <div class="login-field"><label>إيميل المتجر</label><input type="email" id="loginStoreEmail" placeholder="admin@store.com" autocomplete="off" style="direction:ltr;text-align:left"></div>
-          <div class="login-field"><label>كلمة سر المتجر</label><input type="password" id="loginStorePass" placeholder="••••••••" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()"></div>
-          <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t2);cursor:pointer;margin-top:6px"><input type="checkbox" id="loginStoreRemember" checked style="width:15px;height:15px;accent-color:var(--acc)"> تذكرني — لا تسألني مرة أخرى</label>
-          <div id="loginStoreMsg" style="font-size:12px;color:var(--t3);margin-top:8px;min-height:16px"></div>
-          <button class="btn btn-g" id="loginStoreBtn" style="width:100%;justify-content:center;padding:10px;margin-top:8px" onclick="storeSignInFromLogin()">تسجيل دخول المتجر</button>
-        </div>
-        <div id="loginStoreConnected" style="display:none;font-size:12px;color:var(--t2)">متصل بالمتجر بحساب <b id="loginStoreEmailTxt"></b> — <span style="color:var(--acc);cursor:pointer;font-weight:600" onclick="storeSignOutFromLogin()">تسجيل خروج</span></div>
-      </div>
+      <!-- ONE SIGN-IN: the store (Firebase admin/manager) account is the
+           only sign-in. There is no local program login anymore — the
+           local data (products, customers, invoices, settings) is
+           untouched; only the login gate is gone. A remembered session
+           (Firebase persistence LOCAL) restores at boot and enters
+           straight into the program with no login screen. -->
+      <div class="login-field"><label>إيميل المتجر</label><input type="email" id="loginStoreEmail" placeholder="admin@store.com" autocomplete="off" style="direction:ltr;text-align:left" onkeydown="if(event.key==='Enter')storeSignInFromLogin()"></div>
+      <div class="login-field"><label>كلمة سر المتجر</label><input type="password" id="loginStorePass" placeholder="••••••••" autocomplete="off" onkeydown="if(event.key==='Enter')storeSignInFromLogin()"></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t2);cursor:pointer;margin-top:6px"><input type="checkbox" id="loginStoreRemember" checked style="width:15px;height:15px;accent-color:var(--acc)"> تذكرني — لا تسألني مرة أخرى</label>
+      <div id="loginStoreMsg" style="font-size:12px;color:var(--t3);margin-top:8px;min-height:16px"></div>
+      <button class="btn btn-p" id="loginStoreBtn" style="width:100%;justify-content:center;padding:12px;font-size:14px;border-radius:12px;margin-top:10px" onclick="storeSignInFromLogin()">دخول</button>
+      <div style="font-size:11px;color:var(--t3);text-align:center;margin-top:12px;line-height:1.8">حساب الأدمن بتاع المتجر — نفس حساب تطبيق الموبايل.<br>من غير نت، الدخول الأول مش هينفع؛ الجلسة المحفوظة بتدخل على طول.</div>
     </div>
   </div>
 </div>
@@ -1125,7 +1018,7 @@ const SFX = (function(){
   <div class="ng"><div class="ng-t" data-i18n="nav_orders_grp">الطلبات والشحن</div>
     <div class="ni" data-p="orders"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><span class="ni-lbl" data-i18n="nav_orders">الطلبات والتوصيل</span><span class="ni-badge" id="pendBadge" style="display:none">0</span></div>
   </div>
-  <div class="ng" id="storeNavGroup" style="display:none"><div class="ng-t"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> المتجر</div>
+  <div class="ng"><div class="ng-t"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> المتجر</div>
     <div class="ni" data-p="templates"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg></div><span class="ni-lbl">قوالب المتجر</span></div>
     <div class="ni" data-p="feedback"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><span class="ni-lbl">الشكاوى والاقتراحات</span><span class="ni-badge" id="fbBadge" style="display:none">0</span></div>
   </div>
@@ -1144,7 +1037,6 @@ const SFX = (function(){
   <div class="ng"><div class="ng-t" data-i18n="nav_admin_grp">الإدارة</div>
     <div class="ni" data-p="settings"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div><span class="ni-lbl" data-i18n="nav_settings">الإعدادات</span></div>
     <div class="ni" data-p="activitylog"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div><span class="ni-lbl">سجل النشاط</span></div>
-    <div class="ni" data-p="adminpanel" id="adminNavItem" style="display:none"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><span class="ni-lbl">لوحة الأدمن</span></div>
   </div>
   </div><!-- end scrollable nav -->
 
@@ -1161,7 +1053,6 @@ const SFX = (function(){
         <div id="sbUserName" style="font-size:12px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
         <div id="sbUserRole" style="font-size:10px;color:var(--t3)"></div>
       </div>
-      <button onclick="openChangePw()" title="تغيير كلمة المرور" style="background:none;border:none;cursor:pointer;font-size:13px;opacity:.45;transition:opacity .15s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.45"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></button>
     </div>
     <button onclick="doLogout()" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--bdr2);background:var(--hov);color:var(--t2);cursor:pointer;font-family:-apple-system,'Cairo',sans-serif;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;position:relative;overflow:hidden"
       onmouseover="this.style.background='var(--redg)';this.style.color='var(--red)';this.style.borderColor='rgba(255,69,58,.3)'"
@@ -1479,30 +1370,6 @@ const SFX = (function(){
 </div>
 
 <!-- ADMIN PANEL -->
-<div id="pg-adminpanel" class="pg hidden">
-  <div class="pg-hd">
-    <div><div class="pg-t"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> لوحة الأدمن</div><div class="pg-s">إدارة المستخدمين ومراقبة النشاط</div></div>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-    <!-- Users management -->
-    <div class="cd">
-      <div class="cd-hd" style="justify-content:space-between">
-        <div class="cd-t"><div class="cd-ti" style="background:rgba(10,132,255,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>المستخدمون</div>
-        <button class="btn btn-p btn-sm" onclick="openAddUserM()">+ إضافة</button>
-      </div>
-      <div id="adminUsersList"></div>
-    </div>
-    <!-- Activity log -->
-    <div class="cd">
-      <div class="cd-hd" style="justify-content:space-between">
-        <div class="cd-t"><div class="cd-ti" style="background:rgba(255,159,10,.12)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>سجل النشاط</div>
-        <button class="btn btn-g btn-sm" onclick="clearActivityLog()">مسح</button>
-      </div>
-      <div id="adminActivityLog" style="max-height:420px;overflow-y:auto"></div>
-    </div>
-  </div>
-</div>
-
 <!-- ACTIVITY LOG PAGE -->
 <div id="pg-activitylog" class="pg hidden">
   <div class="pg-hd">
@@ -1553,69 +1420,6 @@ const SFX = (function(){
 </div>
 
 <!-- CHANGE PASSWORD MODAL -->
-<div id="mChangePw" class="mo hidden">
-  <div class="md" style="max-width:380px">
-    <div class="md-t"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> تغيير كلمة المرور</div>
-    <div id="cpFor" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--hov);border-radius:12px;margin-bottom:18px">
-      <div id="cpAvatar" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0"></div>
-      <div><div id="cpName" style="font-size:13px;font-weight:600;color:var(--t1)"></div><div id="cpUsername" style="font-size:11px;color:var(--t3)"></div></div>
-    </div>
-    <input type="hidden" id="cpUserId">
-    <div class="fg" style="grid-template-columns:1fr">
-      <div class="fgr"><label>كلمة المرور الحالية</label><input type="password" id="cpOld" placeholder="••••••" style="direction:ltr;text-align:left"></div>
-      <div class="fgr"><label>كلمة المرور الجديدة</label><input type="password" id="cpNew" placeholder="••••••" style="direction:ltr;text-align:left"></div>
-      <div class="fgr"><label>تأكيد كلمة المرور الجديدة</label><input type="password" id="cpConfirm" placeholder="••••••" style="direction:ltr;text-align:left" onkeydown="if(event.key==='Enter')doChangePw()"></div>
-    </div>
-    <div id="cpErr" style="margin-top:12px;padding:9px 13px;background:var(--redg);border:1px solid var(--red);color:var(--red);border-radius:10px;font-size:12px;font-weight:600;display:none"></div>
-    <div class="md-ft">
-      <button class="btn btn-g" onclick="closeM('mChangePw')">إلغاء</button>
-      <button class="btn btn-p" onclick="doChangePw()"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> تغيير</button>
-    </div>
-  </div>
-</div>
-
-<!-- ADD USER MODAL -->
-<div id="mAddUser" class="mo hidden">
-  <div class="md md-w">
-    <div class="md-t"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> إضافة / تعديل مستخدم</div>
-    <input type="hidden" id="auId">
-    <div class="fg">
-      <div class="fgr full"><label>الاسم الكامل</label><input id="auName" placeholder="مثال: أحمد محمد"></div>
-      <div class="fgr"><label>اسم المستخدم</label><input id="auUser" placeholder="ahmed" style="direction:ltr;text-align:left"></div>
-      <div class="fgr"><label><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> رقم الموبايل <span style="color:var(--red);font-size:10px">*لا يتكرر</span></label><input id="auPhone" type="tel" placeholder="01xxxxxxxxx" style="direction:ltr;text-align:left" maxlength="11"></div>
-      <div class="fgr"><label>كلمة المرور <span style="color:var(--t3);font-weight:400">(اتركها فارغة لعدم التغيير)</span></label><input type="password" id="auPass" placeholder="••••••" style="direction:ltr;text-align:left"></div>
-      <div class="fgr"><label>لون الأفاتار</label>
-        <select id="auColor">
-          <option value="linear-gradient(145deg,#0a84ff,#bf5af2)">أزرق بنفسجي</option>
-          <option value="linear-gradient(145deg,#30d158,#0a84ff)">أخضر أزرق</option>
-          <option value="linear-gradient(145deg,#ff9f0a,#ff453a)">برتقالي أحمر</option>
-          <option value="linear-gradient(145deg,#bf5af2,#ff453a)">بنفسجي أحمر</option>
-          <option value="linear-gradient(145deg,#ffd60a,#ff9f0a)">ذهبي</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- PERMISSIONS -->
-    <div style="margin-top:20px;border-top:1px solid var(--bdr);padding-top:18px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-        <div style="font-size:12px;font-weight:700;color:var(--t1);letter-spacing:.3px"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> الصلاحيات</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn btn-p btn-sm" onclick="setAllPerms(true)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> كل الصلاحيات</button>
-          <button class="btn btn-g btn-sm" onclick="setAdminPreset()"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> أدمن</button>
-          <button class="btn btn-g btn-sm" onclick="setViewerPreset()"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> مشاهد فقط</button>
-          <button class="btn btn-g btn-sm" onclick="setAllPerms(false)" style="color:var(--red)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> إزالة الكل</button>
-        </div>
-      </div>
-      <div id="permsGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:7px"></div>
-    </div>
-
-    <div class="md-ft">
-      <button class="btn btn-g" onclick="closeM('mAddUser')">إلغاء</button>
-      <button class="btn btn-p" onclick="saveUser()"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> حفظ</button>
-    </div>
-  </div>
-</div>
-
 <!-- KEYBOARD SHORTCUTS OVERLAY -->
 <div id="kbOverlay" class="hidden" onclick="if(event.target===this)$('kbOverlay').classList.add('hidden')">
   <div class="kb-box">
@@ -2260,10 +2064,6 @@ function removeLogo(){
 // ════════════════════════════════════════
 document.querySelectorAll('.ni').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.p)));
 function nav(p){
-  // permission guard
-  const navMap={dashboard:'dashboard',sales:'sales_view',customers:'customers',purchases:'purchases_view',suppliers:'suppliers',inventory:'inventory_view',orders:'orders',returns:'returns',profits:'profits',expenses:'expenses',settings:'settings',activitylog:'dashboard',adminpanel:'dashboard'};
-  const key=navMap[p];
-  if(key && currentUser && !hasPerm(key)){ toast('ليس لديك صلاحية لهذا القسم','err'); return; }
   // store pages need the Firebase connection (admin/manager)
   if((p==='templates'||p==='feedback')&&(!window.StoreFB||!window.StoreFB.state.connected)){
     toast('سجّل دخول المتجر الأول من شاشة الدخول','err'); return;
@@ -2297,7 +2097,7 @@ function showPage(p){
     });
   }
   const ni=document.querySelector(`[data-p="${p}"]`);if(ni)ni.classList.add('active');
-  ({dashboard:rDash,inventory:rProds,sales:rSales,purchases:rPurchs,customers:rCusts,suppliers:rSups,returns:rRets,profits:()=>{calcPr();},expenses:rExps,settings:applyCfg,orders:()=>{ storeOrdersSource==='store'?rStoreOrders():rOrders(); },adminpanel:rAdminPanel,activitylog:rFullActLog,templates:rStoreTemplates,feedback:rStoreFeedback})[p]?.();
+  ({dashboard:rDash,inventory:rProds,sales:rSales,purchases:rPurchs,customers:rCusts,suppliers:rSups,returns:rRets,profits:()=>{calcPr();},expenses:rExps,settings:applyCfg,orders:()=>{ storeOrdersSource==='store'?rStoreOrders():rOrders(); },activitylog:rFullActLog,templates:rStoreTemplates,feedback:rStoreFeedback})[p]?.();
 }
 
 // ════════════════════════════════════════
@@ -2315,7 +2115,7 @@ function staggerRows(container){
 // RIPPLE EFFECT
 // ════════════════════════════════════════
 document.addEventListener('click',e=>{
-  const btn=e.target.closest('.btn,.ra,.ni,.login-user-btn');
+  const btn=e.target.closest('.btn,.ra,.ni');
   if(!btn) return;
   const circle=document.createElement('span');
   const diameter=Math.max(btn.clientWidth,btn.clientHeight);
@@ -3117,6 +2917,7 @@ let storeOrders=[],storeTemplates=[],storeFeedback=[],storeShipping=[],storeInve
 let storeOrdersSource='store';
 let storeUnsubs=[];
 let storeFbStarted=false;
+let storeFbInitPromise=null;
 
 const STORE_STATUS_LABEL={new:'جديد',accepted:'مقبول',preparing:'قيد التحضير',ready:'جاهز',in_transit:'في الطريق',delivered:'تم التوصيل',cancelled:'ملغي',expired:'منتهي'};
 const STORE_STATUS_CLASS={new:'ds-pend',accepted:'ds-pend',preparing:'ds-ship',ready:'ds-ship',in_transit:'ds-ship',delivered:'ds-done',cancelled:'ds-delay',expired:'ds-late'};
@@ -3162,27 +2963,33 @@ function cancelledStoreCustomers(){
   return out;
 }
 
+// Returns the auth-settle promise (null when the SDK is missing) so
+// the boot sequence can await a remembered session before deciding
+// whether to show the login screen at all.
 function initStoreFirebase(){
-  if(!window.StoreFB){ renderStoreConnection(); return; }
-  if(storeFbStarted) return;
+  if(!window.StoreFB){ renderStoreConnection(); return null; }
+  if(storeFbStarted) return storeFbInitPromise;
   storeFbStarted=true;
   window.StoreFB.onStateChange(onStoreStateChange);
-  window.StoreFB.init().catch(function(e){ console.warn('store init failed', e); });
+  storeFbInitPromise=window.StoreFB.init().catch(function(e){ console.warn('store init failed', e); });
+  return storeFbInitPromise;
 }
 
 function onStoreStateChange(snap){
   renderStoreConnection();
-  const grp=$('storeNavGroup');
-  if(grp) grp.style.display=snap.connected?'':'none';
   if(snap.connected){
     startStoreListeners();
     if(storeOrdersSource==='store') rStoreOrders();
     rStoreTemplates(); rStoreFeedback();
+    enterProgram();
   }else{
     stopStoreListeners();
     storeOrders=[]; storeTemplates=[]; storeFeedback=[]; storeShipping=[]; storeInventoryMap={};
     if(storeOrdersSource==='store'){ setOrdersSource('local'); }
     rStoreTemplates(); rStoreFeedback(); rDash(); rRets(); calcPr();
+    // Sign-out while inside the program returns to the store login
+    // screen. At boot (before entry) the boot sequence decides.
+    if(programEntered) showLogin();
   }
   updateFbBadge();
 }
@@ -3235,33 +3042,23 @@ function updateFbBadge(){
   if(n>0){ b.style.display='inline-block'; b.textContent=n; } else { b.style.display='none'; }
 }
 
-// The store connection state lives on the startup login screen
-// (#loginStoreBox) — the Settings card is gone. This renders the
-// badge + the connected/fields blocks there; it is a no-op before
-// the login screen exists.
+// The store connection state lives on the startup login screen —
+// now the screen IS the store sign-in (email + password +
+// remember-me). This only reports the state there: an error/hint
+// message while signed out, cleared once connected.
 function renderStoreConnection(){
-  const badge=$('loginStoreBadge'), msg=$('loginStoreMsg');
-  const fields=$('loginStoreFields'), connected=$('loginStoreConnected');
-  if(!badge) return;
+  const msg=$('loginStoreMsg');
+  if(!msg) return;
   const fb=window.StoreFB;
   if(!fb){
-    badge.textContent='المكتبة غير متوفرة'; badge.className='bx bx-r';
-    if(msg) msg.textContent='مكتبة Firebase مش متوفرة في النسخة دي — حدّث البرنامج.';
+    msg.textContent='مكتبة Firebase مش متوفرة في النسخة دي — حدّث البرنامج.';
     return;
   }
   const st=fb.state;
   if(st.connected){
-    badge.textContent='متصل'+(st.role||''); badge.className='bx bx-g';
-    if(msg) msg.textContent='';
-    if(fields) fields.style.display='none';
-    if(connected) connected.style.display='';
-    const emTxt=$('loginStoreEmailTxt'); if(emTxt) emTxt.textContent=st.user?st.user.email:'';
-    const em=$('loginStoreEmail'); if(em&&st.user) em.value=st.user.email;
+    msg.textContent='';
   }else{
-    badge.textContent='غير متصل'; badge.className='bx bx-r';
-    if(msg) msg.textContent=st.error||'سجّل دخول بحساب الأدمن بتاع المتجر (نفس حساب تطبيق الموبايل).';
-    if(fields) fields.style.display='';
-    if(connected) connected.style.display='none';
+    msg.textContent=st.error||'سجّل دخول بحساب الأدمن بتاع المتجر (نفس حساب تطبيق الموبايل).';
   }
 }
 
@@ -3281,8 +3078,9 @@ async function doStoreSignIn(email, pass, remember){
   return true;
 }
 
-// The login screen's own "تسجيل دخول المتجر" button: connects the
-// store without entering the program yet.
+// The login screen's sign-in button: the store sign-in IS the program
+// sign-in. On success the auth state change enters the program; on
+// failure the message stays on the screen.
 async function storeSignInFromLogin(){
   const email=($('loginStoreEmail').value||'').trim();
   const pass=$('loginStorePass').value||'';
@@ -3291,44 +3089,13 @@ async function storeSignInFromLogin(){
   try{
     await doStoreSignIn(email,pass,remember);
     if($('loginStorePass')) $('loginStorePass').value='';
-    toast('تم الاتصال بالمتجر');
+    toast('تم تسجيل الدخول');
   }catch(e){
+    const msg=$('loginStoreMsg'); if(msg) msg.textContent=e.message||'تعذر تسجيل الدخول';
     toast(e.message||'تعذر تسجيل الدخول','err');
-    renderStoreConnection();
   }finally{
     if(btn) btn.disabled=false;
   }
-}
-
-// After the local login succeeds, the دخول button also attempts the
-// store sign-in with whatever the login screen holds — but a store
-// failure never blocks entering the program; the store sections
-// simply stay disconnected until it connects.
-async function maybeStoreSignInFromLogin(){
-  const fb=window.StoreFB;
-  if(!fb||fb.state.connected) return;
-  const email=($('loginStoreEmail')||{}).value||'';
-  const pass=($('loginStorePass')||{}).value||'';
-  if(!email.trim()||!pass) return;
-  const remember=$('loginStoreRemember')?$('loginStoreRemember').checked:true;
-  try{
-    await doStoreSignIn(email,pass,remember);
-    if($('loginStorePass')) $('loginStorePass').value='';
-  }catch(e){
-    toast('تعذر الاتصال بالمتجر:'+(e.message||e),'err');
-    renderStoreConnection();
-  }
-}
-
-async function storeSignOutFromLogin(){
-  const fb=window.StoreFB;
-  if(!fb) return;
-  try{
-    try{ localStorage.setItem('sb_store_remember','0'); }catch(e){}
-    await fb.signOut(); toast('تم تسجيل خروج المتجر');
-  }
-  catch(e){ toast(e.message||'تعذر تسجيل الخروج','err'); }
-  renderStoreConnection();
 }
 
 // ---- Open the storefront in the browser (B8) ----
@@ -4829,17 +4596,17 @@ document.addEventListener('keydown',e=>{
 
   // N  new sale
   if(k==='N'&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey){
-    if(typeof openSaleM==='function'&&hasPerm('sales_write')) openSaleM();
+    if(typeof openSaleM==='function') openSaleM();
     return;
   }
   // Shift+P  new product
   if(k==='P'&&e.shiftKey){
-    if(typeof openProdM==='function'&&hasPerm('inventory_write')) openProdM();
+    if(typeof openProdM==='function') openProdM();
     return;
   }
   // Shift+C  new customer
   if(k==='C'&&e.shiftKey){
-    if(typeof openCustM==='function'&&hasPerm('customers')) openCustM();
+    if(typeof openCustM==='function') openCustM();
     return;
   }
 
@@ -4902,50 +4669,27 @@ function confirmAction(msg, opts={}){
 // ════════════════════════════════════════
 // AUTH SYSTEM
 // ════════════════════════════════════════
-const AUTH_KEY = 'sb_auth_v1';
 const LOG_KEY  = 'sb_actlog_v1';
-const MAX_ATTEMPTS = 5;
-const LOCK_MINUTES = 15;
-
-let currentUser = null;  // { id, name, username, role, color }
-let selectedLoginUser = null;
-
-// ── Default users (first run) ──
-function getUsers(){
-  const stored = localStorage.getItem(AUTH_KEY);
-  if(stored){
-    const users = JSON.parse(stored);
-    // auto-upgrade: ensure any user with username 'admin' has isAdmin:true
-    let changed = false;
-    users.forEach(u=>{
-      if(u.username==='admin' && !u.isAdmin){ u.isAdmin=true; changed=true; }
-      // also fix anyone stored with old role:'admin'
-      if(u.role==='admin' && !u.isAdmin){ u.isAdmin=true; changed=true; }
-    });
-    if(changed) localStorage.setItem(AUTH_KEY, JSON.stringify(users));
-    return users;
-  }
-  const defaults = [
-    {id:'u1', name:'المدير', username:'admin', password:'admin123',
-     isAdmin:true, color:'linear-gradient(145deg,#0a84ff,#bf5af2)',
-     attempts:0, lockedUntil:null}
-  ];
-  localStorage.setItem(AUTH_KEY, JSON.stringify(defaults));
-  return defaults;
-}
-function saveUsers(users){
-  localStorage.setItem(AUTH_KEY, JSON.stringify(users));
-}
 
 // ── Activity log ──
+// The log records the STORE identity (the only sign-in now): the
+// admin/manager email + role from Firebase. The local user records
+// in storage are never read — they stay in storage,
+// untouched, as dead data. Old log rows (local names) still render.
 function getLog(){ try{ return JSON.parse(localStorage.getItem(LOG_KEY)||'[]'); }catch(e){return[];} }
 function saveLog(log){ localStorage.setItem(LOG_KEY, JSON.stringify(log.slice(-200))); }
+function storeIdentity(){
+  const st=window.StoreFB&&window.StoreFB.state;
+  if(!st||!st.connected||!st.user) return null;
+  return { user: st.user.email||'', username: st.user.email||'', role: st.role||'', isAdmin: st.role==='admin' };
+}
 function logActivity(action, detail=''){
-  if(!currentUser) return;
+  const idn=storeIdentity();
+  if(!idn) return;
   const log = getLog();
   log.unshift({
-    id: uid(), user: currentUser.name, username: currentUser.username,
-    role: currentUser.role, action, detail,
+    id: uid(), user: idn.user, username: idn.username,
+    role: idn.role, isAdmin: idn.isAdmin, action, detail,
     time: new Date().toISOString()
   });
   saveLog(log);
@@ -4960,241 +4704,77 @@ function wrapWithLog(origFn, actionLabel){
   };
 }
 
-// ── Splash  Login ──
+// ── Splash → boot ──
+// ONE SIGN-IN: the store (Firebase admin/manager) account is the only
+// gate. After the splash, the remembered session (Firebase persistence
+// LOCAL) is awaited: if it restores, the program opens straight away
+// with no login screen at all; otherwise the store login screen shows.
+// A fresh sign-in with no network cannot enter — there is no local
+// fallback anymore.
+let programEntered=false;
 function startSplash(){
   setTimeout(()=>{
     $('splash').classList.add('hide');
-    setTimeout(()=>{ $('splash').style.display='none'; showLogin(); }, 500);
+    setTimeout(()=>{ $('splash').style.display='none'; bootAfterSplash(); }, 500);
   }, 2000);
 }
 
-// ── Login Screen ──
+async function bootAfterSplash(){
+  try{
+    const p=initStoreFirebase();
+    if(p) await p;
+  }catch(e){ /* the login screen reports the failure */ }
+  if(window.StoreFB&&window.StoreFB.state.connected) enterProgram();
+  else showLogin();
+}
+
+// ── Store login screen ──
 function showLogin(){
+  programEntered=false;
   $('loginScreen').classList.remove('hidden');
-  renderLoginUsers();
-  // Store sign-in fields: prefill the saved email + remember-me, and
-  // start Firebase now so a remembered session restores while the
-  // login screen is up (the store sections unlock without retyping).
   try{
     const em=$('loginStoreEmail');
     if(em&&!em.value) em.value=localStorage.getItem('sb_store_email')||'';
     const rm=$('loginStoreRemember');
     if(rm) rm.checked=localStorage.getItem('sb_store_remember')!=='0';
+    const pw=$('loginStorePass'); if(pw) pw.value='';
   }catch(e){}
   initStoreFirebase();
   renderStoreConnection();
 }
 
-function renderLoginUsers(){
-  const users = getUsers();
-  const now = Date.now();
-  $('loginUsers').innerHTML = users.map(u=>{
-    const locked = u.lockedUntil && now < u.lockedUntil;
-    const roleLabel = {admin:'أدمن',user:'مستخدم',viewer:'مشاهد'}[u.role]||u.role;
-    const roleBadge = {admin:'admin',user:'user',viewer:'user'}[u.role]||'user';
-    return `<div class="login-user-btn ${locked?'opacity-lock':''}" onclick="selectLoginUser('${u.id}')" id="lub-${u.id}" style="${locked?'opacity:.5;pointer-events:none':''}">
-      <div class="lu-av" style="background:${u.color||'linear-gradient(145deg,#0a84ff,#bf5af2)'}">
-        ${u.name.charAt(0)}
-      </div>
-      <div style="flex:1">
-        <div class="lu-nm">${u.name}</div>
-        <div class="lu-role">${locked?'مقفل مؤقتاً':'@'+u.username}</div>
-      </div>
-      <span class="lu-badge ${roleBadge}">${roleLabel}</span>
-    </div>`;
-  }).join('');
-}
-
-function selectLoginUser(uid_){
-  selectedLoginUser = getUsers().find(u=>u.id===uid_);
-  if(!selectedLoginUser) return;
-  // highlight selected
-  document.querySelectorAll('.login-user-btn').forEach(el=>el.style.borderColor='');
-  const el = $('lub-'+uid_);
-  if(el) el.style.borderColor='var(--acc)';
-  // show password field
-  $('pwLabel').textContent = 'كلمة مرور @'+selectedLoginUser.username;
-  $('pwField').style.display='block';
-  $('loginBtn').style.display='flex';
-  if($('forgotLink')) $('forgotLink').style.display='block';
-  $('loginErr').classList.remove('show');
-  setTimeout(()=>$('pwInput').focus(), 50);
-}
-
-function doLogin(){
-  if(!selectedLoginUser){ showLoginErr('اختر حساباً أولاً'); return; }
-  const users = getUsers();
-  const u = users.find(x=>x.id===selectedLoginUser.id);
-  if(!u){ showLoginErr('حساب غير موجود'); return; }
-  const now = Date.now();
-  // check lock
-  if(u.lockedUntil && now < u.lockedUntil){
-    const mins = Math.ceil((u.lockedUntil - now)/60000);
-    showLoginErr(`الحساب مقفل — انتظر ${mins} دقيقة`); return;
-  }
-  const pw = $('pwInput').value;
-  if(pw !== u.password){
-    u.attempts = (u.attempts||0)+1;
-    if(u.attempts >= MAX_ATTEMPTS){
-      u.lockedUntil = now + LOCK_MINUTES*60*1000;
-      u.attempts = 0;
-      showLoginErr(`تم قفل الحساب لمدة ${LOCK_MINUTES} دقيقة بعد ${MAX_ATTEMPTS} محاولات خاطئة`);
-    } else {
-      const rem = MAX_ATTEMPTS - u.attempts;
-      showLoginErr(`كلمة مرور خاطئة — ${rem} محاولة متبقية`);
-    }
-    saveUsers(users);
-    $('pwInput').value='';
-    return;
-  }
-  // success
-  u.attempts = 0; u.lockedUntil = null;
-  saveUsers(users);
-  currentUser = {id:u.id, name:u.name, username:u.username, isAdmin:u.isAdmin||false, perms:u.perms||{}, color:u.color};
+// ── Enter the program (idempotent) ──
+function enterProgram(){
+  if(programEntered) return; programEntered=true;
   $('loginScreen').classList.add('hidden');
-  $('pwInput').value='';
-  applyUserSession();
-  // One sign-in at startup: the store credentials from the same
-  // screen connect in the background (a failure never blocks entry).
-  maybeStoreSignInFromLogin();
+  renderStoreUserCard();
+  init();
   logActivity('تسجيل دخول','');
   SFX.login();
-}
-
-function showLoginErr(msg){
-  $('loginErrTxt').textContent = msg;
-  $('loginErr').classList.add('show');
-}
-
-// ════════════════════════════════════════
-// PERMISSIONS DEFINITIONS
-// ════════════════════════════════════════
-const PERMS_DEF = [
-  {key:'dashboard',        ico:'chart', label:'لوحة التحكم',       sub:'عرض الإحصائيات والتقارير'},
-  {key:'sales_view',       ico:'cart', label:'عرض المبيعات',      sub:'قراءة فواتير البيع'},
-  {key:'sales_write',      ico:'edit', label:'تعديل المبيعات',    sub:'إضافة وحذف فواتير البيع'},
-  {key:'customers',        ico:'users', label:'العملاء',            sub:'إضافة وتعديل العملاء'},
-  {key:'purchases_view',   ico:'box', label:'عرض المشتريات',     sub:'قراءة فواتير الشراء'},
-  {key:'purchases_write',  ico:'edit', label:'تعديل المشتريات',   sub:'إضافة وحذف فواتير الشراء'},
-  {key:'suppliers',        ico:'factory', label:'الموردون',           sub:'إضافة وتعديل الموردين'},
-  {key:'inventory_view',   ico:'box', label:'عرض المخزون',      sub:'قراءة بيانات المنتجات'},
-  {key:'inventory_write',  ico:'wrench', label:'تعديل المخزون',     sub:'إضافة وحذف المنتجات'},
-  {key:'orders',           ico:'truck', label:'الطلبات والتوصيل',  sub:'إدارة طلبات الشحن'},
-  {key:'returns',          ico:'undo', label:'المرتجعات',          sub:'تسجيل وعرض المرتجعات'},
-  {key:'profits',          ico:'money', label:'الأرباح والتقارير',  sub:'عرض تقارير الأرباح'},
-  {key:'expenses',         ico:'wallet', label:'المصروفات',          sub:'إضافة وعرض المصروفات'},
-  {key:'settings',         ico:'settings', label:'الإعدادات',          sub:'تعديل إعدادات الشركة'},
-];
-
-const ALL_PERMS    = Object.fromEntries(PERMS_DEF.map(p=>[p.key,true]));
-const VIEWER_PERMS = Object.fromEntries(PERMS_DEF.map(p=>[p.key,
-  ['dashboard','sales_view','purchases_view','inventory_view','orders','profits'].includes(p.key)
-]));
-
-function hasPerm(key){
-  if(!currentUser) return false;
-  if(currentUser.isAdmin) return true;
-  return !!(currentUser.perms?.[key]);
-}
-
-// ── Perm checkbox grid ──
-function renderPermsGrid(perms={}){
-  const grid=$('permsGrid'); if(!grid) return;
-  grid.innerHTML = PERMS_DEF.map(p=>{
-    const on=!!perms[p.key];
-    return `<div class="perm-item${on?' checked':''}" onclick="togglePermItem(this,'${p.key}')" data-key="${p.key}">
-      <div class="perm-check">${on?ic('check'):''}</div>
-      <span class="perm-ico">${ic(p.ico)}</span>
-      <div style="flex:1;min-width:0">
-        <div class="perm-label">${p.label}</div>
-        <div class="perm-sub">${p.sub}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function togglePermItem(el,key){
-  const on=!el.classList.contains('checked');
-  el.classList.toggle('checked',on);
-  el.querySelector('.perm-check').innerHTML=on?ic('check'):'';
-}
-
-function getPermsFromGrid(){
-  const p={};
-  document.querySelectorAll('#permsGrid .perm-item').forEach(el=>{
-    p[el.dataset.key]=el.classList.contains('checked');
-  });
-  return p;
-}
-
-function setAllPerms(val){
-  document.querySelectorAll('#permsGrid .perm-item').forEach(el=>{
-    el.classList.toggle('checked',val);
-    el.querySelector('.perm-check').innerHTML=val?ic('check'):'';
-  });
-}
-function setAdminPreset(){ setAllPerms(true); }
-function setViewerPreset(){
-  document.querySelectorAll('#permsGrid .perm-item').forEach(el=>{
-    const v=VIEWER_PERMS[el.dataset.key]||false;
-    el.classList.toggle('checked',v);
-    el.querySelector('.perm-check').innerHTML=v?ic('check'):'';
-  });
-}
-
-// ── Apply session: show/hide nav + FAB based on perms ──
-function applyUserSession(){
-  $('sbUserAv').textContent=currentUser.name.charAt(0);
-  $('sbUserAv').style.background=currentUser.color||'linear-gradient(145deg,#0a84ff,#bf5af2)';
-  $('sbUserName').textContent=currentUser.name;
-  const allOn=PERMS_DEF.every(p=>hasPerm(p.key));
-  $('sbUserRole').textContent=currentUser.isAdmin?'أدمن':allOn?'مستخدم':'صلاحيات محدودة';
-
-  // admin nav
-  const adminNav=$('adminNavItem');
-  if(adminNav) adminNav.style.display=currentUser.isAdmin?'flex':'none';
-
-  // nav items — dim/hide based on perms
-  const navMap={
-    dashboard:'dashboard', sales:'sales_view', customers:'customers',
-    purchases:'purchases_view', suppliers:'suppliers',
-    inventory:'inventory_view', orders:'orders', returns:'returns',
-    profits:'profits', expenses:'expenses', settings:'settings',
-  };
-  document.querySelectorAll('.ni[data-p]').forEach(el=>{
-    const p=el.dataset.p;
-    if(p==='adminpanel') return;
-    const permKey=navMap[p];
-    const allowed=!permKey||hasPerm(permKey);
-    el.style.opacity=allowed?'':'0.3';
-    el.style.pointerEvents=allowed?'':'none';
-  });
-
-  // FAB — hide if no write perms
-  const hasWrite=hasPerm('sales_write')||hasPerm('purchases_write')||hasPerm('inventory_write')||hasPerm('orders')||hasPerm('returns')||hasPerm('expenses');
-  document.querySelectorAll('.fab,.fab-menu').forEach(el=>el.style.display=hasWrite?'':'none');
-
-  initStoreFirebase();
-  init();
   // ملخص اليوم بعد ثانية من تسجيل الدخول
   setTimeout(showDailySummary, 800);
 }
 
-function doLogout(){
-  logActivity('تسجيل خروج','');
-  currentUser=null; selectedLoginUser=null;
-  $('loginErr').classList.remove('show');
-  $('pwField').style.display='none';
-  $('loginBtn').style.display='none';
-  if($('forgotLink')) $('forgotLink').style.display='none';
-  $('pwInput').value='';
-  renderLoginUsers();
-  $('loginScreen').classList.remove('hidden');
-  renderStoreConnection();
+function renderStoreUserCard(){
+  const st=window.StoreFB&&window.StoreFB.state;
+  const email=st&&st.user?st.user.email:'';
+  const role=st?st.role:'';
+  $('sbUserAv').textContent=(email||'S').charAt(0).toUpperCase();
+  $('sbUserName').textContent=email;
+  $('sbUserRole').textContent=role==='admin'?'أدمن':(role==='manager'?'مدير':'');
 }
 
-// ── Admin panel ──
-function rAdminPanel(){ renderAdminUsers(); renderActivityLog(); }
+// ── Sign out of the store ──
+// The store account is the only session: signing out returns to the
+// store login screen. The local data stays on disk untouched.
+async function doLogout(){
+  logActivity('تسجيل خروج','');
+  const fb=window.StoreFB;
+  if(fb){
+    try{ await fb.signOut(); }catch(e){ toast(e.message||'تعذر تسجيل الخروج','err'); }
+  }
+  showLogin();
+}
 
 // ════════════════════════════════════════
 // DAILY SUMMARY
@@ -5279,7 +4859,7 @@ function showDailySummary(){
 
   $('dailySummaryContent').innerHTML = `
     <div style="text-align:center;padding:4px 0 16px;border-bottom:1px solid var(--br);margin-bottom:4px">
-      <div style="font-size:14px;color:var(--t2)">مرحباً، <strong style="color:var(--t1)">${currentUser.name}</strong> </div>
+      <div style="font-size:14px;color:var(--t2)">مرحباً، <strong style="color:var(--t1)">${escHtml((storeIdentity()||{}).user||'')}</strong> </div>
       <div style="font-size:12px;color:var(--t3);margin-top:4px">${new Date().toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
     </div>
     ${rows.map(r=>`
@@ -5293,50 +4873,6 @@ function showDailySummary(){
     </div>`).join('')}`;
 
   $('mDailySummary').classList.remove('hidden');
-}
-
-function renderAdminUsers(){
-  const users=getUsers(), el=$('adminUsersList');
-  if(!el) return;
-  el.innerHTML=users.map(u=>{
-    const perms=u.isAdmin?ALL_PERMS:(u.perms||{});
-    const count=PERMS_DEF.filter(p=>perms[p.key]).length;
-    const roleLabel=u.isAdmin?'أدمن':(count===PERMS_DEF.length?'مستخدم كامل':`${icOrDot('lock')} ${count}/${PERMS_DEF.length} صلاحية`);
-    const isMe=u.id===currentUser?.id;
-    return `<div class="usr-card">
-      <div class="usr-av" style="background:${u.color||'linear-gradient(145deg,#0a84ff,#bf5af2)'}">
-        ${u.name.charAt(0)}
-      </div>
-      <div style="flex:1">
-        <div class="usr-nm">${u.name}${isMe?' <span style="font-size:10px;color:var(--acc)">(أنت)</span>':''}</div>
-        <div class="usr-meta">@${u.username} · ${u.phone?' '+u.phone+' · ':''} ${roleLabel}</div>
-      </div>
-      <div style="display:flex;gap:6px">
-        <button class="ra edit" onclick="editUser('${u.id}')" title="تعديل الصلاحيات">${icOrDot('edit')}</button>
-        <button class="ra view" onclick="openChangePw('${u.id}')" title="تغيير كلمة المرور">${icOrDot('key')}</button>
-        ${!isMe?`<button class="ra del" onclick="deleteUser('${u.id}')" title="حذف">${icOrDot('trash')}</button>`:''}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function renderActivityLog(){
-  const log=getLog(), el=$('adminActivityLog');
-  if(!el) return;
-  if(!log.length){el.innerHTML='<div class="np-empty">لا يوجد نشاط مسجل بعد</div>';return;}
-  const icons={'تسجيل دخول':'dot-g','تسجيل خروج':'dot-r','حفظ بيع':'cart','حذف بيع':'trash','حفظ شراء':'box','حذف شراء':'trash','حفظ منتج':'tag','حذف منتج':'trash','حفظ عميل':'user','حذف عميل':'trash','حفظ طلب':'truck','حفظ مرتجع':'undo','حفظ مصروف':'wallet','تغيير كلمة مرور':'key','إدارة مستخدمين':'users'};
-  el.innerHTML=log.map(e=>{
-    const t=new Date(e.time);
-    const ts=t.toLocaleDateString('ar-EG',{month:'short',day:'numeric'})+' '+t.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
-    return `<div class="act-row">
-      <div class="act-ico">${icOrDot(icons[e.action]||'file')}</div>
-      <div class="act-main">
-        <div class="act-action">${e.action}${e.detail?' <span style="color:var(--t3);font-weight:400">— '+e.detail+'</span>':''}</div>
-        <div class="act-meta"><span style="color:${e.isAdmin?'var(--acc)':'var(--grn)'};font-weight:700">${e.name}</span> · @${e.username}</div>
-      </div>
-      <div class="act-time">${ts}</div>
-    </div>`;
-  }).join('');
 }
 
 // ════════════════════════════════════════
@@ -5429,134 +4965,13 @@ function exportActLogCSV(){
 
 async function clearActivityLog(){
   const ok=await confirmAction('مسح كل سجل النشاط نهائياً؟',{ico:'trash',ok:'مسح',danger:true});if(!ok)return;
-  saveLog([]); renderActivityLog();
-}
-
-// ── User CRUD ──
-function openAddUserM(){
-  ['auId','auName','auUser','auPass','auPhone'].forEach(id=>{$(id).value='';}) ;
-  $('auColor').value='linear-gradient(145deg,#0a84ff,#bf5af2)';
-  renderPermsGrid({});
-  $('mAddUser').classList.remove('hidden');
-}
-
-function editUser(uid_){
-  const u=getUsers().find(x=>x.id===uid_); if(!u) return;
-  $('auId').value=u.id; $('auName').value=u.name;
-  $('auUser').value=u.username; $('auPass').value=''; $('auPhone').value=u.phone||'';
-  $('auColor').value=u.color||'linear-gradient(145deg,#0a84ff,#bf5af2)';
-  renderPermsGrid(u.isAdmin?ALL_PERMS:(u.perms||{}));
-  // if admin — lock grid with notice
-  const grid=$('permsGrid');
-  if(u.isAdmin){
-    grid.style.opacity='.5';
-    grid.style.pointerEvents='none';
-    grid.title='يوزر الأدمن لا يمكن تعديل صلاحياته';
-    // show lock notice
-    let notice=$('permsLockNotice');
-    if(!notice){
-      notice=document.createElement('div');
-      notice.id='permsLockNotice';
-      notice.style.cssText='margin-bottom:8px;padding:8px 12px;background:var(--accg);border:1px solid rgba(10,132,255,.3);border-radius:10px;font-size:12px;font-weight:600;color:var(--acc)';
-      notice.textContent='يوزر الأدمن — الصلاحيات مقفلة تلقائياً';
-      grid.before(notice);
-    }
-    notice.style.display='block';
-  } else {
-    grid.style.opacity=''; grid.style.pointerEvents=''; grid.title='';
-    const notice=$('permsLockNotice');
-    if(notice) notice.style.display='none';
-  }
-  $('mAddUser').classList.remove('hidden');
-}
-
-function saveUser(){
-  const id=$('auId').value, name=$('auName').value.trim(), username=$('auUser').value.trim().toLowerCase();
-  const pass=$('auPass').value, color=$('auColor').value;
-  const phone=($('auPhone').value||'').trim();
-  let perms=getPermsFromGrid();
-  let allOn=PERMS_DEF.every(p=>perms[p.key]);
-  if(!name||!username){toast('الاسم واسم المستخدم مطلوبان','err');return;}
-  if(!phone){toast('رقم الموبايل مطلوب','err');return;}
-  const users=getUsers();
-  if(id){
-    const idx=users.findIndex(u=>u.id===id); if(idx===-1) return;
-    if(users.find(u=>u.id!==id && u.phone===phone)){toast('رقم الموبايل مستخدم من يوزر آخر','err');return;}
-    //  protect admin — can never lose isAdmin
-    if(users[idx].isAdmin){ allOn=true; perms=ALL_PERMS; }
-    users[idx]={...users[idx],name,username,phone,color,perms,isAdmin:allOn};
-    if(pass) users[idx].password=pass;
-    if(currentUser?.id===id){
-      Object.assign(currentUser,{name,phone,color,perms,isAdmin:allOn});
-      applyUserSession();
-    }
-  } else {
-    if(users.find(u=>u.username===username)){toast('اسم المستخدم موجود بالفعل','err');return;}
-    if(users.find(u=>u.phone===phone)){toast('رقم الموبايل مستخدم من يوزر آخر','err');return;}
-    if(!pass){toast('كلمة المرور مطلوبة للمستخدم الجديد','err');return;}
-    users.push({id:uid(),name,username,phone,password:pass,color,perms,isAdmin:allOn,attempts:0,lockedUntil:null});
-  }
-  saveUsers(users);
-  closeM('mAddUser');
-  renderAdminUsers();
-  SFX.success();toast('تم حفظ المستخدم');
-  logActivity('إدارة مستخدمين',`${id?'تعديل':'إضافة'} @${username}`);
-}
-
-async function deleteUser(uid_){
-  if(uid_===currentUser?.id){toast('لا يمكنك حذف حسابك الحالي','err');return;}
-  const ok=await confirmAction('حذف هذا المستخدم نهائياً؟',{ico:'user',ok:'حذف',danger:true});if(!ok)return;
-  saveUsers(getUsers().filter(u=>u.id!==uid_));
-  renderAdminUsers(); toast('تم الحذف');
-  logActivity('إدارة مستخدمين','حذف مستخدم');
-}
-
-// ── Change Password ──
-// called from  button in sidebar (changes current user's own pw)
-function openChangePw(targetId){
-  const uid_ = targetId || currentUser?.id;
-  const users = getUsers();
-  const u = users.find(x=>x.id===uid_);
-  if(!u) return;
-  $('cpUserId').value = uid_;
-  $('cpAvatar').textContent = u.name.charAt(0);
-  $('cpAvatar').style.background = u.color||'linear-gradient(145deg,#0a84ff,#bf5af2)';
-  $('cpName').textContent = u.name;
-  $('cpUsername').textContent = '@'+u.username;
-  // if admin changing someone else's pw, hide "current pw" field
-  const isSelf = uid_===currentUser?.id;
-  $('cpOld').closest('.fgr').style.display = isSelf ? 'flex' : 'none';
-  ['cpOld','cpNew','cpConfirm'].forEach(id=>$(id).value='');
-  $('cpErr').style.display='none';
-  $('mChangePw').classList.remove('hidden');
-  setTimeout(()=>$(isSelf?'cpOld':'cpNew').focus(),80);
-}
-
-function doChangePw(){
-  const uid_ = $('cpUserId').value;
-  const users = getUsers();
-  const u = users.find(x=>x.id===uid_);
-  if(!u) return;
-  const isSelf = uid_===currentUser?.id;
-  const oldPw = $('cpOld').value;
-  const newPw = $('cpNew').value;
-  const confirm_ = $('cpConfirm').value;
-  const showErr = msg=>{ $('cpErr').textContent=msg; $('cpErr').style.display='block'; };
-  // validate
-  if(isSelf && oldPw !== u.password){ showErr('كلمة المرور الحالية غير صحيحة'); return; }
-  if(newPw.length < 4){ showErr('كلمة المرور الجديدة قصيرة جداً (4 أحرف على الأقل)'); return; }
-  if(newPw !== confirm_){ showErr('كلمة المرور الجديدة وتأكيدها غير متطابقين'); return; }
-  // save
-  u.password = newPw;
-  saveUsers(users);
-  closeM('mChangePw');
-  SFX.success();toast('تم تغيير كلمة المرور بنجاح');
-  logActivity('تغيير كلمة مرور', '@'+u.username);
+  saveLog([]); rFullActLog();
 }
 
 // ── Inject log calls into existing save/del functions ──
 // We'll wrap after they're defined by monkey-patching in init
 function patchLoggers(){
+  if(patchLoggers.done) return; patchLoggers.done=true;
   const orig={
     saveSale:window.saveSale, delSale:window.delSale,
     savePurch:window.savePurch, delPurch:window.delPurch,
@@ -5574,58 +4989,7 @@ function patchLoggers(){
 }
 
 // ════════════════════════════════════════
-// FORGOT PASSWORD
-// ════════════════════════════════════════
-function openForgotPw(){
-  $('fpPhone').value='';
-  $('fpErr1').style.display='none';
-  $('fpStep1').style.display='block';
-  $('fpStep2').style.display='none';
-  $('mForgotPw').classList.remove('hidden');
-  setTimeout(()=>$('fpPhone').focus(),80);
-}
-
-function verifyFpPhone(){
-  const phone = $('fpPhone').value.trim();
-  if(!phone){ showFpErr1('أدخل رقم الموبايل'); return; }
-  const users = getUsers();
-  const u = users.find(x=>x.phone===phone);
-  if(!u){ showFpErr1('رقم الموبايل غير مرتبط بأي حساب'); return; }
-  // found — move to step 2
-  $('fpUserId').value = u.id;
-  $('fpUserInfo').innerHTML = `
-    <div style="width:36px;height:36px;border-radius:10px;background:${u.color||'linear-gradient(145deg,#0a84ff,#bf5af2)'};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">${u.name.charAt(0)}</div>
-    <div><div style="font-size:13px;font-weight:600;color:var(--t1)">${u.name}</div><div style="font-size:11px;color:var(--t3)">@${u.username}</div></div>`;
-  $('fpNewPw').value=''; $('fpConfPw').value='';
-  $('fpErr2').style.display='none';
-  $('fpStep1').style.display='none';
-  $('fpStep2').style.display='block';
-  setTimeout(()=>$('fpNewPw').focus(),80);
-}
-
-function showFpErr1(msg){ $('fpErr1').textContent=msg; $('fpErr1').style.display='block'; }
-function showFpErr2(msg){ $('fpErr2').textContent=msg; $('fpErr2').style.display='block'; }
-
-function doResetPw(){
-  const uid_ = $('fpUserId').value;
-  const newPw = $('fpNewPw').value;
-  const conf  = $('fpConfPw').value;
-  if(newPw.length < 4){ showFpErr2('كلمة المرور قصيرة جداً (4 أحرف على الأقل)'); return; }
-  if(newPw !== conf){ showFpErr2('كلمتا المرور غير متطابقتين'); return; }
-  const users = getUsers();
-  const idx = users.findIndex(u=>u.id===uid_);
-  if(idx===-1){ showFpErr2('حدث خطأ، حاول مرة أخرى'); return; }
-  users[idx].password = newPw;
-  users[idx].attempts = 0;
-  users[idx].lockedUntil = null;
-  saveUsers(users);
-  closeM('mForgotPw');
-  toast('تم تغيير كلمة المرور — سجّل دخولك الآن');
-  logActivity('إعادة تعيين كلمة مرور','@'+users[idx].username);
-}
-
-// ════════════════════════════════════════
-// START — Splash  Login  App
+// START — Splash → Store login → App
 // ════════════════════════════════════════
 try{ loadLocal(); applyBrand(); }catch(e){}
 startSplash();
@@ -5635,7 +4999,6 @@ startSplash();
 
 
 
-<!-- FORGOT PASSWORD MODAL -->
 <!-- Supplier History Modal -->
 <div id="mSupHis" class="mo hidden"><div class="md md-w" style="max-width:680px">
   <div class="md-t" id="mSupHisT"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M17 18h1"/><path d="M12 18h1"/><path d="M7 18h1"/></svg> تاريخ المورد</div>
@@ -5652,45 +5015,6 @@ startSplash();
   <div class="md-ft"><button class="btn btn-g" onclick="closeM('mCustHis')">إغلاق</button></div>
 </div></div>
 
-<div id="mForgotPw" class="mo hidden" style="z-index:9500">
-  <div class="md" style="max-width:380px">
-    <!-- Step 1: enter phone -->
-    <div id="fpStep1">
-      <div class="md-t"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> نسيت كلمة المرور</div>
-      <p style="font-size:13px;color:var(--t2);margin-bottom:18px">أدخل رقم الموبايل المرتبط بحسابك</p>
-      <div class="fgr" style="margin-bottom:12px">
-        <label><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> رقم الموبايل</label>
-        <input id="fpPhone" type="tel" placeholder="01xxxxxxxxx" maxlength="11" style="direction:ltr;text-align:left" onkeydown="if(event.key==='Enter')verifyFpPhone()">
-      </div>
-      <div id="fpErr1" style="display:none;background:var(--redg);border:1px solid var(--red);color:var(--red);font-size:12px;font-weight:600;padding:9px 13px;border-radius:10px;margin-bottom:12px"></div>
-      <div class="md-ft">
-        <button class="btn btn-g" onclick="closeM('mForgotPw')">إلغاء</button>
-        <button class="btn btn-p" onclick="verifyFpPhone()">تحقق <svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
-      </div>
-    </div>
-    <!-- Step 2: set new password -->
-    <div id="fpStep2" style="display:none">
-      <div class="md-t"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> إعادة تعيين كلمة المرور</div>
-      <div id="fpUserInfo" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--hov);border-radius:12px;margin-bottom:18px"></div>
-      <input type="hidden" id="fpUserId">
-      <div class="fg" style="grid-template-columns:1fr">
-        <div class="fgr">
-          <label>كلمة المرور الجديدة</label>
-          <input type="password" id="fpNewPw" placeholder="••••••" style="direction:ltr;text-align:left">
-        </div>
-        <div class="fgr">
-          <label>تأكيد كلمة المرور</label>
-          <input type="password" id="fpConfPw" placeholder="••••••" style="direction:ltr;text-align:left" onkeydown="if(event.key==='Enter')doResetPw()">
-        </div>
-      </div>
-      <div id="fpErr2" style="display:none;background:var(--redg);border:1px solid var(--red);color:var(--red);font-size:12px;font-weight:600;padding:9px 13px;border-radius:10px;margin-top:12px"></div>
-      <div class="md-ft">
-        <button class="btn btn-g" onclick="closeM('mForgotPw')">إلغاء</button>
-        <button class="btn btn-p" onclick="doResetPw()"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> حفظ كلمة المرور</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>

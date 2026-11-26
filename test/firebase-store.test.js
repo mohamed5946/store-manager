@@ -25,6 +25,7 @@ function createFakeFirebase() {
       id,
       path: coll + '/' + id,
       get: async () => {
+        if (fake._failGets) throw new Error('offline');
         const data = store[coll + '/' + id];
         return { exists: data !== undefined, id, data: () => (data ? { ...data } : undefined) };
       },
@@ -297,6 +298,58 @@ test('createManualOrder: calls the callable with the exact input, maps errors', 
     throw e;
   };
   await assert.rejects(fb.createManualOrder(input), /أكبر من المتاح في المخزون/);
+});
+
+// In-memory localStorage stand-in (Node has none) for the role-cache tests.
+function stubLocalStorage() {
+  const store = {};
+  const prev = global.localStorage;
+  global.localStorage = {
+    getItem: (k) => (k in store ? store[k] : null),
+    setItem: (k, v) => { store[k] = String(v); },
+    removeItem: (k) => { delete store[k]; }
+  };
+  return () => { if (prev === undefined) delete global.localStorage; else global.localStorage = prev; };
+}
+
+test('init: remembered session restores offline from the cached role', async () => {
+  const restore = stubLocalStorage();
+  try {
+    // An online sign-in caches the confirmed role.
+    const fake1 = createFakeFirebase();
+    fake1._setRole('uid-admin', 'admin');
+    const fb1 = StoreFB.create(fake1, CONFIG);
+    await fb1.init();
+    await fb1.signIn('admin@store.test', 'correct');
+    assert.equal(JSON.parse(global.localStorage.getItem('sb_store_role')).role, 'admin');
+    assert.equal(JSON.parse(global.localStorage.getItem('sb_store_role')).uid, 'uid-admin');
+    // A fresh boot where the role read fails (offline) still restores
+    // the session from the cached user + cached role.
+    const fake2 = createFakeFirebase();
+    fake2._failGets = true;
+    const fb2 = StoreFB.create(fake2, CONFIG);
+    await fb2.init();
+    await fb2.signIn('admin@store.test', 'correct');
+    assert.equal(fb2.state.connected, true);
+    assert.equal(fb2.state.role, 'admin');
+    assert.equal(fb2.state.user.email, 'admin@store.test');
+  } finally {
+    restore();
+  }
+});
+
+test('init: offline role read with no cached role stays refused', async () => {
+  const restore = stubLocalStorage();
+  try {
+    const fake = createFakeFirebase();
+    fake._failGets = true;
+    const fb = StoreFB.create(fake, CONFIG);
+    await fb.init();
+    await assert.rejects(fb.signIn('admin@store.test', 'correct'), /تعذر قراءة صلاحيات الحساب/);
+    assert.equal(fb.state.connected, false);
+  } finally {
+    restore();
+  }
 });
 
 test('signIn: wrong password maps to Arabic; non-admin is refused', async () => {
