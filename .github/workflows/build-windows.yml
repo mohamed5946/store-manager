@@ -29,8 +29,8 @@ jobs:
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.1.1
-          name: Store Manager v1.1.1
+          tag_name: v1.1.2
+          name: Store Manager v1.1.2
           files: dist/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

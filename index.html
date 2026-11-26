@@ -4034,14 +4034,19 @@ async function saveWebProduct(){
     // A brand-new product with no stock given starts out of stock;
     // editing an existing product without touching stock leaves its
     // availability exactly as it is.
-    if(!$('wpId').value) writes['products/'+id].inStock=false;
+    // FIX 1.1.2: inStock is a SENSITIVE field — the rules require its
+    // new value to be recorded in the audit, or the create is denied.
+    if(!$('wpId').value){ writes['products/'+id].inStock=false; sensitive['products/'+id].inStock=false; }
   }
   if(stockRaw!==''){
     const stock=parseInt(stockRaw,10);
     if(isNaN(stock)||stock<0){ toast('المخزون لازم يكون رقم صحيح ≥ صفر','err'); return; }
     const reserved=(storeInventoryMap[id]||{}).reserved||0;
-    writes['inventory/'+id]={ stock: stock };
-    sensitive['inventory/'+id]={ stock: stock };
+    if(stock<reserved){ toast('المخزون ('+stock+') أقل من الكمية المحجوزة ('+reserved+') — قلّل الحجز الأول أو زوّد المخزون','err'); return; }
+    // FIX 1.1.2: the inventory create rule requires `reserved` to be
+    // an int (a stock-only write is denied) — always send both.
+    writes['inventory/'+id]={ stock: stock, reserved: reserved };
+    sensitive['inventory/'+id]={ stock: stock, reserved: reserved };
     writes['products/'+id].inStock=(stock-reserved)>0;
     sensitive['products/'+id].inStock=(stock-reserved)>0;
   }
