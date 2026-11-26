@@ -744,7 +744,12 @@
       if (!custName) return Promise.reject(_txError('INVALID_INPUT', 'اسم العميل مطلوب'));
       if (custPhone.length < 10) return Promise.reject(_txError('INVALID_INPUT', 'رقم موبايل العميل ناقص — لازم 10 أرقام على الأقل'));
       if (!custAddress) return Promise.reject(_txError('INVALID_INPUT', 'عنوان العميل مطلوب'));
-      if (!lines.length || lines.length > 10) return Promise.reject(_txError('ORDER_TOO_LARGE', 'الطلب فيه منتجات أكتر من الحد المسموح (10)'));
+      if (!lines.length || lines.length > 7) return Promise.reject(_txError('ORDER_TOO_LARGE', 'الطلب فيه منتجات أكتر من الحد المسموح (7)'));
+      /* Cap is 7 lines (coordinator fix 2026-11-26): the rules
+       * allow 10 get()/getAfter() calls per operation, and the
+       * order-create rule costs N+3 for a manual order, so an
+       * 8-line manual order with a code is denied by the platform
+       * (7 lines = 10 calls, the safe max). */
       for (var vi = 0; vi < lines.length; vi++) {
         if (!Number.isInteger(lines[vi].qty) || lines[vi].qty < 1 || lines[vi].qty > 20) {
           return Promise.reject(_txError('INVALID_INPUT', 'الكمية لازم تكون من 1 لـ 20 لكل صنف'));
