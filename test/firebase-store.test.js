@@ -29,7 +29,25 @@ function createFakeFirebase() {
         const data = store[coll + '/' + id];
         return { exists: data !== undefined, id, data: () => (data ? { ...data } : undefined) };
       },
-      set: async (data) => { store[coll + '/' + id] = { ...data }; },
+      set: async (data, opts) => {
+        const key = coll + '/' + id;
+        const next = (opts && opts.merge) ? { ...(store[key] || {}) } : {};
+        Object.keys(data || {}).forEach((k) => {
+          if (data[k] && data[k].__delete) delete next[k];
+          else next[k] = data[k];
+        });
+        store[key] = next;
+      },
+      update: async (data) => {
+        const key = coll + '/' + id;
+        const next = { ...(store[key] || {}) };
+        Object.keys(data || {}).forEach((k) => {
+          if (data[k] && data[k].__delete) delete next[k];
+          else next[k] = data[k];
+        });
+        store[key] = next;
+      },
+      delete: async () => { delete store[coll + '/' + id]; },
       onSnapshot: (cb) => {
         const data = store[coll + '/' + id];
         cb({ exists: data !== undefined, id, data: () => (data ? { ...data } : undefined) });
@@ -38,11 +56,35 @@ function createFakeFirebase() {
       collection: (sub) => collectionRef(coll + '/' + id + '/' + sub)
     };
   }
+  function comparable(v) {
+    if (v == null) return v;
+    if (typeof v === 'object' && typeof v.seconds === 'number') return v.seconds * 1000;
+    if (v instanceof Date) return v.getTime();
+    if (v && v.__serverTimestamp) return Date.now();
+    return v;
+  }
   function collectionRef(coll) {
+    const filters = [];
     const q = {
       doc: (id) => docRef(coll, id),
       orderBy: () => q,
       limit: () => q,
+      where: (field, op, value) => { filters.push({ field, op, value }); return q; },
+      get: async () => {
+        const docs = Object.keys(store)
+          .filter((k) => k.startsWith(coll + '/') && !k.slice(coll.length + 1).includes('/'))
+          .map((k) => ({ id: k.slice(coll.length + 1), data: () => ({ ...store[k] }) }))
+          .filter((d) => filters.every((f) => {
+            const v = comparable(d.data()[f.field]);
+            const want = comparable(f.value);
+            if (f.op === '==') return v === want;
+            if (f.op === '<') return v < want;
+            if (f.op === '<=') return v <= want;
+            if (f.op === '>') return v > want;
+            return true;
+          }));
+        return { forEach: (fn) => docs.forEach(fn), docs, empty: docs.length === 0 };
+      },
       onSnapshot: (cb) => {
         const docs = Object.keys(store)
           .filter((k) => k.startsWith(coll + '/') && !k.slice(coll.length + 1).includes('/'))
@@ -59,14 +101,28 @@ function createFakeFirebase() {
       const ops = [];
       return {
         set: (ref, data, opts) => { ops.push({ ref, data, merge: !!(opts && opts.merge) }); },
+        delete: (ref) => { ops.push({ ref, del: true }); },
         commit: async () => {
           for (const op of ops) {
-            store[op.ref.path] = op.merge
-              ? { ...(store[op.ref.path] || {}), ...op.data }
-              : { ...op.data };
+            if (op.del) { delete store[op.ref.path]; continue; }
+            const next = op.merge ? { ...(store[op.ref.path] || {}) } : {};
+            Object.keys(op.data || {}).forEach((k) => {
+              if (op.data[k] && op.data[k].__delete) delete next[k];
+              else next[k] = op.data[k];
+            });
+            store[op.ref.path] = next;
           }
         }
       };
+    },
+    runTransaction: async (fn) => {
+      const tx = {
+        get: (ref) => ref.get(),
+        set: (ref, data, opts) => ref.set(data, opts),
+        update: (ref, data) => ref.update(data),
+        delete: (ref) => ref.delete()
+      };
+      return fn(tx);
     }
   };
   const authState = { user: null, cbs: [] };
@@ -105,7 +161,10 @@ function createFakeFirebase() {
     },
     auth: () => auth,
     firestore: Object.assign(() => db, {
-      FieldValue: { serverTimestamp: () => ({ __serverTimestamp: true }) }
+      FieldValue: {
+        serverTimestamp: () => ({ __serverTimestamp: true }),
+        delete: () => ({ __delete: true })
+      }
     }),
     functions: () => ({
       httpsCallable: (name) => async (data) => {
@@ -145,15 +204,6 @@ test('order state machine: legal, illegal, same-state', () => {
   assert.equal(StoreFB.isAllowedOrderTransition('new', 'expired'), true);
 });
 
-test('feedback state machine: legal, illegal, same-state', () => {
-  assert.equal(StoreFB.isAllowedFeedbackTransition('new', 'in_review'), true);
-  assert.equal(StoreFB.isAllowedFeedbackTransition('new', 'resolved'), false);
-  assert.equal(StoreFB.isAllowedFeedbackTransition('in_review', 'awaiting_customer'), true);
-  assert.equal(StoreFB.isAllowedFeedbackTransition('awaiting_customer', 'in_review'), true);
-  assert.equal(StoreFB.isAllowedFeedbackTransition('resolved', 'closed'), true);
-  assert.equal(StoreFB.isAllowedFeedbackTransition('closed', 'new'), false);
-  assert.equal(StoreFB.isAllowedFeedbackTransition('spam', 'spam'), true);
-});
 
 test('validateTemplateDoc: the classic doc passes', () => {
   const report = StoreFB.validateTemplateDoc(StoreFB.CLASSIC_TEMPLATE);
@@ -275,9 +325,11 @@ test('activateTemplate: validates, seeds classic, moves the pointer', async () =
   await assert.rejects(fb.activateTemplate('broken'), /مش صالح للتفعيل/);
 });
 
-test('createManualOrder: calls the callable with the exact input, maps errors', async () => {
+test('createManualOrder: one transaction reserves, claims the discount, writes order + movements + audit, refreshes inStock', async () => {
   const { fake, fb } = await signedInFb();
-  fake._callableHandlers.createManualOrder = async (data) => ({ data: { order: { id: 'o9' }, created: true } });
+  fake._store['products/p1'] = { name: 'منتج 1', price: 100, inStock: true };
+  fake._store['inventory/p1'] = { stock: 10, reserved: 2 };
+  fake._store['discounts/X10'] = { code: 'X10', active: true, usedBy: null, percent: 10, expiresAt: null };
   const input = {
     clientOrderId: 'c-1',
     items: [{ productId: 'p1', qty: 2 }],
@@ -287,17 +339,200 @@ test('createManualOrder: calls the callable with the exact input, maps errors', 
     notes: 'ملاحظة'
   };
   const res = await fb.createManualOrder(input);
-  assert.equal(res.order.id, 'o9');
-  assert.equal(fake._callableCalls.length, 1);
-  assert.equal(fake._callableCalls[0].name, 'createManualOrder');
-  assert.deepEqual(fake._callableCalls[0].data, input);
-  fake._callableHandlers.createManualOrder = async () => {
-    const e = new Error('failed-precondition');
-    e.code = 'failed-precondition';
-    e.details = { code: 'INSUFFICIENT_STOCK', availableQty: 1 };
-    throw e;
+  assert.equal(res.created, true);
+  assert.equal(res.order.id, 'c-1');
+  const o = fake._store['orders/c-1'];
+  assert.equal(o.status, 'new');
+  assert.equal(o.paymentStatus, 'cod_pending');
+  assert.equal(o.source, 'admin_manual');
+  assert.equal(o.createdBy, 'uid-admin');
+  assert.equal(o.customerName, 'أحمد');
+  assert.equal(o.customerPhone, '01012345678');
+  assert.equal(o.customerAddress, 'القاهرة');
+  assert.equal(o.subtotal, 200);
+  assert.equal(o.discountCode, 'X10');
+  assert.equal(o.discountPercent, 10);
+  assert.equal(o.discountAmount, 20);
+  assert.equal(o.total, 180);
+  assert.deepEqual(o.items, [{ productId: 'p1', name: 'منتج 1', price: 100, qty: 2 }]);
+  assert.equal(o.acceptedAt, null);
+  assert.equal(o.cancelReason, null);
+  assert.equal(o.trackingNumber, null);
+  assert.ok(o.auditId);
+  assert.equal(fake._store['inventory/p1'].reserved, 4); // 2 + 2 reserved
+  assert.equal(fake._store['discounts/X10'].usedBy, 'c-1');
+  assert.equal(fake._store['products/p1'].inStock, true); // §13 refresh: 10 - 4 > 0
+  const mvKeys = Object.keys(fake._store).filter((k) => k.startsWith('movements/'));
+  assert.equal(mvKeys.length, 1);
+  assert.equal(fake._store[mvKeys[0]].type, 'order_reserve');
+  assert.equal(fake._store[mvKeys[0]].qty, -2);
+  assert.equal(fake._store[mvKeys[0]].orderId, 'c-1');
+  assert.equal(fake._store[mvKeys[0]].source, 'createManualOrder');
+  const auditKeys = Object.keys(fake._store).filter((k) => k.startsWith('audit/'));
+  assert.equal(auditKeys.length, 2); // the order audit + the §13 inStock-refresh audit
+  const audit = Object.values(fake._store).find((v) => v.operation === 'manual_order_create');
+  assert.equal(audit.operation, 'manual_order_create');
+  assert.equal(audit.docId, 'c-1');
+  assert.ok(audit.docIds['orders/c-1'].includes('status'));
+  assert.ok(audit.docIds['inventory/p1'].includes('reserved'));
+});
+
+test('createManualOrder: idempotent — a retry with the same clientOrderId returns the order without re-reserving', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['products/p1'] = { name: 'منتج 1', price: 100 };
+  fake._store['inventory/p1'] = { stock: 10, reserved: 0 };
+  const input = {
+    clientOrderId: 'c-9',
+    items: [{ productId: 'p1', qty: 2 }],
+    customer: { name: 'أحمد', phone: '01012345678', address: 'القاهرة' }
   };
-  await assert.rejects(fb.createManualOrder(input), /أكبر من المتاح في المخزون/);
+  const first = await fb.createManualOrder(input);
+  assert.equal(first.created, true);
+  assert.equal(fake._store['inventory/p1'].reserved, 2);
+  const second = await fb.createManualOrder(input);
+  assert.equal(second.created, false);
+  assert.equal(second.order.id, 'c-9');
+  assert.equal(fake._store['inventory/p1'].reserved, 2); // no double reserve
+  assert.equal(Object.keys(fake._store).filter((k) => k.startsWith('orders/')).length, 1);
+});
+
+test('createManualOrder: dedupes lines, rejects short stock with the available count, price/total changes, used discount', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['products/p1'] = { name: 'منتج 1', price: 100 };
+  fake._store['products/p2'] = { name: 'منتج 2', price: 50 };
+  fake._store['inventory/p1'] = { stock: 1, reserved: 0 };
+  fake._store['inventory/p2'] = { stock: 10, reserved: 0 };
+  fake._store['discounts/USED'] = { code: 'USED', active: true, usedBy: 'other-order', percent: 10 };
+  const base = {
+    clientOrderId: 'c-x',
+    items: [{ productId: 'p2', qty: 1 }, { productId: 'p2', qty: 2 }], // dedupes to 3
+    customer: { name: 'أحمد', phone: '01012345678', address: 'القاهرة' }
+  };
+  const ok = await fb.createManualOrder(base);
+  assert.equal(ok.order.total, 150); // 3 x 50, no discount
+  assert.equal(fake._store['inventory/p2'].reserved, 3);
+  await assert.rejects(
+    fb.createManualOrder({ ...base, clientOrderId: 'c-y', items: [{ productId: 'p1', qty: 2 }] }),
+    (e) => { assert.equal(e.code, 'INSUFFICIENT_STOCK'); assert.equal(e.availableQty, 1); return /هو 1 بس/.test(e.message); });
+  assert.equal(fake._store['inventory/p1'].reserved, 0); // nothing written
+  await assert.rejects(
+    fb.createManualOrder({ ...base, clientOrderId: 'c-z', seenPrices: { p2: 40 } }),
+    (e) => e.code === 'PRICE_CHANGED');
+  await assert.rejects(
+    fb.createManualOrder({ ...base, clientOrderId: 'c-w', seenTotal: 999 }),
+    (e) => e.code === 'TOTAL_CHANGED');
+  await assert.rejects(
+    fb.createManualOrder({ ...base, clientOrderId: 'c-v', discountCode: 'USED' }),
+    (e) => e.code === 'DISCOUNT_USED');
+  await assert.rejects(
+    fb.createManualOrder({ ...base, clientOrderId: 'c-u', customer: { name: 'أحمد', phone: '010', address: 'القاهرة' } }),
+    (e) => e.code === 'INVALID_INPUT');
+});
+
+test('updateOrderStatus: cancel releases the reservation, deliver deducts stock, reopen re-reserves and deletes the cancel stamp', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['products/p1'] = { name: 'منتج 1', price: 100, inStock: true };
+  fake._store['inventory/p1'] = { stock: 10, reserved: 2 };
+  fake._store['orders/o1'] = { status: 'preparing', total: 200, items: [{ productId: 'p1', name: 'منتج 1', price: 100, qty: 2 }] };
+  assert.equal(await fb.updateOrderStatus({ id: 'o1', status: 'preparing' }, 'cancelled'), true);
+  assert.equal(fake._store['orders/o1'].status, 'cancelled');
+  assert.ok(fake._store['orders/o1'].cancelledAt);
+  assert.equal(fake._store['inventory/p1'].reserved, 0); // released
+  assert.equal(fake._store['inventory/p1'].stock, 10); // stock untouched by a cancel
+  const mvCancel = Object.values(fake._store).find((v) => v.type === 'order_cancel');
+  assert.equal(mvCancel.qty, 2);
+  // Reopen re-reserves and deletes cancelledAt + cancelReason.
+  fake._store['orders/o1'].cancelReason = 'customer asked';
+  assert.equal(await fb.updateOrderStatus({ id: 'o1', status: 'cancelled' }, 'new'), true);
+  assert.equal(fake._store['orders/o1'].status, 'new');
+  assert.equal(fake._store['orders/o1'].cancelledAt, undefined);
+  assert.equal(fake._store['orders/o1'].cancelReason, undefined);
+  assert.equal(fake._store['inventory/p1'].reserved, 2);
+  const mvReopen = Object.values(fake._store).find((v) => v.type === 'reopen_reserve');
+  assert.equal(mvReopen.qty, -2);
+  // Deliver deducts stock and reserved.
+  fake._store['orders/o1'].status = 'in_transit';
+  assert.equal(await fb.updateOrderStatus({ id: 'o1', status: 'in_transit' }, 'delivered'), true);
+  assert.equal(fake._store['inventory/p1'].stock, 8);
+  assert.equal(fake._store['inventory/p1'].reserved, 0);
+  assert.ok(fake._store['orders/o1'].deliveredAt);
+  const mvDel = Object.values(fake._store).find((v) => v.type === 'order_deliver');
+  assert.equal(mvDel.qty, -2);
+});
+
+test('updateOrderStatus: reopen throws with the available count when stock is short — and writes nothing', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['products/p1'] = { name: 'منتج 1', price: 100 };
+  fake._store['inventory/p1'] = { stock: 1, reserved: 0 };
+  fake._store['orders/o1'] = { status: 'cancelled', total: 200, cancelledAt: { seconds: 1 }, cancelReason: 'x', items: [{ productId: 'p1', name: 'منتج 1', price: 100, qty: 2 }] };
+  await assert.rejects(
+    fb.updateOrderStatus({ id: 'o1', status: 'cancelled' }, 'new'),
+    (e) => { assert.equal(e.code, 'INSUFFICIENT_STOCK'); assert.equal(e.availableQty, 1); assert.equal(e.productId, 'p1'); return /هو 1 بس/.test(e.message); });
+  assert.equal(fake._store['orders/o1'].status, 'cancelled');
+  assert.equal(fake._store['inventory/p1'].reserved, 0);
+  assert.equal(fake._store['orders/o1'].cancelReason, 'x'); // stamp intact
+});
+
+test('runLazySweep: expires only new orders older than 24h and releases their reservations', async () => {
+  const { fake, fb } = await signedInFb();
+  const nowSec = Math.floor(Date.now() / 1000);
+  fake._store['products/p1'] = { name: 'منتج 1', price: 100, inStock: true };
+  fake._store['inventory/p1'] = { stock: 5, reserved: 1 };
+  fake._store['orders/o-old'] = { status: 'new', total: 100, createdAt: { seconds: nowSec - 25 * 3600 }, items: [{ productId: 'p1', qty: 1 }] };
+  fake._store['orders/o-fresh'] = { status: 'new', total: 100, createdAt: { seconds: nowSec - 3600 }, items: [{ productId: 'p1', qty: 1 }] };
+  fake._store['orders/o-acc'] = { status: 'accepted', total: 100, createdAt: { seconds: nowSec - 30 * 3600 }, items: [{ productId: 'p1', qty: 1 }] };
+  const res = await fb.runLazySweep();
+  assert.equal(res.swept, 1);
+  assert.equal(res.checked, 1);
+  assert.equal(fake._store['orders/o-old'].status, 'expired');
+  assert.equal(fake._store['orders/o-old'].cancelReason, 'reservation_expired');
+  assert.equal(fake._store['inventory/p1'].reserved, 0);
+  assert.equal(fake._store['orders/o-fresh'].status, 'new');
+  assert.equal(fake._store['orders/o-acc'].status, 'accepted');
+  const mv = Object.values(fake._store).find((v) => v.type === 'reservation_expire');
+  assert.equal(mv.orderId, 'o-old');
+  // Second run is a no-op (idempotent).
+  const res2 = await fb.runLazySweep();
+  assert.equal(res2.swept, 0);
+});
+
+test('deleteFeedback: deletes the card and writes its delete-audit', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['feedback/fb-1'] = { name: 'أحمد', email: 'a@test.com', address: 'القاهرة', message: 'الطلب اتأخر', createdAt: { seconds: 1 } };
+  assert.equal(await fb.deleteFeedback('fb-1'), true);
+  assert.equal(fake._store['feedback/fb-1'], undefined);
+  const auditKeys = Object.keys(fake._store).filter((k) => k.startsWith('audit/'));
+  assert.equal(auditKeys.length, 1);
+  assert.equal(fake._store[auditKeys[0]].operation, 'feedback_delete');
+  assert.equal(fake._store[auditKeys[0]].docId, 'fb-1');
+});
+
+test('pure helpers: dedupe, totals, low stock, sales by period', () => {
+  assert.deepEqual(StoreFB.dedupeOrderLines([{ productId: 'p1', qty: 1 }, { productId: 'p1', qty: 2 }, { productId: 'p2', qty: 1 }]),
+    [{ productId: 'p1', qty: 3 }, { productId: 'p2', qty: 1 }]);
+  assert.deepEqual(StoreFB.computeOrderTotals([{ price: 100, qty: 2 }], 10), { subtotal: 200, discountAmount: 20, total: 180 });
+  assert.deepEqual(StoreFB.computeOrderTotals([{ price: 100, qty: 1 }], null), { subtotal: 100, discountAmount: 0, total: 100 });
+  assert.equal(StoreFB.computeInStock(10, 4), true);
+  assert.equal(StoreFB.computeInStock(2, 2), false);
+  const low = StoreFB.lowStockProducts(
+    [{ id: 'p1', name: 'منتج 1', minStock: 5 }, { id: 'p2', name: 'منتج 2' }, { id: 'p3', name: 'منتج 3', minStock: 2 }],
+    { p1: { stock: 10, reserved: 6 }, p2: { stock: 20, reserved: 0 }, p3: { stock: 3, reserved: 2 } });
+  assert.deepEqual(low.map((x) => x.id), ['p3', 'p1']); // available 1, then 4 — sorted ascending
+  assert.equal(low[0].available, 1);
+  const today = new Date();
+  const iso = (d) => d.toISOString();
+  const orders = [
+    { status: 'new', total: 100, createdAt: iso(today) },
+    { status: 'delivered', total: 50, createdAt: iso(new Date(today.getTime() - 86400000)) },
+    { status: 'cancelled', total: 999, createdAt: iso(today) }
+  ];
+  const day = StoreFB.salesByPeriod(orders, 'day');
+  assert.equal(day.length, 14);
+  const todayBucket = day.find((b) => b.key === today.toISOString().slice(0, 10));
+  assert.equal(todayBucket.total, 100); // the cancelled 999 is excluded
+  assert.equal(todayBucket.count, 1);
+  const month = StoreFB.salesByPeriod(orders, 'month');
+  assert.equal(month.length, 12);
 });
 
 // In-memory localStorage stand-in (Node has none) for the role-cache tests.
@@ -399,26 +634,34 @@ test('friendlyCallableError: maps the structured codes', () => {
   assert.equal(StoreFB.friendlyCallableError({ code: 'not-found' }), 'حصل خطأ: not-found');
 });
 
-test('updateOrderStatus: cancelling is an audited write with the audit entry', async () => {
+test('updateOrderStatus: cancelling is a stock-moving transaction with the audit entry', async () => {
   const { fake, fb } = await signedInFb();
-  fake._store['orders/o1'] = { status: 'preparing', total: 250 };
+  fake._store['products/p1'] = { name: 'منتج 1', price: 100 };
+  fake._store['inventory/p1'] = { stock: 10, reserved: 2 };
+  fake._store['orders/o1'] = { status: 'preparing', total: 250, items: [{ productId: 'p1', qty: 2 }] };
   assert.equal(await fb.updateOrderStatus({ id: 'o1', status: 'preparing' }, 'cancelled'), true);
   assert.equal(fake._store['orders/o1'].status, 'cancelled');
   assert.ok(fake._store['orders/o1'].operationId);
+  assert.equal(fake._store['inventory/p1'].reserved, 0); // released
   const auditKeys = Object.keys(fake._store).filter((k) => k.startsWith('audit/'));
   assert.equal(auditKeys.length, 1);
   const audit = fake._store[auditKeys[0]];
   assert.equal(audit.operation, 'order_status');
   assert.equal(audit.operationId, fake._store['orders/o1'].operationId);
   assert.deepEqual(audit.newValuesByDoc['orders/o1'], { status: 'cancelled' });
-  assert.deepEqual(audit.oldValues, { status: 'preparing' });
+  assert.deepEqual(audit.oldValues, { status: 'preparing', cancelledAt: null });
 });
 
-test('updateOrderStatus: reopen cancelled -> new is an audited write; cancelled -> in_transit stays denied', async () => {
+test('updateOrderStatus: reopen cancelled -> new re-reserves; cancelled -> in_transit stays denied', async () => {
   const { fake, fb } = await signedInFb();
-  fake._store['orders/o1'] = { status: 'cancelled', total: 250 };
+  fake._store['products/p1'] = { name: 'منتج 1', price: 100 };
+  fake._store['inventory/p1'] = { stock: 10, reserved: 0 };
+  fake._store['orders/o1'] = { status: 'cancelled', total: 250, cancelledAt: { seconds: 1 }, cancelReason: 'x', items: [{ productId: 'p1', qty: 2 }] };
   assert.equal(await fb.updateOrderStatus({ id: 'o1', status: 'cancelled' }, 'new'), true);
   assert.equal(fake._store['orders/o1'].status, 'new');
+  assert.equal(fake._store['orders/o1'].cancelledAt, undefined);
+  assert.equal(fake._store['orders/o1'].cancelReason, undefined);
+  assert.equal(fake._store['inventory/p1'].reserved, 2);
   assert.ok(fake._store['orders/o1'].operationId);
   const auditKeys = Object.keys(fake._store).filter((k) => k.startsWith('audit/'));
   assert.equal(auditKeys.length, 1);
@@ -426,7 +669,8 @@ test('updateOrderStatus: reopen cancelled -> new is an audited write; cancelled 
   assert.equal(audit.operation, 'order_status');
   assert.equal(audit.operationId, fake._store['orders/o1'].operationId);
   assert.deepEqual(audit.newValuesByDoc['orders/o1'], { status: 'new' });
-  assert.deepEqual(audit.oldValues, { status: 'cancelled' });
+  assert.ok(audit.docIds['orders/o1'].includes('cancelledAt'));
+  assert.ok(audit.docIds['orders/o1'].includes('cancelReason'));
   // Direct jump to in_transit is still denied — reopen must go via new.
   fake._store['orders/o2'] = { status: 'cancelled', total: 100 };
   await assert.rejects(
@@ -470,29 +714,25 @@ test('subscribeOrders: a website order flows through with every field (placeOrde
   assert.equal(o.createdAt.seconds, 1795000000);
 });
 
-test('subscribeFeedback: a submitted complaint flows through with every field', async () => {
+test('subscribeFeedback: a one-way card flows through with only its five fields', async () => {
   const { fake, fb } = await signedInFb();
-  // The shape the Phase 3 submitFeedback callable writes: the form
-  // fields + the tracking code the customer uses for the lookup.
+  // The no-functions shape (§3/§6): name / email / address / message /
+  // createdAt — no type, category, title, tracking code, status or
+  // priority anywhere.
   fake._store['feedback/fb-1'] = {
-    type: 'complaint', category: 'توصيل', title: 'تأخر الطلب',
-    message: 'الطلب اتأخر يومين', name: 'أحمد محمد', email: 'ahmed@test.com',
-    phone: '01012345678', orderId: 'web-1', trackingCode: 'FB-123456',
-    status: 'new', createdAt: { seconds: 1795000000, nanoseconds: 0 }
+    name: 'أحمد محمد', email: 'ahmed@test.com', address: 'القاهرة — مدينة نصر',
+    message: 'الطلب اتأخر يومين', createdAt: { seconds: 1795000000, nanoseconds: 0 }
   };
   const list = await new Promise((resolve) => fb.subscribeFeedback((l) => resolve(l)));
   assert.equal(list.length, 1);
   const f = list[0];
   assert.equal(f.id, 'fb-1');
-  assert.equal(f.type, 'complaint');
-  assert.equal(f.title, 'تأخر الطلب');
   assert.equal(f.message, 'الطلب اتأخر يومين');
   assert.equal(f.name, 'أحمد محمد');
   assert.equal(f.email, 'ahmed@test.com');
-  assert.equal(f.phone, '01012345678');
-  assert.equal(f.orderId, 'web-1');
-  assert.equal(f.trackingCode, 'FB-123456');
-  assert.equal(f.status, 'new');
+  assert.equal(f.address, 'القاهرة — مدينة نصر');
+  assert.equal(f.status, undefined);
+  assert.equal(f.trackingCode, undefined);
   assert.equal(f.createdAt.seconds, 1795000000);
 });
 
