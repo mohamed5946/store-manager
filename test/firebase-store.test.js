@@ -81,6 +81,8 @@ function createFakeFirebase() {
             if (f.op === '<') return v < want;
             if (f.op === '<=') return v <= want;
             if (f.op === '>') return v > want;
+            if (f.op === '>=') return v >= want;
+            if (f.op === 'in') return Array.isArray(want) && want.indexOf(v) !== -1;
             return true;
           }));
         return { forEach: (fn) => docs.forEach(fn), docs, empty: docs.length === 0 };
@@ -205,13 +207,21 @@ test('order state machine: legal, illegal, same-state', () => {
 });
 
 
-test('validateTemplateDoc: the classic doc passes', () => {
-  const report = StoreFB.validateTemplateDoc(StoreFB.CLASSIC_TEMPLATE);
-  assert.deepEqual(report, { passed: true, failedChecks: [] });
+test('validateTemplateDoc: the classic seed is a bundle doc (passes the registry check, fails the v1 gateway)', () => {
+  // The seed is the six-field bundle shape (decision 15, Dart
+  // _ensureClassicTemplateDoc parity): id, nameAr, nameEn, string
+  // version, shellMinVersion, bundleHash (+ status, previewImageUrl).
+  // The bundle registry check passes it; the v1-only gateway fails
+  // it — by design, the old shell cannot read a bundle registry
+  // doc (see the old-shell test in templates.test.js).
+  assert.deepEqual(StoreFB.validateRegistryManifest(StoreFB.CLASSIC_TEMPLATE, 'classic'), { passed: true, failedChecks: [] });
+  assert.equal(StoreFB.validateRegistryManifest(StoreFB.CLASSIC_TEMPLATE, 'classic').passed, true);
+  assert.equal(StoreFB.validateTemplateDoc(StoreFB.CLASSIC_TEMPLATE).passed, false);
+  assert.equal(StoreFB.CLASSIC_TEMPLATE.bundleHash, StoreFB.CLASSIC_BUNDLE_HASH);
 });
 
-test('validateTemplateDoc: bad docs fail with the right checks', () => {
-  const base = StoreFB.CLASSIC_TEMPLATE;
+test('validateTemplateDoc: bad v1 docs fail with the right checks', () => {
+  const base = v1TemplateDoc();
   assert.deepEqual(StoreFB.validateTemplateDoc({ ...base, name: '  ' }).failedChecks, ['name']);
   assert.deepEqual(StoreFB.validateTemplateDoc({ ...base, schemaVersion: 2 }).failedChecks, ['schemaVersion']);
   assert.deepEqual(StoreFB.validateTemplateDoc({ ...base, version: 0 }).failedChecks, ['version']);
@@ -235,6 +245,19 @@ test('validateTemplateDoc: bad docs fail with the right checks', () => {
     StoreFB.validateTemplateDoc({ ...base, bodyPath: 'other.json' }).failedChecks,
     ['bodyPath']);
   assert.equal(StoreFB.validateTemplateDoc(null).passed, false);
+});
+
+test('validateRegistryManifest: bad bundle docs fail with the right checks', () => {
+  const base = StoreFB.CLASSIC_TEMPLATE;
+  assert.deepEqual(StoreFB.validateRegistryManifest({ ...base, id: 'nope' }, 'nope').failedChecks, ['manifest.id']);
+  assert.deepEqual(StoreFB.validateRegistryManifest({ ...base, nameAr: '  ' }, 'classic').failedChecks, ['manifest.nameAr']);
+  assert.deepEqual(StoreFB.validateRegistryManifest({ ...base, nameEn: '' }, 'classic').failedChecks, ['manifest.nameEn']);
+  assert.deepEqual(StoreFB.validateRegistryManifest({ ...base, version: 1 }, 'classic').failedChecks, ['manifest.version']);
+  assert.deepEqual(StoreFB.validateRegistryManifest({ ...base, shellMinVersion: '9.9.9' }, 'classic').failedChecks, ['manifest.shellMinVersion']);
+  assert.deepEqual(StoreFB.validateRegistryManifest({ ...base, bundleHash: 'xyz' }, 'classic').failedChecks, ['manifest.bundleHash']);
+  assert.deepEqual(StoreFB.validateRegistryManifest({ ...base, status: 'live' }, 'classic').failedChecks, ['manifest.status']);
+  assert.deepEqual(StoreFB.validateRegistryManifest({ ...base, previewImageUrl: '/relative.png' }, 'classic').failedChecks, ['manifest.previewImageUrl']);
+  assert.equal(StoreFB.validateRegistryManifest(null, 'classic').passed, false);
 });
 
 test('buildAuditEntry: single-doc status change records the sensitive value', () => {
@@ -311,14 +334,20 @@ test('updateOrderStatus: legal writes, illegal rejects, same-state is a no-op', 
 
 test('activateTemplate: validates, seeds classic, moves the pointer', async () => {
   const { fake, fb } = await signedInFb();
-  fake._store['templates/dark'] = { ...StoreFB.CLASSIC_TEMPLATE, id: 'dark', name: 'داكن', status: 'draft' };
+  fake._store['templates/dark'] = { ...v1TemplateDoc(), id: 'dark', name: 'داكن', status: 'draft' };
   const res = await fb.activateTemplate('dark');
-  assert.deepEqual(res, { previousTemplateId: 'classic' });
+  assert.deepEqual(res, { previousTemplateId: 'classic', templateId: 'dark', bundleVersion: '1.0.0', bundleHash: null });
   assert.equal(fake._store['templates/dark'].status, 'active');
-  assert.equal(fake._store['templates/classic'].name, 'التصميم الحالي'); // auto-seeded
+  assert.equal(fake._store['templates/classic'].nameAr, 'الكلاسيكي'); // auto-seeded (six-field bundle shape)
+  assert.equal(fake._store['templates/classic'].bundleHash, StoreFB.CLASSIC_BUNDLE_HASH);
   const ptr = fake._store['storeSettings/activeTemplate'];
   assert.equal(ptr.templateId, 'dark');
   assert.equal(ptr.previousTemplateId, 'classic');
+  assert.equal(ptr.bundleVersion, '1.0.0');
+  assert.equal(ptr.bundleHash, null);
+  assert.equal(ptr.history.length, 1);
+  assert.equal(ptr.history[0].templateId, 'dark');
+  assert.equal(ptr.history[0].by, 'admin@store.test');
   await assert.rejects(fb.activateTemplate('dark'), /مفعّل أصلاً/);
   await assert.rejects(fb.activateTemplate('ghost'), /مش موجود/);
   fake._store['templates/broken'] = { name: '', schemaVersion: 2, status: 'draft', version: 0 };
@@ -330,6 +359,7 @@ test('createManualOrder: one transaction reserves, claims the discount, writes o
   fake._store['products/p1'] = { name: 'منتج 1', price: 100, inStock: true };
   fake._store['inventory/p1'] = { stock: 10, reserved: 2 };
   fake._store['discounts/X10'] = { code: 'X10', active: true, usedBy: null, percent: 10, expiresAt: null };
+  fake._store['storeSettings/settings'] = { deliveryFee: 30 };
   const input = {
     clientOrderId: 'c-1',
     items: [{ productId: 'p1', qty: 2 }],
@@ -354,7 +384,10 @@ test('createManualOrder: one transaction reserves, claims the discount, writes o
   assert.equal(o.discountPercent, 10);
   assert.equal(o.discountAmount, 20);
   assert.equal(o.total, 180);
-  assert.deepEqual(o.items, [{ productId: 'p1', name: 'منتج 1', price: 100, qty: 2 }]);
+  assert.equal(o.saleSavings, 0);
+  assert.equal(o.deliveryFee, 30);
+  assert.equal(o.amountDue, 210);
+  assert.deepEqual(o.items, [{ productId: 'p1', name: 'منتج 1', price: 100, basePrice: null, qty: 2 }]);
   assert.equal(o.acceptedAt, null);
   assert.equal(o.cancelReason, null);
   assert.equal(o.trackingNumber, null);
@@ -381,6 +414,7 @@ test('createManualOrder: idempotent — a retry with the same clientOrderId retu
   const { fake, fb } = await signedInFb();
   fake._store['products/p1'] = { name: 'منتج 1', price: 100 };
   fake._store['inventory/p1'] = { stock: 10, reserved: 0 };
+  fake._store['storeSettings/settings'] = { deliveryFee: 30 };
   const input = {
     clientOrderId: 'c-9',
     items: [{ productId: 'p1', qty: 2 }],
@@ -403,6 +437,7 @@ test('createManualOrder: dedupes lines, rejects short stock with the available c
   fake._store['inventory/p1'] = { stock: 1, reserved: 0 };
   fake._store['inventory/p2'] = { stock: 10, reserved: 0 };
   fake._store['discounts/USED'] = { code: 'USED', active: true, usedBy: 'other-order', percent: 10 };
+  fake._store['storeSettings/settings'] = { deliveryFee: 30 };
   const base = {
     clientOrderId: 'c-x',
     items: [{ productId: 'p2', qty: 1 }, { productId: 'p2', qty: 2 }], // dedupes to 3
@@ -506,15 +541,30 @@ test('deleteFeedback: deletes the card and writes its delete-audit', async () =>
   assert.equal(fake._store['feedback/fb-1'], undefined);
   const auditKeys = Object.keys(fake._store).filter((k) => k.startsWith('audit/'));
   assert.equal(auditKeys.length, 1);
-  assert.equal(fake._store[auditKeys[0]].operation, 'feedback_delete');
+  // Deterministic delete audit (rules hasDeleteAudit): the entry id
+  // is del_<collection>_<docId> with operation 'delete'.
+  assert.deepEqual(auditKeys, ['audit/del_feedback_fb-1']);
+  assert.equal(fake._store[auditKeys[0]].operation, 'delete');
+  assert.equal(fake._store[auditKeys[0]].collection, 'feedback');
   assert.equal(fake._store[auditKeys[0]].docId, 'fb-1');
 });
 
 test('pure helpers: dedupe, totals, low stock, sales by period', () => {
   assert.deepEqual(StoreFB.dedupeOrderLines([{ productId: 'p1', qty: 1 }, { productId: 'p1', qty: 2 }, { productId: 'p2', qty: 1 }]),
     [{ productId: 'p1', qty: 3 }, { productId: 'p2', qty: 1 }]);
-  assert.deepEqual(StoreFB.computeOrderTotals([{ price: 100, qty: 2 }], 10), { subtotal: 200, discountAmount: 20, total: 180 });
-  assert.deepEqual(StoreFB.computeOrderTotals([{ price: 100, qty: 1 }], null), { subtotal: 100, discountAmount: 0, total: 100 });
+  // Pricing (§8): the canonical helper returns every shared figure —
+  // feeUnset / feeWaived / amountDue (null while the fee is unset) /
+  // savingTotal / insteadOf, identical to the storefront + Flutter.
+  assert.deepEqual(StoreFB.computeOrderTotals([{ price: 100, qty: 2 }], 10, { deliveryFee: 30 }), {
+    perLine: [{ saving: 0, pct: null }], baseSubtotal: 200, subtotal: 200, saleSavings: 0,
+    discountPercent: 10, discountAmount: 20, total: 180, deliveryFee: 30, feeUnset: false,
+    feeWaived: false, amountDue: 210, savingTotal: 20, insteadOf: 230
+  });
+  assert.deepEqual(StoreFB.computeOrderTotals([{ price: 100, qty: 1 }], null), {
+    perLine: [{ saving: 0, pct: null }], baseSubtotal: 100, subtotal: 100, saleSavings: 0,
+    discountPercent: null, discountAmount: 0, total: 100, deliveryFee: null, feeUnset: true,
+    feeWaived: false, amountDue: null, savingTotal: 0, insteadOf: null
+  });
   assert.equal(StoreFB.computeInStock(10, 4), true);
   assert.equal(StoreFB.computeInStock(2, 2), false);
   const low = StoreFB.lowStockProducts(
@@ -755,7 +805,7 @@ test('updateOrderPaymentStatus: paid/unpaid is an audited write', async () => {
 
 test('updateTemplateGrid: validates, then saves one audited write', async () => {
   const { fake, fb } = await signedInFb();
-  fake._store['templates/dark'] = { ...StoreFB.CLASSIC_TEMPLATE, id: 'dark', name: 'داكن', grid: { columns: null, rows: null, minColumnWidthPx: 250 } };
+  fake._store['templates/dark'] = { ...v1TemplateDoc(), id: 'dark', name: 'داكن', grid: { columns: null, rows: null, minColumnWidthPx: 250 } };
   await assert.rejects(fb.updateTemplateGrid('dark', { columns: 13, rows: 2 }), /مش صالحة/);
   await assert.rejects(fb.updateTemplateGrid('dark', { columns: 3, rows: 0 }), /مش صالحة/);
   await assert.rejects(fb.updateTemplateGrid('ghost', { columns: 3, rows: 2 }), /مش موجود/);
@@ -809,4 +859,1124 @@ test('setPersistenceMode: remember-me picks LOCAL, otherwise SESSION', async () 
   assert.equal(fake._authState.persistence, 'local');
   await fb.setPersistenceMode(false);
   assert.equal(fake._authState.persistence, 'session');
+});
+
+// ---- Pricing (pricing-bundle.md, Technical Plan §8 + Verification
+// Plan matrix cases A–G). The shared numeric matrix is the test
+// oracle: the PC path passes only when it reproduces every row
+// exactly, with identical expected totals to the storefront and
+// Flutter paths. No ±1 EGP tolerance anywhere.
+
+test('pricing matrix A — worked example: 500 → 300 x1, no code, fee 30', () => {
+  const t = StoreFB.computeOrderTotals([{ price: 300, basePrice: 500, qty: 1 }], null, { deliveryFee: 30 });
+  assert.equal(t.baseSubtotal, 500);
+  assert.equal(t.subtotal, 300);
+  assert.equal(t.saleSavings, 200);
+  assert.equal(t.discountAmount, 0);
+  assert.equal(t.total, 300);
+  assert.equal(t.deliveryFee, 30);
+  assert.equal(t.amountDue, 330);
+  assert.deepEqual(t.perLine, [{ saving: 200, pct: 40 }]);
+  assert.equal(t.savingTotal, 200);
+  assert.equal(t.insteadOf, 530);
+});
+
+test('pricing matrix B — fee 0: amountDue == items total', () => {
+  const t = StoreFB.computeOrderTotals([{ price: 300, basePrice: 500, qty: 1 }], null, { deliveryFee: 0 });
+  assert.equal(t.baseSubtotal, 500);
+  assert.equal(t.subtotal, 300);
+  assert.equal(t.saleSavings, 200);
+  assert.equal(t.discountAmount, 0);
+  assert.equal(t.total, 300);
+  assert.equal(t.deliveryFee, 0);
+  assert.equal(t.amountDue, 300);
+  assert.equal(t.insteadOf, 500);
+});
+
+test('pricing matrix C — code on sale: 10% on the post-sale subtotal', () => {
+  const t = StoreFB.computeOrderTotals([{ price: 300, basePrice: 500, qty: 1 }], 10, { deliveryFee: 30 });
+  assert.equal(t.baseSubtotal, 500);
+  assert.equal(t.subtotal, 300);
+  assert.equal(t.saleSavings, 200);
+  assert.equal(t.discountAmount, 30);
+  assert.equal(t.total, 270);
+  assert.equal(t.deliveryFee, 30);
+  assert.equal(t.amountDue, 300);
+});
+
+test('pricing matrix D — multi-line: 500 → 300 x2 + 150 x1', () => {
+  const t = StoreFB.computeOrderTotals(
+    [{ price: 300, basePrice: 500, qty: 2 }, { price: 150, basePrice: null, qty: 1 }],
+    null, { deliveryFee: 30 });
+  assert.equal(t.baseSubtotal, 1150);
+  assert.equal(t.subtotal, 750);
+  assert.equal(t.saleSavings, 400);
+  assert.equal(t.discountAmount, 0);
+  assert.equal(t.total, 750);
+  assert.equal(t.deliveryFee, 30);
+  assert.equal(t.amountDue, 780);
+  assert.equal(t.insteadOf, 1180);
+});
+
+test('pricing matrix E — rounding, % display: 199 → 149 saves exactly 50', () => {
+  const t = StoreFB.computeOrderTotals([{ price: 149, basePrice: 199, qty: 1 }], null, { deliveryFee: 30 });
+  assert.equal(t.baseSubtotal, 199);
+  assert.equal(t.subtotal, 149);
+  assert.equal(t.saleSavings, 50);
+  assert.equal(t.discountAmount, 0);
+  assert.equal(t.total, 149);
+  assert.equal(t.deliveryFee, 30);
+  assert.equal(t.amountDue, 179);
+  // The saving is exact, and the % badge is SUPPRESSED for this
+  // line (§8: 25% × 199 = 49.75 ≠ 50) — never a displayed 25%.
+  assert.equal(t.perLine.length, 1);
+  assert.equal(t.perLine[0].saving, 50);
+  assert.equal(t.perLine[0].pct, null);
+  assert.equal(t.savingTotal, 50);
+  assert.equal(t.insteadOf, 229);
+});
+
+test('pricing matrix F — rounding, code: round(149 x 10 / 100) = round(14.9) = 15', () => {
+  const t = StoreFB.computeOrderTotals([{ price: 149, basePrice: 199, qty: 1 }], 10, { deliveryFee: 30 });
+  assert.equal(t.baseSubtotal, 199);
+  assert.equal(t.subtotal, 149);
+  assert.equal(t.saleSavings, 50);
+  assert.equal(t.discountAmount, 15);
+  assert.equal(t.total, 134);
+  assert.equal(t.deliveryFee, 30);
+  assert.equal(t.amountDue, 164);
+});
+
+test('pricing matrix G — code halves-up: round(305 x 10 / 100) = round(30.5) = 31', () => {
+  const t = StoreFB.computeOrderTotals([{ price: 305, basePrice: null, qty: 1 }], 10, { deliveryFee: 30 });
+  assert.equal(t.baseSubtotal, 305);
+  assert.equal(t.subtotal, 305);
+  assert.equal(t.saleSavings, 0);
+  assert.equal(t.discountAmount, 31);
+  assert.equal(t.total, 274);
+  assert.equal(t.deliveryFee, 30);
+  assert.equal(t.amountDue, 304);
+});
+
+test('pricing % badge: exact percentages show, inexact ones are suppressed (§8)', () => {
+  assert.equal(StoreFB.salePercent({ price: 300, basePrice: 500 }), 40);
+  assert.equal(StoreFB.salePercent({ price: 90, basePrice: 100 }), 10);
+  assert.equal(StoreFB.salePercent({ price: 150, basePrice: 200 }), 25);
+  assert.equal(StoreFB.salePercent({ price: 149, basePrice: 199 }), null);
+  assert.equal(StoreFB.salePercent({ price: 100, basePrice: 100 }), null);
+  assert.equal(StoreFB.salePercent({ price: 100, basePrice: null }), null);
+  assert.equal(StoreFB.salePercent({ price: 100, basePrice: 90 }), null);
+  assert.equal(StoreFB.isOnSale({ price: 149, basePrice: 199 }), true);
+  assert.equal(StoreFB.isOnSale({ price: 100, basePrice: 100 }), false);
+  assert.equal(StoreFB.roundHalfUp(30.5), 31);
+  assert.equal(StoreFB.roundHalfUp(14.9), 15);
+  assert.equal(StoreFB.roundHalfUp(14.4), 14);
+});
+
+test('pricing fee: missing fee blocks with amountDue null; threshold waives the fee (D3)', () => {
+  const unset = StoreFB.computeOrderTotals([{ price: 300, qty: 1 }], null, {});
+  assert.equal(unset.feeUnset, true);
+  assert.equal(unset.deliveryFee, null);
+  assert.equal(unset.amountDue, null);
+  assert.equal(unset.insteadOf, null);
+  const waived = StoreFB.computeOrderTotals([{ price: 300, qty: 1 }], null, { deliveryFee: 30, freeDeliveryThreshold: 300 });
+  assert.equal(waived.feeWaived, true);
+  assert.equal(waived.deliveryFee, 0);
+  assert.equal(waived.amountDue, 300);
+  const below = StoreFB.computeOrderTotals([{ price: 299, qty: 1 }], null, { deliveryFee: 30, freeDeliveryThreshold: 300 });
+  assert.equal(below.feeWaived, false);
+  assert.equal(below.deliveryFee, 30);
+  assert.equal(below.amountDue, 329);
+  // Threshold 0 (or absent) never waives.
+  const zero = StoreFB.computeOrderTotals([{ price: 300, qty: 1 }], null, { deliveryFee: 30, freeDeliveryThreshold: 0 });
+  assert.equal(zero.feeWaived, false);
+  assert.equal(zero.amountDue, 330);
+  // An invalid stored base (base <= price) is no sale.
+  const bad = StoreFB.computeOrderTotals([{ price: 100, basePrice: 90, qty: 1 }], null, { deliveryFee: 30 });
+  assert.equal(bad.baseSubtotal, 100);
+  assert.equal(bad.saleSavings, 0);
+});
+
+test('createManualOrder: snapshots per-line basePrice + saleSavings + deliveryFee + amountDue, audit records the money fields', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['products/p1'] = { name: 'منتج 1', price: 300, basePrice: 500 };
+  fake._store['products/p2'] = { name: 'منتج 2', price: 150 };
+  fake._store['inventory/p1'] = { stock: 10, reserved: 0 };
+  fake._store['inventory/p2'] = { stock: 10, reserved: 0 };
+  fake._store['storeSettings/settings'] = { deliveryFee: 30 };
+  const res = await fb.createManualOrder({
+    clientOrderId: 'c-pr1',
+    items: [{ productId: 'p1', qty: 2 }, { productId: 'p2', qty: 1 }],
+    customer: { name: 'أحمد', phone: '01012345678', address: 'القاهرة' }
+  });
+  assert.equal(res.created, true);
+  const o = fake._store['orders/c-pr1'];
+  assert.equal(o.subtotal, 750);
+  assert.equal(o.saleSavings, 400);
+  assert.equal(o.total, 750);
+  assert.equal(o.deliveryFee, 30);
+  assert.equal(o.amountDue, 780);
+  assert.equal(o.attemptId, undefined); // manual orders have no checkout attempt
+  assert.deepEqual(o.items, [
+    { productId: 'p1', name: 'منتج 1', price: 300, basePrice: 500, qty: 2 },
+    { productId: 'p2', name: 'منتج 2', price: 150, basePrice: null, qty: 1 }
+  ]);
+  const audit = Object.values(fake._store).find((v) => v.operation === 'manual_order_create');
+  // 'items' is covered whenever a line carries a base price
+  // (orderAuditOk) — so it is recorded in the audit entry too.
+  assert.deepEqual(audit.newValuesByDoc['orders/c-pr1'], {
+    status: 'new', total: 750, saleSavings: 400, deliveryFee: 30, amountDue: 780,
+    items: [
+      { productId: 'p1', name: 'منتج 1', price: 300, basePrice: 500, qty: 2 },
+      { productId: 'p2', name: 'منتج 2', price: 150, basePrice: null, qty: 1 }
+    ]
+  });
+  assert.ok(audit.docIds['orders/c-pr1'].includes('items'));
+  assert.ok(audit.docIds['orders/c-pr1'].includes('deliveryFee'));
+});
+
+test('createManualOrder: missing delivery fee rejects (FEE_NOT_SET) and writes nothing', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['products/p1'] = { name: 'منتج 1', price: 100 };
+  fake._store['inventory/p1'] = { stock: 10, reserved: 0 };
+  // No storeSettings/settings doc at all.
+  await assert.rejects(
+    fb.createManualOrder({
+      clientOrderId: 'c-nofee',
+      items: [{ productId: 'p1', qty: 1 }],
+      customer: { name: 'أحمد', phone: '01012345678', address: 'القاهرة' }
+    }),
+    (e) => { assert.equal(e.code, 'FEE_NOT_SET'); return /رسوم التوصيل غير محددة/.test(e.message); });
+  assert.equal(fake._store['orders/c-nofee'], undefined);
+  assert.equal(fake._store['inventory/p1'].reserved, 0);
+});
+
+test('createManualOrder: free-delivery threshold from settings waives the fee', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['products/p1'] = { name: 'منتج 1', price: 300, basePrice: 500 };
+  fake._store['inventory/p1'] = { stock: 10, reserved: 0 };
+  fake._store['storeSettings/settings'] = { deliveryFee: 30, freeDeliveryThreshold: 300 };
+  const res = await fb.createManualOrder({
+    clientOrderId: 'c-thr',
+    items: [{ productId: 'p1', qty: 1 }],
+    customer: { name: 'أحمد', phone: '01012345678', address: 'القاهرة' }
+  });
+  assert.equal(res.created, true);
+  const o = fake._store['orders/c-thr'];
+  assert.equal(o.deliveryFee, 0);
+  assert.equal(o.amountDue, 300);
+});
+
+test('pricing audit: basePrice and the money fields are sensitive — a missing entry must fail', () => {
+  // The 1.1.2 save-bug lesson: any new field written must be
+  // recorded in the sensitive map, or the rules deny the write.
+  // saveWebProduct lives in index.html (not a module), so the
+  // contract is asserted here at the level the tests can reach:
+  // the factory's SENSITIVE_FIELDS and the audit entry shape.
+  for (const f of ['basePrice', 'deliveryFee', 'saleSavings', 'amountDue']) {
+    assert.ok(StoreFB.SENSITIVE_FIELDS.includes(f), f + ' must be a sensitive field');
+  }
+  const entry = StoreFB.buildAuditEntry({
+    opId: 'op-1', actor: 'uid-admin', actorName: 'admin@store.test', timestamp: { __serverTimestamp: true },
+    operation: 'product_update',
+    writes: { 'products/p1': { name: 'منتج 1', price: 300, basePrice: 500 } },
+    sensitive: { 'products/p1': { price: 300, basePrice: 500 } },
+    oldValues: {}, topNewValues: { productId: 'p1', basePrice: 500 }
+  });
+  assert.equal(entry.newValuesByDoc['products/p1'].basePrice, 500);
+  assert.ok(entry.docIds['products/p1'].includes('basePrice'));
+  // A sensitive map that omits basePrice while the write carries it
+  // is exactly the 1.1.2 bug — the audit must expose the gap.
+  const bad = StoreFB.buildAuditEntry({
+    opId: 'op-2', actor: 'uid-admin', actorName: 'admin@store.test', timestamp: { __serverTimestamp: true },
+    operation: 'product_update',
+    writes: { 'products/p1': { price: 300, basePrice: 500 } },
+    sensitive: { 'products/p1': { price: 300 } },
+    oldValues: {}, topNewValues: {}
+  });
+  assert.equal(bad.newValuesByDoc['products/p1'].basePrice, undefined);
+});
+
+test('computePricingCounters: sale share, savings, fees and cash from order docs; rejections from attempt docs', () => {
+  const orders = [
+    { saleSavings: 200, deliveryFee: 30, amountDue: 330, total: 300 },
+    { saleSavings: 0, deliveryFee: 30, amountDue: 180, total: 150 },
+    { saleSavings: 50, deliveryFee: 0, amountDue: 149, total: 149 },
+    { saleSavings: 0, deliveryFee: 30, total: 100 } // legacy order: no amountDue — falls back to total
+  ];
+  const attempts = [
+    { errorCode: 'PRICE_CHANGED' },
+    { errorCode: 'FEE_CHANGED' },
+    { errorCode: 'INSUFFICIENT_STOCK' },
+    {},
+    {}
+  ];
+  const c = StoreFB.computePricingCounters(orders, attempts);
+  assert.equal(c.totalOrders, 4);
+  assert.equal(c.saleOrders, 2);
+  assert.equal(c.saleOrderShare, 50);
+  assert.equal(c.totalSaleSavings, 250);
+  assert.equal(c.totalFeeCollected, 90);
+  assert.equal(c.cashCollected, 330 + 180 + 149 + 100);
+  assert.equal(c.attempts, 5);
+  assert.equal(c.failedAttempts, 3);
+  assert.equal(c.priceChangeRejections, 2);
+  assert.equal(c.rejectionRate, 40);
+  assert.deepEqual(c.failuresByCode, { PRICE_CHANGED: 1, FEE_CHANGED: 1, INSUFFICIENT_STOCK: 1 });
+  const empty = StoreFB.computePricingCounters([], []);
+  assert.equal(empty.saleOrderShare, 0);
+  assert.equal(empty.rejectionRate, 0);
+});
+
+// ════════════════════════════════════════
+// INCOMPLETE ORDERS (checkout drafts)
+// ════════════════════════════════════════
+
+function seedConvertDraftBase(fake, overrides) {
+  const o = overrides || {};
+  fake._store['products/p1'] = { name: 'منتج 1', price: 100 };
+  fake._store['inventory/p1'] = { stock: 10, reserved: 0 };
+  fake._store['storeSettings/settings'] = { deliveryFee: 30 };
+  const now = new Date();
+  fake._store['checkoutDrafts/d1'] = {
+    sessionId: 'd1', sessionToken: 'tok-1',
+    name: 'أحمد', phone: '01012345678',
+    cart: [{ productId: 'p1', qty: 2, price: 100, priceAtDraft: 100 }],
+    status: 'new', createdAt: new Date(now.getTime() - 10000), lastSyncAt: now,
+    ...(o.draft || {})
+  };
+  return now;
+}
+
+function convertDraftInput(overrides) {
+  return {
+    id: 'd1', customerName: 'أحمد', customerPhone: '01012345678',
+    governorate: 'cairo', detailedAddress: 'شارع التحرير 5', customerAddress: 'شارع التحرير 5، القاهرة',
+    ...(overrides || {})
+  };
+}
+
+test('convertDraft: creates one order, reserves stock, marks the draft converted', async () => {
+  const { fake, fb } = await signedInFb();
+  seedConvertDraftBase(fake);
+  const res = await fb.convertDraft(convertDraftInput());
+  assert.equal(res.result, 'ok');
+  assert.equal(res.created, true);
+  assert.equal(res.order.id, 'd1');
+  const o = fake._store['orders/d1'];
+  assert.equal(o.status, 'new');
+  assert.equal(o.source, 'admin_manual');
+  assert.equal(o.customerName, 'أحمد');
+  assert.equal(o.customerPhone, '01012345678');
+  assert.equal(o.governorate, 'cairo');
+  assert.equal(o.detailedAddress, 'شارع التحرير 5');
+  assert.equal(o.subtotal, 200);
+  assert.equal(o.deliveryFee, 30);
+  assert.equal(o.amountDue, 230);
+  assert.deepEqual(o.items, [{ productId: 'p1', name: 'منتج 1', price: 100, basePrice: null, qty: 2 }]);
+  assert.equal(fake._store['inventory/p1'].reserved, 2);
+  const d = fake._store['checkoutDrafts/d1'];
+  assert.equal(d.status, 'converted');
+  assert.equal(d.orderId, 'd1');
+  const mvKeys = Object.keys(fake._store).filter((k) => k.startsWith('movements/'));
+  assert.equal(mvKeys.length, 1);
+  assert.equal(fake._store[mvKeys[0]].source, 'convertDraft');
+  const audit = Object.values(fake._store).find((v) => v.operation === 'manual_order_create');
+  assert.equal(audit.docId, 'd1');
+  assert.ok(audit.docIds['orders/d1'].includes('status'));
+});
+
+test('convertDraft: second call returns the existing order without re-reserving', async () => {
+  const { fake, fb } = await signedInFb();
+  seedConvertDraftBase(fake);
+  const first = await fb.convertDraft(convertDraftInput());
+  assert.equal(first.result, 'ok');
+  assert.equal(fake._store['inventory/p1'].reserved, 2);
+  const second = await fb.convertDraft(convertDraftInput());
+  assert.equal(second.result, 'ALREADY_CONVERTED');
+  assert.equal(second.created, false);
+  assert.equal(second.order.id, 'd1');
+  assert.equal(fake._store['inventory/p1'].reserved, 2); // no double reserve
+  assert.equal(Object.keys(fake._store).filter((k) => k.startsWith('orders/')).length, 1);
+});
+
+test('convertDraft: out of stock returns a result and creates nothing', async () => {
+  const { fake, fb } = await signedInFb();
+  seedConvertDraftBase(fake, { draft: { cart: [{ productId: 'p1', qty: 3, price: 100, priceAtDraft: 100 }] } });
+  fake._store['inventory/p1'] = { stock: 2, reserved: 0 };
+  const res = await fb.convertDraft(convertDraftInput());
+  assert.equal(res.result, 'INSUFFICIENT_STOCK');
+  assert.equal(res.productId, 'p1');
+  assert.equal(res.availableQty, 2);
+  assert.equal(res.created, false);
+  assert.equal(fake._store['orders/d1'], undefined);
+  assert.equal(fake._store['inventory/p1'].reserved, 0);
+  assert.equal(fake._store['checkoutDrafts/d1'].status, 'new'); // still convertible later
+});
+
+test('convertDraft: price change returns a result and creates nothing', async () => {
+  const { fake, fb } = await signedInFb();
+  seedConvertDraftBase(fake);
+  fake._store['products/p1'] = { name: 'منتج 1', price: 120 }; // was 100 at draft time
+  const res = await fb.convertDraft(convertDraftInput());
+  assert.equal(res.result, 'PRICE_CHANGED');
+  assert.equal(res.productId, 'p1');
+  assert.equal(res.oldPrice, 100);
+  assert.equal(res.newPrice, 120);
+  assert.equal(fake._store['orders/d1'], undefined);
+  assert.equal(fake._store['inventory/p1'].reserved, 0);
+});
+
+test('convertDraft: moot — customer already ordered after the draft — marks the draft and returns the existing order', async () => {
+  const { fake, fb } = await signedInFb();
+  const now = seedConvertDraftBase(fake);
+  fake._store['orders/o9'] = {
+    customerName: 'أحمد', customerPhone: '01012345678', status: 'new',
+    createdAt: new Date(now.getTime() + 5000), total: 230
+  };
+  const res = await fb.convertDraft(convertDraftInput());
+  assert.equal(res.result, 'MOOT');
+  assert.equal(res.mootOrderId, 'o9');
+  assert.equal(res.order.id, 'o9');
+  assert.equal(res.created, false);
+  assert.equal(fake._store['checkoutDrafts/d1'].mootOrderId, 'o9');
+  assert.equal(fake._store['orders/d1'], undefined); // no duplicate order
+  assert.equal(fake._store['inventory/p1'].reserved, 0);
+});
+
+test('convertDraft: rejects bad input and a dead draft', async () => {
+  const { fake, fb } = await signedInFb();
+  seedConvertDraftBase(fake);
+  await assert.rejects(
+    fb.convertDraft(convertDraftInput({ customerName: '  ' })),
+    (e) => e.code === 'INVALID_INPUT');
+  await assert.rejects(
+    fb.convertDraft(convertDraftInput({ customerPhone: '12345' })),
+    (e) => e.code === 'INVALID_INPUT');
+  await assert.rejects(
+    fb.convertDraft(convertDraftInput({ customerPhone2: '12345' })),
+    (e) => e.code === 'INVALID_INPUT');
+  await assert.rejects(
+    fb.convertDraft(convertDraftInput({ customerAddress: '  ' })),
+    (e) => e.code === 'INVALID_INPUT');
+  await assert.rejects(
+    fb.convertDraft(convertDraftInput({ id: 'missing' })),
+    (e) => e.code === 'INVALID_INPUT');
+  fake._store['checkoutDrafts/d1'].status = 'dead';
+  await assert.rejects(
+    fb.convertDraft(convertDraftInput()),
+    (e) => e.code === 'INVALID_INPUT');
+});
+
+test('convertDraft: throws FEE_NOT_SET when the delivery fee is unset', async () => {
+  const { fake, fb } = await signedInFb();
+  seedConvertDraftBase(fake);
+  delete fake._store['storeSettings/settings'];
+  await assert.rejects(
+    fb.convertDraft(convertDraftInput()),
+    (e) => e.code === 'FEE_NOT_SET');
+});
+
+test('updateDraftStatus: valid transitions pass, illegal ones reject; deleteDraft writes the deterministic delete audit', async () => {
+  const { fake, fb } = await signedInFb();
+  seedConvertDraftBase(fake);
+  await fb.updateDraftStatus('d1', 'contacted');
+  assert.equal(fake._store['checkoutDrafts/d1'].status, 'contacted');
+  await fb.updateDraftStatus('d1', 'no-answer');
+  assert.equal(fake._store['checkoutDrafts/d1'].status, 'no-answer');
+  await assert.rejects(fb.updateDraftStatus('d1', 'new'), /مينفعش تغير الحالة/); // no-answer -> new is not a legal transition
+  await fb.updateDraftStatus('d1', 'dead');
+  assert.equal(fake._store['checkoutDrafts/d1'].status, 'dead');
+  await assert.rejects(fb.updateDraftStatus('d1', 'contacted'), /مينفعش تغير الحالة/);
+  await fb.deleteDraft('d1');
+  assert.equal(fake._store['checkoutDrafts/d1'], undefined);
+  const audit = fake._store['audit/del_checkoutDrafts_d1'];
+  assert.ok(audit);
+  assert.equal(audit.operation, 'delete');
+  assert.equal(audit.collection, 'checkoutDrafts');
+  assert.equal(audit.docId, 'd1');
+});
+
+test('saveGovernorates: merge-only — an unrelated field on the doc survives; 28 entries rejected', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['storeSettings/governorates'] = { entries: [], note: 'keep-me' };
+  await fb.saveGovernorates([{ id: 'cairo', name: 'القاهرة', active: true }, { id: 'giza', name: 'الجيزة', active: false }]);
+  const doc = fake._store['storeSettings/governorates'];
+  assert.equal(doc.entries.length, 2);
+  assert.equal(doc.entries[0].id, 'cairo');
+  assert.equal(doc.note, 'keep-me');
+  const tooMany = Array.from({ length: 28 }, (_, i) => ({ id: 'g' + i, name: 'x', active: true }));
+  await assert.rejects(fb.saveGovernorates(tooMany), /27/);
+});
+
+test('saveDeletionConfig: 0–365 accepted, out of range rejected; getDeletionConfig defaults to 0', async () => {
+  const { fake, fb } = await signedInFb();
+  assert.deepEqual(await fb.getDeletionConfig(), { autoDeleteDays: 0 });
+  await fb.saveDeletionConfig(30);
+  assert.equal(fake._store['storeSettings/deletion'].autoDeleteDays, 30);
+  assert.deepEqual(await fb.getDeletionConfig(), { autoDeleteDays: 30 });
+  await assert.rejects(fb.saveDeletionConfig(400), /365/);
+  await assert.rejects(fb.saveDeletionConfig(-1), /365/);
+});
+
+test('runDraftDeletion: deletes only drafts older than X days', async () => {
+  const { fake, fb } = await signedInFb();
+  const now = new Date();
+  const day = 24 * 60 * 60 * 1000;
+  fake._store['storeSettings/deletion'] = { autoDeleteDays: 30 };
+  fake._store['checkoutDrafts/d-old'] = { status: 'new', createdAt: new Date(now.getTime() - 40 * day), lastSyncAt: new Date(now.getTime() - 40 * day) };
+  fake._store['checkoutDrafts/d-mid'] = { status: 'new', createdAt: new Date(now.getTime() - 10 * day), lastSyncAt: new Date(now.getTime() - 10 * day) };
+  fake._store['checkoutDrafts/d-new'] = { status: 'new', createdAt: now, lastSyncAt: now };
+  const res = await fb.runDraftDeletion();
+  assert.equal(res.skipped, false);
+  assert.equal(res.deleted, 1);
+  assert.equal(res.kept, 2);
+  assert.equal(fake._store['checkoutDrafts/d-old'], undefined);
+  assert.ok(fake._store['checkoutDrafts/d-mid']);
+  assert.ok(fake._store['checkoutDrafts/d-new']);
+});
+
+test('runDraftDeletion: skips when lastRunAt is today', async () => {
+  const { fake, fb } = await signedInFb();
+  const now = new Date();
+  const day = 24 * 60 * 60 * 1000;
+  fake._store['storeSettings/deletion'] = { autoDeleteDays: 30, lastRunAt: now };
+  fake._store['checkoutDrafts/d-old'] = { status: 'new', createdAt: new Date(now.getTime() - 40 * day), lastSyncAt: new Date(now.getTime() - 40 * day) };
+  const res = await fb.runDraftDeletion();
+  assert.equal(res.skipped, true);
+  assert.equal(res.deleted, 0);
+  assert.ok(fake._store['checkoutDrafts/d-old']); // untouched
+});
+
+test('runDraftDeletion: X=0 deletes nothing by age but enforces the newest-100 cap', async () => {
+  const { fake, fb } = await signedInFb();
+  const now = new Date();
+  fake._store['storeSettings/deletion'] = { autoDeleteDays: 0 };
+  for (let i = 0; i < 105; i++) {
+    fake._store['checkoutDrafts/d' + i] = {
+      status: 'new',
+      createdAt: new Date(now.getTime() - i * 60000),
+      lastSyncAt: new Date(now.getTime() - i * 60000)
+    };
+  }
+  const res = await fb.runDraftDeletion();
+  assert.equal(res.skipped, false);
+  assert.equal(res.deleted, 5);
+  assert.equal(res.kept, 100);
+  const remaining = Object.keys(fake._store).filter((k) => k.startsWith('checkoutDrafts/'));
+  assert.equal(remaining.length, 100);
+  assert.ok(fake._store['checkoutDrafts/d0']); // newest kept
+  assert.equal(fake._store['checkoutDrafts/d104'], undefined); // oldest cut
+});
+
+test('fetchOrdersByPhones: newest order per phone, chunked by 10', async () => {
+  const { fake, fb } = await signedInFb();
+  const now = new Date();
+  fake._store['orders/o1'] = { customerPhone: '01011111111', createdAt: new Date(now.getTime() - 1000), total: 100 };
+  fake._store['orders/o2'] = { customerPhone: '01011111111', createdAt: now, total: 200 };
+  fake._store['orders/o3'] = { customerPhone: '01022222222', createdAt: now, total: 300 };
+  const byPhone = await fb.fetchOrdersByPhones(['01011111111', '01022222222', '01033333333']);
+  assert.equal(byPhone['01011111111'].id, 'o2'); // newest wins
+  assert.equal(byPhone['01022222222'].id, 'o3');
+  assert.equal(byPhone['01033333333'], undefined);
+});
+
+test('dailyWriteEstimate: counts today drafts and journeys, 2 writes each', async () => {
+  const { fake, fb } = await signedInFb();
+  const now = new Date();
+  const day = 24 * 60 * 60 * 1000;
+  fake._store['checkoutDrafts/a'] = { createdAt: now };
+  fake._store['checkoutDrafts/b'] = { createdAt: now };
+  fake._store['checkoutDrafts/old'] = { createdAt: new Date(now.getTime() - 2 * day) };
+  fake._store['journeySummaries/s1'] = { startedAt: now };
+  const est = await fb.dailyWriteEstimate();
+  assert.equal(est.draftsToday, 2);
+  assert.equal(est.journeysToday, 1);
+  assert.equal(est.estimatedWrites, 6);
+});
+
+// ════════════════════════════════════════
+// AUDIT FIX PASS (2026-11-27): B2 / B4 / B6 + auditedDelete
+// ════════════════════════════════════════
+
+test('draftIsCallable: the triage minimum — name + non-empty cart + full valid phone', () => {
+  const callable = StoreFB.draftIsCallable;
+  assert.equal(typeof callable, 'function');
+  const good = { name: 'أحمد', phone: '01012345678', cart: [{ productId: 'p1' }] };
+  assert.equal(callable(good), true);
+  assert.equal(callable({ ...good, phone: '+201012345678' }), true); // +20 folds
+  assert.equal(callable({ ...good, detailedAddress: 'شارع 5' }), true);
+  assert.equal(callable({ ...good, cart: [] }), false); // empty cart
+  assert.equal(callable({ ...good, name: '' }), false); // no name
+  assert.equal(callable({ ...good, name: '   ' }), false); // blank name
+  assert.equal(callable({ ...good, phone: '12345' }), false); // bad phone
+  assert.equal(callable({ ...good, phone: '' }), false); // no phone
+  assert.equal(callable({ name: 'أحمد', phone: '01012345678' }), false); // no cart
+  assert.equal(callable({}), false);
+  assert.equal(callable(null), false);
+  // Address is NOT required: name + phone + cart already meets the minimum.
+  assert.equal(callable({ name: 'أحمد', phone: '01012345678', cart: [{ productId: 'p1' }], address: '' }), true);
+});
+
+test('draftIsCallable: address never substitutes for a missing name or an empty cart (B2 re-audit)', () => {
+  const callable = StoreFB.draftIsCallable;
+  const base = { name: 'أحمد', phone: '01012345678', cart: [{ productId: 'p1' }], detailedAddress: 'شارع 5، القاهرة' };
+  assert.equal(callable(base), true);
+  // Leaking combination 1 (re-audit 2026-11-27): name + phone +
+  // address with an EMPTY cart scored 75 under the old score check.
+  assert.equal(callable({ ...base, cart: [] }), false);
+  // Leaking combination 2: phone + cart + address with NO name.
+  assert.equal(callable({ ...base, name: '' }), false);
+  assert.equal(callable({ ...base, name: '   ' }), false);
+  // Address is still not required: name + phone + cart lists.
+  assert.equal(callable({ name: 'أحمد', phone: '01012345678', cart: [{ productId: 'p1' }] }), true);
+  // +20 phone folds the same way.
+  assert.equal(callable({ ...base, phone: '+201012345678' }), true);
+  // Status is not part of the predicate: a converted/dead draft that
+  // meets triage still returns true — the list carves closed records
+  // out of triage-hiding, it does not hide them (B2 carve-out).
+  assert.equal(callable({ ...base, status: 'converted' }), true);
+  assert.equal(callable({ ...base, status: 'dead' }), true);
+});
+
+test('setQuotaCutoff: persists the cut-off level; invalid levels reject and write nothing', async () => {
+  const { fake, fb } = await signedInFb();
+  assert.equal(typeof fb.setQuotaCutoff, 'function');
+  await fb.setQuotaCutoff('journeys');
+  assert.equal(fake._store['storeSettings/quota'].cutoffLevel, 'journeys');
+  assert.ok(fake._store['storeSettings/quota'].operationId);
+  const audit = Object.values(fake._store).find((v) => v.operation === 'quota_cutoff_save');
+  assert.ok(audit);
+  assert.equal(audit.operationId, fake._store['storeSettings/quota'].operationId);
+  await fb.setQuotaCutoff('drafts');
+  assert.equal(fake._store['storeSettings/quota'].cutoffLevel, 'drafts');
+  await fb.setQuotaCutoff('none');
+  assert.equal(fake._store['storeSettings/quota'].cutoffLevel, 'none');
+  await assert.rejects(fb.setQuotaCutoff('everything'), /مش صالح/);
+  await assert.rejects(fb.setQuotaCutoff(''), /مش صالح/);
+  assert.equal(fake._store['storeSettings/quota'].cutoffLevel, 'none'); // untouched by the rejects
+});
+
+test('createManualOrder: audit covers items when a line is on sale, and only then', async () => {
+  // On-sale line (basePrice > price): docIds must cover 'items'
+  // or the rules deny the order (orderAuditOk / itemsCovered).
+  const { fake, fb } = await signedInFb();
+  fake._store['products/p1'] = { name: 'منتج 1', price: 300, basePrice: 500 };
+  fake._store['inventory/p1'] = { stock: 10, reserved: 0 };
+  fake._store['storeSettings/settings'] = { deliveryFee: 30 };
+  const res = await fb.createManualOrder({
+    clientOrderId: 'c-sale',
+    items: [{ productId: 'p1', qty: 1 }],
+    customer: { name: 'أحمد', phone: '01012345678', address: 'القاهرة' }
+  });
+  assert.equal(res.created, true);
+  const audit = Object.values(fake._store).find((v) => v.operation === 'manual_order_create');
+  assert.ok(audit.docIds['orders/c-sale'].includes('items'));
+  assert.deepEqual(audit.newValuesByDoc['orders/c-sale'].items,
+    [{ productId: 'p1', name: 'منتج 1', price: 300, basePrice: 500, qty: 1 }]);
+
+  // No-sale line (basePrice null): no items coverage is required,
+  // mirroring convertDraft — the entry stays money-fields only.
+  const { fake: fake2, fb: fb2 } = await signedInFb();
+  fake2._store['products/p1'] = { name: 'منتج 1', price: 100 };
+  fake2._store['inventory/p1'] = { stock: 10, reserved: 0 };
+  fake2._store['storeSettings/settings'] = { deliveryFee: 30 };
+  const res2 = await fb2.createManualOrder({
+    clientOrderId: 'c-plain',
+    items: [{ productId: 'p1', qty: 1 }],
+    customer: { name: 'أحمد', phone: '01012345678', address: 'القاهرة' }
+  });
+  assert.equal(res2.created, true);
+  const audit2 = Object.values(fake2._store).find((v) => v.operation === 'manual_order_create');
+  assert.equal(audit2.docIds['orders/c-plain'].includes('items'), false);
+  assert.equal(audit2.newValuesByDoc['orders/c-plain'].items, undefined);
+});
+
+test('auditedDelete: deterministic delete audit for products, categories, discounts', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['products/p1'] = { name: 'منتج 1', price: 100 };
+  fake._store['categories/c1'] = { name: 'فئة 1' };
+  fake._store['discounts/X10'] = { code: 'X10', percent: 10 };
+  assert.equal(await fb.deleteWebsiteProduct('p1'), true);
+  assert.equal(await fb.deleteCategory('c1'), true);
+  assert.equal(await fb.deleteDiscount('X10'), true);
+  assert.equal(fake._store['products/p1'], undefined);
+  assert.equal(fake._store['categories/c1'], undefined);
+  assert.equal(fake._store['discounts/X10'], undefined);
+  // One audit entry per delete, at the deterministic id the rules
+  // enforce (hasDeleteAudit), all with operation 'delete'.
+  assert.deepEqual(
+    Object.keys(fake._store).filter((k) => k.startsWith('audit/')).sort(),
+    ['audit/del_categories_c1', 'audit/del_discounts_X10', 'audit/del_products_p1']);
+  for (const key of ['audit/del_products_p1', 'audit/del_categories_c1', 'audit/del_discounts_X10']) {
+    const entry = fake._store[key];
+    assert.equal(entry.operation, 'delete');
+    assert.equal(entry.operationId, key.slice('audit/'.length));
+    assert.equal(entry.actor, 'uid-admin');
+    assert.equal(entry.collection, key.split('_')[1]);
+  }
+  assert.equal(fake._store['audit/del_products_p1'].docId, 'p1');
+  assert.equal(fake._store['audit/del_categories_c1'].docId, 'c1');
+  assert.equal(fake._store['audit/del_discounts_X10'].docId, 'X10');
+});
+
+// ---- Template bundles (entries 16–17): mirror gateway + pointer
+// history + approval freeze + rollback + preview slugs + D2 end-date.
+// The shared fixtures (entry 22) do not exist yet, so these cases
+// validate against gateway-rules.json directly: every rejection reason
+// the rules file names has a case here.
+
+function bundleManifest(overrides) {
+  return {
+    id: 'bazaar', nameAr: 'بازار', nameEn: 'Deal Bazaar', version: '1.0.0',
+    shellMinVersion: '1.0.0', bundleHash: 'a'.repeat(64), motion: 'lively', dark: 'light-only',
+    behaviours: ['countdown-strip'], sections: ['hero', 'products', 'delivery', 'contact'],
+    dataNeeds: ['deliveryFee'], cartLayout: 'drawer', modalLayout: 'default',
+    fonts: [{ family: 'Tajawal', weights: [400, 700], origin: 'self' }],
+    ...overrides,
+  };
+}
+
+// The OLD v1 template shape (name / schemaVersion / int version /
+// grid / tokens / sections / bodyPath). CLASSIC_TEMPLATE used to be
+// this shape; since the decision-15 seed fix it is the six-field
+// bundle shape, so tests that need a v1 doc build one explicitly
+// here instead of spreading the seed.
+function v1TemplateDoc(overrides) {
+  return {
+    id: 'classic',
+    name: 'التصميم الحالي',
+    description: 'تصميم المتجر الحالي كما هو — القالب الافتراضي عند الإطلاق.',
+    version: 1,
+    schemaVersion: 1,
+    status: 'active',
+    thumbnailUrl: '',
+    bodyPath: 'templates/classic.json',
+    grid: { columns: null, rows: null, minColumnWidthPx: 250 },
+    tokens: {
+      bg: '#f4f6f8', bg2: '#eaeff3',
+      surface: 'rgba(255, 255, 255, 0.55)',
+      surfaceStrong: 'rgba(255, 255, 255, 0.82)',
+      border: 'rgba(20, 30, 45, 0.08)',
+      text: '#1b2430', textSoft: '#5b6878',
+      accent: '#3f7f8c', accent2: '#8fb8b0', warm: '#c9a57a',
+      radius: '24px'
+    },
+    sections: { hero: true, promos: true, featured: true, delivery: true, contact: true },
+    ...overrides,
+  };
+}
+
+// The classic bundle's HOSTED manifest, as validateHostedManifest
+// sees it (full-manifest check). Mirrors the real
+// storefront/templates/classic/1.0.0/manifest.json field for field,
+// except previewImageUrl: the real manifest carries the relative
+// '/templates/classic/1.0.0/preview.png', but the PC hosted check
+// requires an http(s) preview URL (same rule as the registry
+// check), so the stub uses the seed's absolute URL. That
+// divergence is pre-existing — the shell and Dart gateways do not
+// check previewImageUrl on a hosted manifest, the PC one does —
+// and is flagged in the fix report, not fixed here: changing the
+// frozen classic manifest would cascade its hash through the Dart
+// and PC seed constants.
+function classicHostedManifest(overrides) {
+  return {
+    id: 'classic', nameAr: 'الكلاسيكي', nameEn: 'Classic', version: '1.0.0',
+    shellMinVersion: '1.0.0', bundleHash: StoreFB.CLASSIC_BUNDLE_HASH, motion: 'calm', dark: 'variant',
+    behaviours: [], sections: ['hero', 'marquee', 'categories', 'featured', 'offers', 'products', 'delivery', 'contact', 'about'],
+    dataNeeds: [], cartLayout: 'drawer', modalLayout: 'default',
+    fonts: [{ family: 'Tajawal', weights: [300, 400, 500, 700, 800], origin: 'self' }, { family: 'Inter', weights: [300, 400, 500, 600, 700], origin: 'self' }],
+    previewImageUrl: 'https://store-3384c.web.app/templates/classic/1.0.0/preview.png',
+    ...overrides,
+  };
+}
+
+function bundleFiles(manifest, overrides) {
+  const tokens = { light: { bg: '#ffffff', bg2: '#f5f5f7', surface: '#ffffff', surfaceStrong: '#ffffff', border: '#eeeeee', text: '#111111', textSoft: '#555555', accent: '#F68B1E', accent2: '#141414', warm: '#c9a57a', radius: '24px', font: 'Tajawal' } };
+  return {
+    'manifest.json': JSON.stringify(manifest),
+    'sections/hero.html': '<section data-section="brand"><span data-slot="brand-name"></span></section>',
+    'sections/products.html': '<section><div data-slot="product-card"></div><button data-action="add-to-cart">أضف</button></section>',
+    'sections/delivery.html': '<section><span data-slot="delivery-fee"></span></section>',
+    'sections/contact.html': '<section></section>',
+    'styles.css': '.a{color:#fff;transform:translateY(0);transition:transform 300ms}',
+    'tokens.json': JSON.stringify(tokens),
+    ...overrides,
+  };
+}
+
+// Files whose manifest.bundleHash is the real hash of the file set.
+function hashedBundleFiles(manifest, overrides) {
+  const files = bundleFiles(manifest, overrides);
+  const hash = StoreFB.computeBundleHash(files);
+  const m2 = { ...manifest, bundleHash: hash };
+  files['manifest.json'] = JSON.stringify(m2);
+  return { manifest: m2, files };
+}
+
+function bundleRegistryDoc(manifest, status, approval) {
+  const doc = { ...manifest, status };
+  if (approval) doc.approval = approval;
+  return doc;
+}
+
+// Stubs global.fetch so validateHostedManifest serves the given
+// hosted manifests (keyed by template id); anything else 404s.
+// Returns a restore function — call it in a finally block.
+function stubHostedManifests(manifestsById) {
+  const origFetch = global.fetch;
+  const byUrl = {};
+  for (const [id, manifest] of Object.entries(manifestsById)) {
+    byUrl['https://store-3384c.web.app/templates/' + id + '/' + (manifest.version || '1.0.0') + '/manifest.json'] = JSON.stringify(manifest);
+  }
+  global.fetch = async (url) => {
+    const text = byUrl[url];
+    if (text === undefined) return { ok: false, status: 404, text: async () => '' };
+    return { ok: true, status: 200, text: async () => text };
+  };
+  return () => { global.fetch = origFetch; };
+}
+
+test('sha256Hex: known vectors', () => {
+  assert.equal(StoreFB.sha256Hex('abc'), 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
+  assert.equal(StoreFB.sha256Hex(''), 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
+});
+
+test('computeBundleHash: bundleHash field and preview.png excluded; null when a fixed file is missing', () => {
+  const { manifest, files } = hashedBundleFiles(bundleManifest());
+  const h1 = StoreFB.computeBundleHash(files);
+  assert.equal(h1, manifest.bundleHash);
+  // Changing only the declared hash does not change the computed hash.
+  const files2 = { ...files, 'manifest.json': JSON.stringify({ ...manifest, bundleHash: 'f'.repeat(64) }) };
+  assert.equal(StoreFB.computeBundleHash(files2), h1);
+  // preview.png is outside the hash.
+  const files3 = { ...files, 'preview.png': 'PNG-BYTES-HERE' };
+  assert.equal(StoreFB.computeBundleHash(files3), h1);
+  // A missing fixed file -> null (the missing file is its own failure).
+  const files4 = { ...files };
+  delete files4['tokens.json'];
+  assert.equal(StoreFB.computeBundleHash(files4), null);
+});
+
+test('validateBundleManifest: valid passes; every failure named', () => {
+  const good = bundleManifest();
+  assert.deepEqual(StoreFB.validateBundleManifest(good, 'bazaar'), { passed: true, failedChecks: [], warnings: [] });
+  assert.deepEqual(StoreFB.validateBundleManifest(bundleManifest({ id: 'nope' }), 'nope').failedChecks, ['manifest.id']);
+  assert.deepEqual(StoreFB.validateBundleManifest(bundleManifest({ id: 'gallery' }), 'bazaar').failedChecks, ['manifest.id']);
+  assert.deepEqual(StoreFB.validateBundleManifest(bundleManifest({ version: '2.0.0' }), 'bazaar').failedChecks, ['manifest.version']);
+  assert.deepEqual(StoreFB.validateBundleManifest(bundleManifest({ shellMinVersion: '1.1.0' }), 'bazaar').failedChecks, ['manifest.shellMinVersion']);
+  assert.deepEqual(StoreFB.validateBundleManifest(bundleManifest({ shellMinVersion: 'x' }), 'bazaar').failedChecks, ['manifest.shellMinVersion']);
+  assert.deepEqual(StoreFB.validateBundleManifest(bundleManifest({ bundleHash: 'zzz' }), 'bazaar').failedChecks, ['manifest.bundleHash']);
+  assert.deepEqual(StoreFB.validateBundleManifest(bundleManifest({ motion: 'wild' }), 'bazaar').failedChecks, ['manifest.motion']);
+  assert.deepEqual(StoreFB.validateBundleManifest(bundleManifest({ dark: 'maybe' }), 'bazaar').failedChecks, ['manifest.dark']);
+  assert.deepEqual(StoreFB.validateBundleManifest(bundleManifest({ behaviours: ['teleport'] }), 'bazaar').failedChecks, ['manifest.behaviours.teleport']);
+  assert.deepEqual(StoreFB.validateBundleManifest(bundleManifest({ sections: ['hero', 'products', 'delivery'] }), 'bazaar').failedChecks, ['manifest.sections.contact']);
+  assert.deepEqual(StoreFB.validateBundleManifest(bundleManifest({ sections: ['hero', 'products', 'delivery', 'contact', 'nope'] }), 'bazaar').failedChecks, ['manifest.sections.nope']);
+  assert.deepEqual(StoreFB.validateBundleManifest(bundleManifest({ dataNeeds: ['stockCount'] }), 'bazaar').failedChecks, ['manifest.dataNeeds.stockCount']);
+  assert.deepEqual(StoreFB.validateBundleManifest(bundleManifest({ cartLayout: 'popup' }), 'bazaar').failedChecks, ['manifest.cartLayout']);
+  assert.deepEqual(StoreFB.validateBundleManifest(bundleManifest({ fonts: [{ family: 'Evil', origin: 'https://evil.example' }] }), 'bazaar').failedChecks, ['manifest.fonts.Evil']);
+  assert.deepEqual(StoreFB.validateBundleManifest(bundleManifest({ nameAr: '  ' }), 'bazaar').failedChecks, ['manifest.nameAr']);
+});
+
+test('validateBundleFiles: a valid bundle passes', () => {
+  const { manifest, files } = hashedBundleFiles(bundleManifest());
+  assert.deepEqual(StoreFB.validateTemplateBundle(manifest, files, 'bazaar'), { passed: true, failedChecks: [], warnings: [] });
+});
+
+test('validateBundleFiles: every gateway rejection reason named', () => {
+  const base = bundleManifest();
+  const check = (overrides) => {
+    const { manifest, files } = hashedBundleFiles(base, overrides);
+    return StoreFB.validateTemplateBundle(manifest, files, 'bazaar').failedChecks;
+  };
+  assert.ok(check({ 'sections/products.html': '<section><script>alert(1)</script></section>' }).includes('sections/products.html.tag.script'));
+  assert.ok(check({ 'sections/products.html': '<section><img src="x.png" onerror="alert(1)"></section>' }).some((c) => c.includes('.attr.onerror')));
+  assert.ok(check({ 'sections/products.html': '<section><a href="javascript:alert(1)">x</a></section>' }).some((c) => c.includes('javascript')));
+  assert.ok(check({ 'sections/products.html': '<section><div data-slot="nope"></div></section>' }).includes('sections/products.html.slot.nope'));
+  assert.ok(check({ 'sections/products.html': '<section><button data-action="explode">x</button></section>' }).includes('sections/products.html.action.explode'));
+  assert.ok(check({ 'sections/products.html': '<section><iframe src="x"></iframe></section>' }).includes('sections/products.html.tag.iframe'));
+  assert.ok(check({ 'sections/products.html': '<section><form></form></section>' }).includes('sections/products.html.tag.form'));
+  assert.ok(check({ 'sections/products.html': '<section><img src="https://evil.example/x.png"></section>' }).includes('sections/products.html.src.origin'));
+  const noDelivery = hashedBundleFiles(base);
+  delete noDelivery.files['sections/delivery.html'];
+  assert.ok(StoreFB.validateTemplateBundle(noDelivery.manifest, noDelivery.files, 'bazaar').failedChecks.includes('sections.delivery'));
+  const noBrand = hashedBundleFiles(base, { 'sections/hero.html': '<section><span data-slot="brand-name"></span></section>' });
+  assert.ok(StoreFB.validateTemplateBundle(noBrand.manifest, noBrand.files, 'bazaar').failedChecks.includes('brandSlot'));
+  const noTokens = hashedBundleFiles(base);
+  delete noTokens.files['tokens.json'];
+  assert.ok(StoreFB.validateTemplateBundle(noTokens.manifest, noTokens.files, 'bazaar').failedChecks.includes('tokens.json'));
+  assert.ok(check({ 'styles.css': '#cartDrawer{display:block}' }).includes('styles.css.selector.#cartDrawer'));
+  assert.ok(check({ 'styles.css': '#modal .price{display:none}' }).includes('styles.css.display-none-transactional'));
+  assert.ok(check({ 'styles.css': '.a{filter:blur(2px)}' }).includes('styles.css.blur'));
+  assert.ok(check({ 'styles.css': '.a{transition:width 300ms}' }).includes('styles.css.animated-property'));
+  assert.ok(check({ 'styles.css': '.a{transition:transform 2000ms}' }).includes('styles.css.motion-duration'));
+  assert.ok(check({ 'styles.css': '.a{background:url(https://evil.example/x.png)}' }).includes('styles.css.url-origin'));
+  assert.ok(check({ 'styles.css': '@import url(https://evil.example/f.css);' }).includes('styles.css.import-origin'));
+  assert.ok(check({ 'styles.css': '.a{background:url(https://res.cloudinary.com/x.png)}' }).length === 0);
+  assert.ok(check({ 'tokens.json': JSON.stringify({ light: { bg: '#fff' } }) }).some((c) => c.startsWith('tokens.json.light.')));
+  // Hash mismatch: the manifest declares a hash the files do not match.
+  const mismatch = hashedBundleFiles(base);
+  mismatch.manifest = { ...mismatch.manifest, bundleHash: '0'.repeat(64) };
+  mismatch.files['manifest.json'] = JSON.stringify(mismatch.manifest);
+  assert.ok(StoreFB.validateTemplateBundle(mismatch.manifest, mismatch.files, 'bazaar').failedChecks.includes('manifest.bundleHash'));
+  // RTL physical positioning is a warning, never a failure.
+  const rtl = StoreFB.validateTemplateBundle(...(() => { const h = hashedBundleFiles(base, { 'styles.css': '.a{left:0}' }); return [h.manifest, h.files, 'bazaar']; })());
+  assert.equal(rtl.passed, true);
+  assert.ok(rtl.warnings.includes('styles.css.rtl-physical'));
+  // Dark tokens required only when the manifest declares a variant.
+  const darkOk = hashedBundleFiles(bundleManifest({ dark: 'variant' }), { 'tokens.json': JSON.stringify({ light: { bg: '#ffffff', bg2: '#f5f5f7', surface: '#ffffff', surfaceStrong: '#ffffff', border: '#eeeeee', text: '#111111', textSoft: '#555555', accent: '#F68B1E', accent2: '#141414', warm: '#c9a57a', radius: '24px', font: 'Tajawal' }, dark: { bg: '#111111', bg2: '#222222', surface: '#222222', surfaceStrong: '#333333', border: '#444444', text: '#ffffff', textSoft: '#cccccc', accent: '#F68B1E', accent2: '#141414', warm: '#c9a57a', radius: '24px', font: 'Tajawal' } }) });
+  assert.equal(StoreFB.validateTemplateBundle(darkOk.manifest, darkOk.files, 'bazaar').passed, true);
+  const darkMissing = hashedBundleFiles(bundleManifest({ dark: 'variant' }));
+  assert.ok(StoreFB.validateTemplateBundle(darkMissing.manifest, darkMissing.files, 'bazaar').failedChecks.includes('tokens.json.dark'));
+});
+
+test('validateTemplateBundle: files == null runs manifest checks only', () => {
+  const rep = StoreFB.validateTemplateBundle(bundleManifest(), null, 'bazaar');
+  assert.equal(rep.passed, true);
+  assert.ok(rep.warnings.includes('files-not-checked'));
+  const bad = StoreFB.validateTemplateBundle(bundleManifest({ motion: 'wild' }), null, 'bazaar');
+  assert.equal(bad.passed, false);
+  assert.deepEqual(bad.failedChecks, ['manifest.motion']);
+});
+
+test('checkApprovalFreeze: matching approval ok; changed hash / shell / missing approval not ok', () => {
+  const doc = bundleRegistryDoc(bundleManifest(), 'approved', { approver: 'a', at: '2026-11-27T00:00:00.000Z', shellVersion: '1.0.0', bundleHash: 'a'.repeat(64) });
+  assert.equal(StoreFB.checkApprovalFreeze(doc).ok, true);
+  assert.equal(StoreFB.checkApprovalFreeze({ ...doc, bundleHash: 'b'.repeat(64) }).ok, false);
+  assert.equal(StoreFB.checkApprovalFreeze({ ...doc, approval: { ...doc.approval, shellVersion: '0.9.0' } }).ok, false);
+  assert.equal(StoreFB.checkApprovalFreeze(bundleRegistryDoc(bundleManifest(), 'approved')).ok, false);
+});
+
+test('pointer history: append + second-last rollback target; double rollback walks back', () => {
+  const h0 = StoreFB.pointerHistoryAppend({}, { templateId: 'classic', bundleVersion: '1.0.0', bundleHash: null, at: 't0', by: 'a' });
+  assert.equal(h0.length, 1);
+  assert.equal(StoreFB.rollbackTargetFromHistory({ history: h0 }), null);
+  const h1 = StoreFB.pointerHistoryAppend({ history: h0 }, { templateId: 'bazaar', bundleVersion: '1.0.0', bundleHash: 'x', at: 't1', by: 'a' });
+  assert.equal(StoreFB.rollbackTargetFromHistory({ history: h1 }).templateId, 'classic');
+  const h2 = StoreFB.pointerHistoryAppend({ history: h1 }, { templateId: 'classic', bundleVersion: '1.0.0', bundleHash: null, at: 't2', by: 'a' });
+  assert.equal(StoreFB.rollbackTargetFromHistory({ history: h2 }).templateId, 'bazaar');
+  // Classic pin: classic is the rollback target while live, in the
+  // history, or when there is no history at all.
+  assert.equal(StoreFB.isRollbackTarget('classic', { templateId: 'classic', history: [] }), true);
+  assert.equal(StoreFB.isRollbackTarget('classic', { templateId: 'bazaar', history: h1 }), true);
+  assert.equal(StoreFB.isRollbackTarget('classic', { templateId: 'bazaar', history: [{ templateId: 'bazaar' }] }), false);
+  assert.equal(StoreFB.isRollbackTarget('classic', {}), true);
+});
+
+test('D2 end-date: Cairo offset winter +02:00, summer +03:00; invalid rejected; round-trip', () => {
+  assert.equal(StoreFB.promoEndDateToISO('2026-12-01T20:00'), '2026-12-01T20:00:00+02:00');
+  assert.equal(StoreFB.promoEndDateToISO('2026-07-01T20:00'), '2026-07-01T20:00:00+03:00');
+  assert.equal(StoreFB.promoEndDateToISO('2026-02-30T20:00'), null);
+  assert.equal(StoreFB.promoEndDateToISO('not-a-date'), null);
+  assert.equal(StoreFB.promoEndDateToISO(''), null);
+  assert.equal(StoreFB.isoToLocalInput('2026-07-01T20:00:00+03:00'), '2026-07-01T20:00');
+  assert.equal(StoreFB.isoToLocalInput('2026-12-01T20:00:00+02:00'), '2026-12-01T20:00');
+  assert.equal(StoreFB.isoToLocalInput('junk'), '');
+  assert.equal(StoreFB.isValidISODateTime('2026-12-01T20:00:00+02:00'), true);
+  assert.equal(StoreFB.isValidISODateTime('2026-12-01T20:00'), true);
+  assert.equal(StoreFB.isValidISODateTime('2026-12-01 20:00'), false);
+  assert.equal(StoreFB.isValidISODateTime(''), false);
+});
+
+test('activateTemplate (bundle): approval-hash gate + pointer write + history + activation record', async () => {
+  const { fake, fb } = await signedInFb();
+  const hash = 'b'.repeat(64);
+  const approval = { approver: 'admin@store.test', at: '2026-11-27T00:00:00.000Z', shellVersion: '1.0.0', bundleHash: hash };
+  fake._store['templates/classic'] = { ...StoreFB.CLASSIC_TEMPLATE, id: 'classic' };
+  fake._store['templates/bazaar'] = bundleRegistryDoc(bundleManifest({ bundleHash: hash }), 'approved', approval);
+  fake._store['storeSettings/activeTemplate'] = {
+    templateId: 'classic', bundleVersion: '1.0.0', bundleHash: null, previousTemplateId: null,
+    history: [{ templateId: 'classic', bundleVersion: '1.0.0', bundleHash: null, at: '2026-11-26T00:00:00.000Z', by: 'admin@store.test' }],
+  };
+  // The hosted-manifest check (decision 2, shape A) fetches the
+  // manifest from Hosting; stub it to the matching manifest.
+  const restore = stubHostedManifests({ bazaar: bundleManifest({ bundleHash: hash }) });
+  try {
+    const res = await fb.activateTemplate('bazaar');
+    assert.deepEqual(res, { previousTemplateId: 'classic', templateId: 'bazaar', bundleVersion: '1.0.0', bundleHash: hash });
+    assert.equal(fake._store['templates/bazaar'].status, 'active');
+    assert.equal(fake._store['templates/classic'].status, 'active'); // classic stays active (pinned rollback target)
+    const ptr = fake._store['storeSettings/activeTemplate'];
+    assert.equal(ptr.templateId, 'bazaar');
+    assert.equal(ptr.bundleHash, hash);
+    assert.equal(ptr.previousTemplateId, 'classic');
+    assert.equal(ptr.history.length, 2);
+    assert.equal(ptr.history[1].templateId, 'bazaar');
+    assert.equal(ptr.history[1].by, 'admin@store.test');
+    const actKeys = Object.keys(fake._store).filter((k) => k.startsWith('templates/bazaar/activations/'));
+    assert.equal(actKeys.length, 1);
+    assert.equal(fake._store[actKeys[0]].action, 'activate');
+    assert.equal(fake._store[actKeys[0]].approver, 'admin@store.test');
+    assert.equal(fake._store[actKeys[0]].shellVersion, '1.0.0');
+    // Draft / unapproved / changed-hash bundles are refused (rejected
+    // before the hosted check, so no fetch is needed for these).
+    fake._store['templates/gallery'] = bundleRegistryDoc(bundleManifest({ id: 'gallery', nameAr: 'معرض', nameEn: 'White Gallery' }), 'draft');
+    await assert.rejects(fb.activateTemplate('gallery'), /مش معتمد/);
+    fake._store['templates/scroll'] = bundleRegistryDoc(bundleManifest({ id: 'scroll', nameAr: 'اسكرول', nameEn: 'Scroll', bundleHash: 'c'.repeat(64) }), 'approved', { ...approval, bundleHash: 'd'.repeat(64) });
+    await assert.rejects(fb.activateTemplate('scroll'), /اعتماد جديد/);
+  } finally {
+    restore();
+  }
+});
+
+test('rollbackTemplate: restores the second-last history entry; double rollback walks back', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['templates/classic'] = { ...StoreFB.CLASSIC_TEMPLATE, id: 'classic' };
+  fake._store['templates/bazaar'] = bundleRegistryDoc(bundleManifest(), 'active');
+  fake._store['storeSettings/activeTemplate'] = {
+    templateId: 'bazaar', bundleVersion: '1.0.0', bundleHash: 'a'.repeat(64), previousTemplateId: 'classic',
+    history: [
+      { templateId: 'classic', bundleVersion: '1.0.0', bundleHash: null, at: 't0', by: 'a' },
+      { templateId: 'bazaar', bundleVersion: '1.0.0', bundleHash: 'a'.repeat(64), at: 't1', by: 'a' },
+    ],
+  };
+  // The first rollback targets the classic doc — now a bundle doc,
+  // so its hosted manifest is fetched too (decision 2, shape A);
+  // the second rollback targets a bundle doc, so its hosted
+  // manifest is fetched; stub both.
+  const restore = stubHostedManifests({ bazaar: bundleManifest(), classic: classicHostedManifest() });
+  try {
+    const r1 = await fb.rollbackTemplate();
+    assert.deepEqual(r1, { templateId: 'classic', previousTemplateId: 'bazaar', fellBack: false, deniedTemplateId: null });
+    let ptr = fake._store['storeSettings/activeTemplate'];
+    assert.equal(ptr.templateId, 'classic');
+    assert.equal(ptr.history.length, 3);
+    assert.equal(ptr.history[2].templateId, 'classic');
+    assert.equal(fake._store['templates/bazaar'].status, 'approved'); // demoted, keeps approval
+    const r2 = await fb.rollbackTemplate();
+    assert.equal(r2.templateId, 'bazaar');
+    ptr = fake._store['storeSettings/activeTemplate'];
+    assert.equal(ptr.templateId, 'bazaar');
+    assert.equal(ptr.history.length, 4);
+    assert.equal(ptr.history[3].templateId, 'bazaar');
+    assert.equal(fake._store['templates/bazaar'].status, 'active');
+  } finally {
+    restore();
+  }
+});
+
+test('rollbackTemplate: retired target is denied, classic restored, denial recorded', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['templates/classic'] = { ...StoreFB.CLASSIC_TEMPLATE, id: 'classic' };
+  fake._store['templates/gallery'] = bundleRegistryDoc(bundleManifest({ id: 'gallery', nameAr: 'معرض', nameEn: 'White Gallery' }), 'approved');
+  fake._store['templates/bazaar'] = bundleRegistryDoc(bundleManifest(), 'active');
+  fake._store['storeSettings/activeTemplate'] = {
+    templateId: 'bazaar', bundleVersion: '1.0.0', bundleHash: 'a'.repeat(64), previousTemplateId: 'gallery',
+    history: [
+      { templateId: 'classic', bundleVersion: '1.0.0', bundleHash: null, at: 't0', by: 'a' },
+      { templateId: 'gallery', bundleVersion: '1.0.0', bundleHash: 'a'.repeat(64), at: 't1', by: 'a' },
+      { templateId: 'bazaar', bundleVersion: '1.0.0', bundleHash: 'a'.repeat(64), at: 't2', by: 'a' },
+    ],
+  };
+  await fb.setTemplateStatus('gallery', 'retired');
+  assert.equal(fake._store['templates/gallery'].status, 'retired');
+  const r = await fb.rollbackTemplate();
+  assert.equal(r.templateId, 'classic');
+  assert.equal(r.fellBack, true);
+  assert.equal(r.deniedTemplateId, 'gallery');
+  const ptr = fake._store['storeSettings/activeTemplate'];
+  assert.equal(ptr.templateId, 'classic');
+  assert.equal(ptr.history.length, 4);
+  assert.ok(ptr.history[3].note && ptr.history[3].note.includes('gallery'));
+  assert.equal(fake._store['templates/bazaar'].status, 'approved');
+  // No previous template at all -> clear rejection.
+  fake._store['storeSettings/activeTemplate'] = { templateId: 'classic', history: [{ templateId: 'classic', at: 't0', by: 'a' }] };
+  await assert.rejects(fb.rollbackTemplate(), /مفيش قالب سابق/);
+});
+
+test('approveTemplate: preview -> approved with the frozen hash + shell version', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['templates/bazaar'] = bundleRegistryDoc(bundleManifest(), 'preview');
+  // The hosted-manifest check (decision 2, shape A) fetches the
+  // manifest from Hosting; stub it to the matching manifest.
+  const restore = stubHostedManifests({ bazaar: bundleManifest() });
+  try {
+    assert.equal(await fb.approveTemplate('bazaar'), true);
+    const doc = fake._store['templates/bazaar'];
+    assert.equal(doc.status, 'approved');
+    assert.equal(doc.approval.bundleHash, 'a'.repeat(64));
+    assert.equal(doc.approval.shellVersion, '1.0.0');
+    assert.equal(doc.approval.approver, 'admin@store.test');
+    await assert.rejects(fb.approveTemplate('bazaar'), /مرحلة المعاينة/);
+    fake._store['templates/gallery'] = bundleRegistryDoc(bundleManifest({ id: 'gallery', nameAr: 'معرض', nameEn: 'White Gallery' }), 'draft');
+    await assert.rejects(fb.approveTemplate('gallery'), /مرحلة المعاينة/);
+  } finally {
+    restore();
+  }
+});
+
+test('setTemplateStatus: classic pin + live guard + draft/retired moves', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['templates/classic'] = { ...StoreFB.CLASSIC_TEMPLATE, id: 'classic' };
+  fake._store['templates/bazaar'] = bundleRegistryDoc(bundleManifest(), 'active');
+  fake._store['templates/scroll'] = bundleRegistryDoc(bundleManifest({ id: 'scroll', nameAr: 'اسكرول', nameEn: 'Scroll' }), 'preview');
+  fake._store['templates/gallery'] = bundleRegistryDoc(bundleManifest({ id: 'gallery', nameAr: 'معرض', nameEn: 'White Gallery' }), 'approved');
+  fake._store['storeSettings/activeTemplate'] = {
+    templateId: 'bazaar', history: [
+      { templateId: 'classic', at: 't0', by: 'a' },
+      { templateId: 'bazaar', at: 't1', by: 'a' },
+    ],
+  };
+  await assert.rejects(fb.setTemplateStatus('classic', 'retired'), /الكلاسيكي/);
+  await assert.rejects(fb.setTemplateStatus('bazaar', 'retired'), /المفعّل/);
+  await assert.rejects(fb.setTemplateStatus('gallery', 'active'), /الاعتماد أو التفعيل/);
+  assert.equal(await fb.setTemplateStatus('scroll', 'draft'), true);
+  assert.equal(fake._store['templates/scroll'].status, 'draft');
+  assert.equal(await fb.setTemplateStatus('gallery', 'retired'), true);
+  assert.equal(fake._store['templates/gallery'].status, 'retired');
+});
+
+test('getOrIssuePreviewSlug: issues a 128-bit slug once, then reuses it', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['templates/bazaar'] = bundleRegistryDoc(bundleManifest(), 'preview');
+  const slug = await fb.getOrIssuePreviewSlug('bazaar');
+  assert.match(slug, /^[0-9a-f]{32}$/);
+  const doc = fake._store['previews/' + slug];
+  assert.equal(doc.templateId, 'bazaar');
+  assert.equal(doc.status, 'open');
+  assert.equal(doc.issuedBy, 'admin@store.test');
+  assert.equal(await fb.getOrIssuePreviewSlug('bazaar'), slug);
+  await assert.rejects(fb.getOrIssuePreviewSlug('ghost'), /مش موجود/);
+});
+
+test('markTemplatePreview: deep gateway pass moves draft -> preview; fail stays draft with the report', async () => {
+  const { fake, fb } = await signedInFb();
+  const good = hashedBundleFiles(bundleManifest());
+  const broken = hashedBundleFiles(bundleManifest(), { 'sections/products.html': '<section><script>alert(1)</script></section>' });
+  fake._store['templates/bazaar'] = bundleRegistryDoc(good.manifest, 'draft');
+  fake._store['templates/gallery'] = bundleRegistryDoc(broken.manifest, 'draft');
+  const origFetch = global.fetch;
+  const byUrl = {};
+  for (const [p, text] of Object.entries(good.files)) byUrl['https://store-3384c.web.app/templates/bazaar/1.0.0/' + p] = text;
+  for (const [p, text] of Object.entries(broken.files)) byUrl['https://store-3384c.web.app/templates/gallery/1.0.0/' + p] = text;
+  global.fetch = async (url) => {
+    const text = byUrl[url];
+    if (text === undefined) return { ok: false, status: 404, text: async () => '' };
+    return { ok: true, status: 200, text: async () => text };
+  };
+  try {
+    assert.equal(await fb.markTemplatePreview('bazaar'), true);
+    assert.equal(fake._store['templates/bazaar'].status, 'preview');
+    assert.equal(fake._store['templates/bazaar'].validation.passed, true);
+    await assert.rejects(fb.markTemplatePreview('gallery'), /مش صالح للمعاينة/);
+    assert.equal(fake._store['templates/gallery'].status, 'draft');
+    assert.equal(fake._store['templates/gallery'].validation.passed, false);
+    assert.ok(fake._store['templates/gallery'].validation.checks.some((c) => c.includes('tag.script')));
+  } finally {
+    global.fetch = origFetch;
+  }
+});
+
+test('index.html wires the template surfaces in: pointer box, cards, preview link, hero note, end-date editor', () => {
+  const fs = require('node:fs');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  for (const needle of [
+    'id="tplPointerBox"', 'id="tplActivateSelect"', 'onclick="rollbackStoreTemplate()"',
+    'function approveStoreTemplate(id)', 'function openTemplatePreview(id)',
+    'function openSelectedTemplatePreview()', 'id="tplPreviewSelect"',
+    'id="hpHeroNote"', 'controlled by the active template',
+    'id="hpPromoEndDates"', 'function renderPromoEndDates()', 'function setPromoEndDate(',
+    'function validateStoreTemplate(id)', 'function moveTemplateToPreview(id)',
+    'subscribeActiveTemplatePointer', 'TPL_D1_CHECKLIST',
+  ]) assert.ok(html.includes(needle), 'missing: ' + needle);
 });
