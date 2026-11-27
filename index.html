@@ -1579,9 +1579,8 @@ const SFX = (function(){
     </div>
   </div>
   <div class="cd" style="max-width:500px;margin-top:16px">
-    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--accg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><span>رسوم التوصيل</span></div><span id="feeStatus" class="bx">غير محددة</span></div>
+    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--accg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><span>رسوم التوصيل</span></div><span id="feeStatus" class="bx">مجاني</span></div>
     <div style="padding:22px">
-      <div id="feeBanner" style="display:none;padding:12px;border-radius:8px;background:rgba(220,60,60,.12);font-weight:700;margin-bottom:12px">رسوم التوصيل غير محددة بعد — حدّدها من الإعدادات. الطلبات من الموقع متوقفة لحد ما تتحدد.</div>
       <div class="fg">
         <div class="fgr"><label>رسوم التوصيل (ج.م)</label><input id="feeAmount" type="number" min="0" step="1" placeholder="مثال: 30 — صفر يعني التوصيل مجاني"></div>
         <div class="fgr"><label>حد التوصيل المجاني (اختياري)</label><input id="feeThreshold" type="number" min="0" step="1" placeholder="فاضي = مفيش حد — فوق المبلغ ده التوصيل مجاني"></div>
@@ -3210,8 +3209,7 @@ function updOrderItemsTotal(){
     let html='';
     try{
       const tot=window.StoreFBFactory.computeOrderTotals(lines, { deliveryFee: st.deliveryFee, freeDeliveryThreshold: st.freeDeliveryThreshold });
-      if(tot.feeUnset) html='<span style="color:var(--red)">رسوم التوصيل غير محددة بعد — حدّدها من الإعدادات قبل إنشاء الطلب.</span>';
-      else html='رسوم التوصيل: '+(tot.deliveryFee===0?'مجاني':fmt(tot.deliveryFee)+' '+(cfg.currency||'ج.م'))+(tot.feeWaived?' (مجاني — فوق الحد)':'')+(tot.saleSavings>0?'<br>وفّرت من العرض: '+fmt(tot.saleSavings)+' '+(cfg.currency||'ج.م'):'')+'<br><b>المبلغ المستحق: '+fmt(tot.amountDue)+' '+(cfg.currency||'ج.م')+'</b>';
+      html='رسوم التوصيل: '+(tot.deliveryFee===0?'مجاني':fmt(tot.deliveryFee)+' '+(cfg.currency||'ج.م'))+(tot.feeWaived?' (مجاني — فوق الحد)':'')+(tot.feeUnset?' (مفيش رسوم محددة)':'')+(tot.saleSavings>0?'<br>وفّرت من العرض: '+fmt(tot.saleSavings)+' '+(cfg.currency||'ج.م'):'')+'<br><b>المبلغ المستحق: '+fmt(tot.amountDue)+' '+(cfg.currency||'ج.م')+'</b>';
     }catch(e){ html=''; }
     pv.innerHTML=html;
   }
@@ -5258,11 +5256,10 @@ function renderWebsiteSettings(forceHero){
   if(document.activeElement!==$('waEnabled')) $('waEnabled').checked=!!st.whatsappOrderEnabled;
   if(document.activeElement!==$('waNumber')) $('waNumber').value=st.whatsappNumber||'201557887719';
   // Delivery fee + free-delivery threshold (pricing, Technical
-  // Plan §2/§9 + decision D3). Same skip-while-typing rule. The
-  // banner stays until the fee is set (missing ≠ 0).
+  // Plan §2/§9 + decision D3). Same skip-while-typing rule. An
+  // unset fee = free delivery (decision 2026-11-27).
   const feeUnset=!(Number.isInteger(st.deliveryFee)&&st.deliveryFee>=0);
-  const feeSt=$('feeStatus'); if(feeSt) feeSt.textContent=feeUnset?'غير محددة':curr(st.deliveryFee);
-  const feeBn=$('feeBanner'); if(feeBn) feeBn.style.display=feeUnset?'block':'none';
+  const feeSt=$('feeStatus'); if(feeSt) feeSt.textContent=feeUnset?'مجاني':curr(st.deliveryFee);
   if(document.activeElement!==$('feeAmount')) $('feeAmount').value=feeUnset?'':st.deliveryFee;
   if(document.activeElement!==$('feeThreshold')) $('feeThreshold').value=(st.freeDeliveryThreshold!=null)?st.freeDeliveryThreshold:'';
   // Homepage fields.
