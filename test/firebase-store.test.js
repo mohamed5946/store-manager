@@ -124,7 +124,12 @@ function createFakeFirebase() {
         update: (ref, data) => ref.update(data),
         delete: (ref) => ref.delete()
       };
-      return fn(tx);
+      const res = await fn(tx);
+      // Test hook: fires the moment the transaction function returns,
+      // BEFORE any post-commit work runs — so a test can pin what the
+      // transaction itself wrote vs what landed after the commit.
+      if (fake._txEndHook) fake._txEndHook();
+      return res;
     }
   };
   const authState = { user: null, cbs: [] };
@@ -354,7 +359,7 @@ test('activateTemplate: validates, seeds classic, moves the pointer', async () =
   await assert.rejects(fb.activateTemplate('broken'), /مش صالح للتفعيل/);
 });
 
-test('createManualOrder: one transaction reserves, writes order + movements + audit, refreshes inStock', async () => {
+test('createManualOrder: transaction reserves and writes the order; movements + audit land post-commit, refreshes inStock', async () => {
   const { fake, fb } = await signedInFb();
   fake._store['products/p1'] = { name: 'منتج 1', price: 100, inStock: true };
   fake._store['inventory/p1'] = { stock: 10, reserved: 2 };
@@ -425,6 +430,43 @@ test('createManualOrder: idempotent — a retry with the same clientOrderId retu
   assert.equal(second.order.id, 'c-9');
   assert.equal(fake._store['inventory/p1'].reserved, 2); // no double reserve
   assert.equal(Object.keys(fake._store).filter((k) => k.startsWith('orders/')).length, 1);
+  // M1: the idempotent retry must NOT re-write movements or audit.
+  assert.equal(Object.keys(fake._store).filter((k) => k.startsWith('movements/')).length, 1);
+  assert.equal(Object.values(fake._store).filter((v) => v.operation === 'manual_order_create').length, 1);
+});
+
+test('createManualOrder: movements + audit are written AFTER the transaction commits, never inside it', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['products/p1'] = { name: 'منتج 1', price: 100, inStock: true };
+  fake._store['inventory/p1'] = { stock: 10, reserved: 2 };
+  fake._store['storeSettings/settings'] = { deliveryFee: 30 };
+  let keysAtTxEnd = null;
+  fake._txEndHook = () => { keysAtTxEnd = Object.keys(fake._store); };
+  const res = await fb.createManualOrder({
+    clientOrderId: 'c-tx',
+    items: [{ productId: 'p1', qty: 2 }],
+    customer: { name: 'أحمد', phone: '01012345678', address: 'القاهرة' }
+  });
+  assert.equal(res.created, true);
+  assert.ok(keysAtTxEnd);
+  // Inside the transaction: order + reserve only.
+  assert.ok(keysAtTxEnd.includes('orders/c-tx'));
+  assert.equal(fake._store['inventory/p1'].reserved, 4);
+  assert.equal(keysAtTxEnd.filter((k) => k.startsWith('movements/')).length, 0);
+  assert.equal(keysAtTxEnd.filter((k) => k.startsWith('audit/')).length, 0);
+  // After the call resolves: movements + the order audit landed.
+  const mvKeys = Object.keys(fake._store).filter((k) => k.startsWith('movements/'));
+  assert.equal(mvKeys.length, 1);
+  assert.equal(fake._store[mvKeys[0]].type, 'order_reserve');
+  assert.equal(fake._store[mvKeys[0]].qty, -2);
+  assert.equal(fake._store[mvKeys[0]].orderId, 'c-tx');
+  assert.equal(fake._store[mvKeys[0]].source, 'createManualOrder');
+  const audit = Object.values(fake._store).find((v) => v.operation === 'manual_order_create');
+  assert.ok(audit);
+  assert.equal(audit.docId, 'c-tx');
+  assert.ok(audit.docIds['orders/c-tx'].includes('status'));
+  assert.ok(audit.docIds['inventory/p1'].includes('reserved'));
+  assert.ok(audit.docIds['movements/' + mvKeys[0].slice('movements/'.length)].includes('type'));
 });
 
 test('createManualOrder: dedupes lines, rejects short stock with the available count, price/total changes', async () => {
@@ -1155,6 +1197,34 @@ test('convertDraft: second call returns the existing order without re-reserving'
   assert.equal(second.order.id, 'd1');
   assert.equal(fake._store['inventory/p1'].reserved, 2); // no double reserve
   assert.equal(Object.keys(fake._store).filter((k) => k.startsWith('orders/')).length, 1);
+  // M1: the second call must NOT re-write movements or audit.
+  assert.equal(Object.keys(fake._store).filter((k) => k.startsWith('movements/')).length, 1);
+  assert.equal(Object.values(fake._store).filter((v) => v.operation === 'manual_order_create').length, 1);
+});
+
+test('convertDraft: movements + audit are written AFTER the transaction commits, never inside it', async () => {
+  const { fake, fb } = await signedInFb();
+  seedConvertDraftBase(fake);
+  let keysAtTxEnd = null;
+  fake._txEndHook = () => { keysAtTxEnd = Object.keys(fake._store); };
+  const res = await fb.convertDraft(convertDraftInput());
+  assert.equal(res.result, 'ok');
+  assert.equal(res.created, true);
+  assert.ok(keysAtTxEnd);
+  // Inside the transaction: order + reserve + draft-converted only.
+  assert.ok(keysAtTxEnd.includes('orders/d1'));
+  assert.equal(fake._store['checkoutDrafts/d1'].status, 'converted');
+  assert.equal(keysAtTxEnd.filter((k) => k.startsWith('movements/')).length, 0);
+  assert.equal(keysAtTxEnd.filter((k) => k.startsWith('audit/')).length, 0);
+  // After the call resolves: movements + the order audit landed.
+  const mvKeys = Object.keys(fake._store).filter((k) => k.startsWith('movements/'));
+  assert.equal(mvKeys.length, 1);
+  assert.equal(fake._store[mvKeys[0]].source, 'convertDraft');
+  assert.equal(fake._store[mvKeys[0]].orderId, 'd1');
+  const audit = Object.values(fake._store).find((v) => v.operation === 'manual_order_create');
+  assert.ok(audit);
+  assert.equal(audit.docId, 'd1');
+  assert.ok(audit.docIds['orders/d1'].includes('status'));
 });
 
 test('convertDraft: out of stock returns a result and creates nothing', async () => {
@@ -1232,6 +1302,91 @@ test('convertDraft: throws FEE_NOT_SET when the delivery fee is unset', async ()
   await assert.rejects(
     fb.convertDraft(convertDraftInput()),
     (e) => e.code === 'FEE_NOT_SET');
+});
+
+// ════════════════════════════════════════
+// ORPHAN ORDERS (M1 audit-split recovery)
+// ════════════════════════════════════════
+
+test('findOrphanOrders + repairOrphanOrder: a missing audit entry is found and repaired with the repairing admin as actor', async () => {
+  const { fake, fb } = await signedInFb();
+  const createdAt = new Date('2026-11-27T10:00:00Z');
+  fake._store['orders/o1'] = {
+    customerName: 'أحمد', customerPhone: '01012345678', status: 'new', source: 'admin_manual',
+    total: 210, saleSavings: 0, deliveryFee: 30, amountDue: 210,
+    items: [{ productId: 'p1', name: 'منتج 1', price: 100, basePrice: null, qty: 2 }],
+    auditId: 'aud-1', createdAt
+  };
+  fake._store['orders/o2'] = {
+    customerName: 'سارة', status: 'new', source: 'storefront',
+    total: 100, saleSavings: 0, deliveryFee: 30, amountDue: 130,
+    items: [], auditId: 'aud-2', createdAt
+  };
+  fake._store['audit/aud-2'] = { operationId: 'aud-2', operation: 'create' }; // o2 is covered
+  fake._store['orders/o3'] = {
+    customerName: 'عمر', status: 'new', source: 'admin_manual',
+    total: 50, saleSavings: 0, deliveryFee: 30, amountDue: 80,
+    items: [], createdAt // no auditId at all — still an orphan
+  };
+  const orphans = await fb.findOrphanOrders();
+  assert.deepEqual(orphans.map((o) => o.id).sort(), ['o1', 'o3']);
+  const res = await fb.repairOrphanOrder(orphans.find((o) => o.id === 'o1'));
+  assert.equal(res.repaired, true);
+  assert.equal(res.auditId, 'aud-1');
+  const entry = fake._store['audit/aud-1'];
+  assert.equal(entry.operationId, 'aud-1');
+  assert.equal(entry.actor, 'uid-admin'); // the REPAIRING admin, not the order creator
+  assert.equal(entry.actorName, 'admin@store.test');
+  assert.equal(entry.operation, 'manual_order_create');
+  assert.equal(entry.timestamp.__serverTimestamp, true); // fresh — never the order's createdAt
+  assert.equal(entry.docId, 'o1');
+  assert.deepEqual(entry.docIds['orders/o1'].sort(), ['amountDue', 'deliveryFee', 'operationId', 'saleSavings', 'status', 'total', 'updatedAt']);
+  assert.deepEqual(entry.newValuesByDoc['orders/o1'], { status: 'new', total: 210, saleSavings: 0, deliveryFee: 30, amountDue: 210 });
+  assert.equal(entry.repaired, true);
+  assert.equal(entry.originalCreatedAt, createdAt);
+  assert.equal(entry.source, 'repairOrphanOrder');
+  // A repaired order disappears from the next check.
+  const orphans2 = await fb.findOrphanOrders();
+  assert.deepEqual(orphans2.map((o) => o.id), ['o3']);
+});
+
+test('repairOrphanOrder: a storefront order is repaired with operation create and covers items when a line has a basePrice', async () => {
+  const { fake, fb } = await signedInFb();
+  const createdAt = new Date('2026-11-27T10:00:00Z');
+  fake._store['orders/s1'] = {
+    customerName: 'ليلى', status: 'new', source: 'storefront',
+    total: 250, saleSavings: 50, deliveryFee: 30, amountDue: 280,
+    items: [{ productId: 'p1', name: 'منتج 1', price: 100, basePrice: 150, qty: 2 }],
+    auditId: 'aud-9', createdAt
+  };
+  const res = await fb.repairOrphanOrder({ ...fake._store['orders/s1'], id: 's1' });
+  assert.equal(res.auditId, 'aud-9');
+  const entry = fake._store['audit/aud-9'];
+  assert.equal(entry.operation, 'create');
+  assert.equal(entry.actor, 'uid-admin');
+  assert.ok(entry.docIds['orders/s1'].includes('items'));
+  assert.deepEqual(entry.newValuesByDoc['orders/s1'].items, [{ productId: 'p1', name: 'منتج 1', price: 100, basePrice: 150, qty: 2 }]);
+  assert.equal(entry.repaired, true);
+  assert.equal(entry.originalCreatedAt, createdAt);
+});
+
+test('repairOrphanOrder: an order with no auditId gets a fresh one stamped onto the order', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['orders/o3'] = {
+    customerName: 'عمر', status: 'new', source: 'admin_manual',
+    total: 50, saleSavings: 0, deliveryFee: 30, amountDue: 80,
+    items: [], createdAt: new Date('2026-11-27T10:00:00Z')
+  };
+  const res = await fb.repairOrphanOrder({ ...fake._store['orders/o3'], id: 'o3' });
+  assert.equal(res.repaired, true);
+  assert.ok(res.auditId);
+  assert.ok(fake._store['audit/' + res.auditId]);
+  assert.equal(fake._store['audit/' + res.auditId].operationId, res.auditId);
+  // The stamp makes the next check find the entry.
+  assert.equal(fake._store['orders/o3'].auditId, res.auditId);
+  assert.equal(fake._store['orders/o3'].operationId, res.auditId);
+  const orphans = await fb.findOrphanOrders();
+  assert.deepEqual(orphans, []);
 });
 
 test('updateDraftStatus: valid transitions pass, illegal ones reject; deleteDraft writes the deterministic delete audit', async () => {

@@ -5,8 +5,11 @@
 // companies, inventory) read Firestore directly. There are NO Cloud
 // Functions on this project (Spark, no-functions contract 2026-11-26):
 // orders are created by ONE client transaction (runTransaction) that
-// reserves stock, writes the order + movements + audit atomically, and order-status transitions move stock in a
-// transaction too. The ERP sections (sales, purchases, returns,
+// reserves stock, claims the discount and writes the order; the
+// movements + audit entry are written AFTER the commit, best-effort
+// (M1: Option 3 + audit-split, 2026-11-27) — an order whose audit
+// entry never landed is recovered by the orphan repair. Order-status
+// transitions move stock in a transaction too. The ERP sections (sales, purchases, returns,
 // customers, suppliers, expenses, local orders) stay on the local
 // JSON files; they are NOT migrated here and local accounts are
 // NEVER sent to Firebase.
@@ -26,7 +29,10 @@
 //   exactly the shape firestore.rules enforces (actor + timestamp +
 //   docIds coverage + the recorded new value of every changed
 //   SENSITIVE field). A write without its audit entry is denied by
-//   the rules, so the app can never silently skip the audit.
+//   the rules, so the app can never silently skip the audit. The
+//   order-create path is the one exception: its audit entry is
+//   written post-commit, best-effort (see writeOrderPostCommit),
+//   and the orphan repair recovers a missing one.
 // - Auth: the same Firebase Auth accounts as the phone app
 //   (admin/manager). The local ERP sign-in stays as the app gate;
 //   this sign-in unlocks the store sections only.
@@ -1795,6 +1801,7 @@
       var orderRef = db().collection('orders').doc(clientOrderId);
       var committedLines = null; // {productId, qty, stock, newReserved} — for the §13 refresh
       var createdOrder = null;
+      var pendingPostCommit = null; // M1: movements + audit, written after the commit
       return db().runTransaction(function (tx) {
         return tx.get(orderRef).then(function (orderSnap) {
           if (orderSnap.exists) {
@@ -1865,7 +1872,6 @@
               throw _txError('TOTAL_CHANGED', 'اتغير الإجمالي — راجع الإجمالي وحاول تاني', { currentPrices: currentPrices, currentTotal: totals.total });
             }
             var auditId = newUuid();
-            var auditRef = db().collection('audit').doc(auditId);
             var opId = auditId;
             var now = serverTimestamp();
             var orderData = {
@@ -1891,21 +1897,23 @@
               writes['inventory/' + l.productId] = { reserved: l.newReserved };
               sensitive['inventory/' + l.productId] = { reserved: l.newReserved };
             });
+            // M1 (Option 3): movements leave the transaction — the
+            // doc ids are reserved here so the post-commit batch
+            // writes the exact docs the audit entry covers, but no
+            // movement is written until the order commits.
+            var movementDocs = [];
             priced.forEach(function (l) {
               var mvRef = db().collection('movements').doc();
-              tx.set(mvRef, {
-                productId: l.productId, type: 'order_reserve', qty: -l.qty,
-                orderId: clientOrderId, source: 'createManualOrder',
-                actorUid: actorUid, createdAt: now, operationId: opId, updatedAt: now
-              });
+              movementDocs.push({ id: mvRef.id, productId: l.productId, qty: l.qty });
               writes['movements/' + mvRef.id] = { type: 'order_reserve', qty: -l.qty };
               sensitive['movements/' + mvRef.id] = {};
             });
             writes['orders/' + clientOrderId] = { status: 'new', total: totals.total, saleSavings: totals.saleSavings, deliveryFee: totals.deliveryFee, amountDue: totals.amountDue };
             sensitive['orders/' + clientOrderId] = { status: 'new', total: totals.total, saleSavings: totals.saleSavings, deliveryFee: totals.deliveryFee, amountDue: totals.amountDue };
             // The audit entry must cover 'items' whenever any line
-            // carries a base price — otherwise the rules deny the
-            // order (orderAuditOk). Same shape as convertDraft.
+            // carries a base price — the log still records the full
+            // order (the rules no longer CHECK coverage since the
+            // audit-split, M1). Same shape as convertDraft.
             var hasBasePrice = priced.some(function (l) { return l.basePrice != null; });
             if (hasBasePrice) {
               var orderItems = priced.map(function (l) { return { productId: l.productId, name: l.name, price: l.price, basePrice: l.basePrice, qty: l.qty }; });
@@ -1913,30 +1921,46 @@
               sensitive['orders/' + clientOrderId].items = orderItems;
             }
             writes = primaryFirst(writes, 'orders/' + clientOrderId);
-            var entry = buildAuditEntry({
-              opId: opId, actor: actorUid, actorName: actorName, timestamp: now,
-              operation: 'manual_order_create', writes: writes, sensitive: sensitive,
-              oldValues: {}, topNewValues: { status: 'new', total: totals.total, saleSavings: totals.saleSavings, deliveryFee: totals.deliveryFee, amountDue: totals.amountDue }
-            });
-            entry.source = 'createManualOrder';
-            tx.set(auditRef, entry);
+            // M1 (audit-split): the audit entry leaves the
+            // transaction too — it is written post-commit (below)
+            // with a fresh timestamp; the order doc is the only
+            // order write left in the transaction besides the
+            // reserves.
             tx.set(orderRef, orderData);
             committedLines = priced;
             createdOrder = orderData;
+            pendingPostCommit = {
+              lines: priced, movementDocs: movementDocs,
+              orderId: clientOrderId, auditId: auditId, opId: opId,
+              source: 'createManualOrder', operation: 'manual_order_create',
+              actorUid: actorUid, actorName: actorName,
+              writes: writes, sensitive: sensitive,
+              topNewValues: { status: 'new', total: totals.total, saleSavings: totals.saleSavings, deliveryFee: totals.deliveryFee, amountDue: totals.amountDue }
+            };
             return { created: true };
           });
         });
       }).then(function (res) {
+        // M1 post-commit (best-effort, retry 3x, never throws):
+        // movements + audit entry, ONLY for a newly created order
+        // (never on an idempotent retry, never when the transaction
+        // threw). The order is already committed, so a failure here
+        // cannot fail the call — it is logged, and the orphan
+        // repair recovers a missing audit entry.
+        var chain = Promise.resolve();
+        if (res.created && pendingPostCommit) {
+          chain = chain.then(function () { return writeOrderPostCommit(pendingPostCommit); });
+        }
         // §13 second write (best-effort, retry 3x, logged): refresh
         // products.inStock from the inventory values just written.
         // The transaction itself never writes products.inStock (that
         // would push the rules budget over 20 for 10-line orders).
         if (res.created && committedLines && committedLines.length) {
-          return refreshInStock(committedLines).then(function () {
-            return { order: createdOrder, created: true };
-          });
+          chain = chain.then(function () { return refreshInStock(committedLines); });
         }
-        return { order: createdOrder, created: false };
+        return chain.then(function () {
+          return { order: createdOrder, created: res.created };
+        });
       });
     }
 
@@ -2009,6 +2033,7 @@
         var committedLines = null;
         var createdOrder = null;
         var convertResult = null;
+        var pendingPostCommit = null; // M1: movements + audit, written after the commit
         return db().runTransaction(function (tx) {
           return tx.get(draftRef).then(function (draftSnap) {
             if (!draftSnap.exists) throw _txError('INVALID_INPUT', 'المسودة مش موجودة');
@@ -2094,7 +2119,6 @@
               }
               var totals = computeOrderTotals(priced, { deliveryFee: fee, freeDeliveryThreshold: threshold });
               var auditId = newUuid();
-              var auditRef = db().collection('audit').doc(auditId);
               var opId = auditId;
               var now = serverTimestamp();
               var hasBasePrice = priced.some(function (l) { return l.basePrice != null; });
@@ -2124,48 +2148,66 @@
                 writes['inventory/' + l.productId] = { reserved: l.newReserved };
                 sensitive['inventory/' + l.productId] = { reserved: l.newReserved };
               });
+              // M1 (Option 3): movements leave the transaction — the
+              // doc ids are reserved here so the post-commit batch
+              // writes the exact docs the audit entry covers, but no
+              // movement is written until the order commits.
+              var movementDocs = [];
               priced.forEach(function (l) {
                 var mvRef = db().collection('movements').doc();
-                tx.set(mvRef, {
-                  productId: l.productId, type: 'order_reserve', qty: -l.qty,
-                  orderId: draftId, source: 'convertDraft',
-                  actorUid: actorUid, createdAt: now, operationId: opId, updatedAt: now
-                });
+                movementDocs.push({ id: mvRef.id, productId: l.productId, qty: l.qty });
                 writes['movements/' + mvRef.id] = { type: 'order_reserve', qty: -l.qty };
                 sensitive['movements/' + mvRef.id] = {};
               });
               // The audit entry must cover 'items' whenever any line
-              // carries a base price — otherwise the rules deny the
-              // order (orderAuditOk). Same for the money fields.
+              // carries a base price — the log still records the full
+              // order (the rules no longer CHECK coverage since the
+              // audit-split, M1). Same for the money fields.
               var orderWrite = { status: 'new', total: totals.total, saleSavings: totals.saleSavings, deliveryFee: totals.deliveryFee, amountDue: totals.amountDue };
               var orderSensitive = { status: 'new', total: totals.total, saleSavings: totals.saleSavings, deliveryFee: totals.deliveryFee, amountDue: totals.amountDue };
               if (hasBasePrice) { orderWrite.items = orderItems; orderSensitive.items = orderItems; }
               writes['orders/' + draftId] = orderWrite;
               sensitive['orders/' + draftId] = orderSensitive;
               writes = primaryFirst(writes, 'orders/' + draftId);
-              var entry = buildAuditEntry({
-                opId: opId, actor: actorUid, actorName: actorName, timestamp: now,
-                operation: 'manual_order_create', writes: writes, sensitive: sensitive,
-                oldValues: {}, topNewValues: { status: 'new', total: totals.total, saleSavings: totals.saleSavings, deliveryFee: totals.deliveryFee, amountDue: totals.amountDue }
-              });
-              entry.source = 'convertDraft';
-              tx.set(auditRef, entry);
+              // M1 (audit-split): the audit entry leaves the
+              // transaction too — written post-commit (below) with a
+              // fresh timestamp. The order doc + draft-converted
+              // mark are the only order writes left in the
+              // transaction besides the reserves.
               tx.set(orderRef, orderData);
               // Mark the draft converted (orderId = the new order id).
               tx.set(draftRef, { status: 'converted', orderId: draftId, operationId: opId, updatedAt: now }, { merge: true });
               committedLines = priced;
               createdOrder = orderData;
+              pendingPostCommit = {
+                lines: priced, movementDocs: movementDocs,
+                orderId: draftId, auditId: auditId, opId: opId,
+                source: 'convertDraft', operation: 'manual_order_create',
+                actorUid: actorUid, actorName: actorName,
+                writes: writes, sensitive: sensitive,
+                topNewValues: { status: 'new', total: totals.total, saleSavings: totals.saleSavings, deliveryFee: totals.deliveryFee, amountDue: totals.amountDue }
+              };
               convertResult = { result: 'ok', order: orderData, created: true };
               return convertResult;
             });
           });
         }).then(function () {
+          // M1 post-commit (best-effort, retry 3x, never throws):
+          // movements + audit entry, ONLY when a new order was
+          // created (never on ALREADY_CONVERTED, never when the
+          // transaction threw). The order is already committed, so
+          // a failure here cannot fail the call — it is logged,
+          // and the orphan repair recovers a missing audit entry.
+          var chain = Promise.resolve();
+          if (convertResult && convertResult.created && pendingPostCommit) {
+            chain = chain.then(function () { return writeOrderPostCommit(pendingPostCommit); });
+          }
           // §13 second write (best-effort, retry 3x, logged): refresh
           // products.inStock from the inventory values just written.
           if (convertResult && convertResult.created && committedLines && committedLines.length) {
-            return refreshInStock(committedLines).then(function () { return convertResult; });
+            chain = chain.then(function () { return refreshInStock(committedLines); });
           }
-          return convertResult;
+          return chain.then(function () { return convertResult; });
         });
       });
     }
@@ -2360,6 +2402,144 @@
             if (attempt < 3) return tryOnce();
             return false;
           });
+      }
+      return tryOnce();
+    }
+
+    // ---- Post-commit order side-effects (M1: Option 3 + audit-split) ----
+    // The order transaction writes ONLY order + inventory reserves.
+    // Movements and the audit entry are written AFTER the order
+    // commits, in ONE batch (atomic together), best-effort with up
+    // to 3 attempts — the same retry pattern as refreshInStock. A
+    // failure is logged and never throws: the order is already
+    // committed, so failing the call would lie about it, and a
+    // missing audit entry is recovered later by repairOrphanOrder.
+    // The movement docs reuse the ids reserved inside the
+    // transaction, so the audit entry's docIds covers the exact docs
+    // written; createdAt/updatedAt and the audit timestamp are
+    // FRESH serverTimestamp() sentinels — the audit-create rule
+    // requires timestamp == request.time (firestore.rules match
+    // /audit).
+    function writeOrderPostCommit(post) {
+      var attempt = 0;
+      function tryOnce() {
+        attempt++;
+        var batch = db().batch();
+        (post.movementDocs || []).forEach(function (m) {
+          batch.set(db().collection('movements').doc(m.id), {
+            productId: m.productId, type: 'order_reserve', qty: -m.qty,
+            orderId: post.orderId, source: post.source,
+            actorUid: post.actorUid, createdAt: serverTimestamp(), operationId: post.opId, updatedAt: serverTimestamp()
+          });
+        });
+        var entry = buildAuditEntry({
+          opId: post.opId, actor: post.actorUid, actorName: post.actorName, timestamp: serverTimestamp(),
+          operation: post.operation, writes: post.writes, sensitive: post.sensitive,
+          oldValues: {}, topNewValues: post.topNewValues || {}
+        });
+        entry.source = post.source;
+        batch.set(db().collection('audit').doc(post.auditId), entry);
+        return batch.commit().then(function () { return true; }).catch(function (e) {
+          logDiag('order post-commit write failed (attempt ' + attempt + '/3): ' + (e.message || e));
+          if (attempt < 3) return tryOnce();
+          return false;
+        });
+      }
+      return tryOnce();
+    }
+
+    // ---- Orphan-order check + repair (M1: audit-split recovery) ----
+    // With the audit entry written post-commit, a crash between the
+    // order commit and the audit write leaves an order with no
+    // matching audit entry. findOrphanOrders runs a BOUNDED check
+    // over the 100 most recent orders (newest first) and returns the
+    // ones whose audit/<order.auditId> is missing — a missing/empty
+    // auditId counts as orphan.
+    function findOrphanOrders() {
+      requireAdmin();
+      return db().collection('orders').orderBy('createdAt', 'desc').limit(100).get().then(function (snap) {
+        var orders = [];
+        snap.forEach(function (d) {
+          var data = d.data() || {};
+          data.id = d.id;
+          orders.push(data);
+        });
+        var checks = orders.map(function (o) {
+          if (!o.auditId) return Promise.resolve(o);
+          return db().collection('audit').doc(o.auditId).get().then(function (aSnap) {
+            return aSnap.exists ? null : o;
+          });
+        });
+        return Promise.all(checks).then(function (found) {
+          return found.filter(function (o) { return !!o; });
+        });
+      });
+    }
+
+    // Repair writes the missing audit entry with the same
+    // money-field coverage as the original order audit entry
+    // (status, total, saleSavings, deliveryFee, amountDue, plus
+    // 'items' when any line has a non-null basePrice), plus the
+    // markers repaired: true and originalCreatedAt (the order's
+    // createdAt). The audit-create rule has no hasOnly, so the extra
+    // fields are allowed; buildAuditEntry returns a fixed shape, so
+    // the markers are set on the entry after building it.
+    //
+    // DESIGN CORRECTION (vs the design doc §2, which says
+    // "actor = the order's creator, timestamp = the order's
+    // createdAt"): that literal spec cannot pass the audit-create
+    // rule (firestore.rules match /audit) — the admin branch
+    // requires timestamp == request.time (a past createdAt would be
+    // denied) and actor == request.auth.uid (a storefront order's
+    // creator is anonymous — there is no uid). So the repair uses
+    // the REPAIRING admin (actor = request.auth.uid, actorName =
+    // their email) and a FRESH serverTimestamp() at repair time;
+    // the original values are preserved in the
+    // repaired/originalCreatedAt markers instead.
+    // Retries 3x; throws only after the third failure so the UI can
+    // report it. An order with no auditId at all gets a fresh one,
+    // stamped onto the order in the same batch (the entry covers
+    // the stamp: auditId is in its writes map, operationId and
+    // updatedAt are auto-covered by buildAuditEntry).
+    function repairOrphanOrder(order) {
+      requireAdmin();
+      var o = order || {};
+      if (!o.id) return Promise.reject(new Error('الطلب مش موجود'));
+      var auditId = o.auditId || newUuid();
+      var operation = (o.source === 'storefront') ? 'create' : 'manual_order_create';
+      var orderWrite = {
+        status: o.status || 'new', total: o.total, saleSavings: o.saleSavings,
+        deliveryFee: o.deliveryFee, amountDue: o.amountDue
+      };
+      var hasBasePrice = (o.items || []).some(function (it) { return it && it.basePrice != null; });
+      if (hasBasePrice) orderWrite.items = o.items;
+      if (!o.auditId) orderWrite.auditId = auditId;
+      var writes = {};
+      writes['orders/' + o.id] = orderWrite;
+      var sensitive = {};
+      sensitive['orders/' + o.id] = Object.assign({}, orderWrite);
+      var topNewValues = { status: orderWrite.status, total: o.total, saleSavings: o.saleSavings, deliveryFee: o.deliveryFee, amountDue: o.amountDue };
+      var attempt = 0;
+      function tryOnce() {
+        attempt++;
+        var batch = db().batch();
+        var entry = buildAuditEntry({
+          opId: auditId, actor: state.user.uid, actorName: state.user.email || '',
+          timestamp: serverTimestamp(), operation: operation,
+          writes: writes, sensitive: sensitive, oldValues: {}, topNewValues: topNewValues
+        });
+        entry.source = 'repairOrphanOrder';
+        entry.repaired = true;
+        entry.originalCreatedAt = o.createdAt || null;
+        batch.set(db().collection('audit').doc(auditId), entry);
+        if (!o.auditId) {
+          batch.set(db().collection('orders').doc(o.id), { auditId: auditId, operationId: auditId, updatedAt: serverTimestamp() }, { merge: true });
+        }
+        return batch.commit().then(function () { return { repaired: true, auditId: auditId }; }).catch(function (e) {
+          logDiag('orphan repair failed for order ' + o.id + ' (attempt ' + attempt + '/3): ' + (e.message || e));
+          if (attempt < 3) return tryOnce();
+          throw e;
+        });
       }
       return tryOnce();
     }
@@ -3327,6 +3507,8 @@
       fetchOrdersByPhones: fetchOrdersByPhones,
       dailyWriteEstimate: dailyWriteEstimate,
       runLazySweep: runLazySweep,
+      findOrphanOrders: findOrphanOrders,
+      repairOrphanOrder: repairOrphanOrder,
       refreshInStock: refreshInStock,
       auditedWrite: auditedWrite,
       auditedDelete: auditedDelete,
