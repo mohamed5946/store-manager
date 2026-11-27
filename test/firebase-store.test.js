@@ -588,8 +588,9 @@ test('pure helpers: dedupe, totals, low stock, sales by period', () => {
   assert.deepEqual(StoreFB.dedupeOrderLines([{ productId: 'p1', qty: 1 }, { productId: 'p1', qty: 2 }, { productId: 'p2', qty: 1 }]),
     [{ productId: 'p1', qty: 3 }, { productId: 'p2', qty: 1 }]);
   // Pricing (§8): the canonical helper returns every shared figure —
-  // feeUnset / feeWaived / amountDue (null while the fee is unset) /
-  // savingTotal / insteadOf, identical to the storefront + Flutter.
+  // feeUnset / feeWaived / amountDue (unset fee = free, 0, decision
+  // 2026-11-27) / savingTotal / insteadOf, identical to the
+  // storefront + Flutter.
   assert.deepEqual(StoreFB.computeOrderTotals([{ price: 100, qty: 2 }], { deliveryFee: 30 }), {
     perLine: [{ saving: 0, pct: null }], baseSubtotal: 200, subtotal: 200, saleSavings: 0,
     total: 200, deliveryFee: 30, feeUnset: false,
@@ -597,8 +598,8 @@ test('pure helpers: dedupe, totals, low stock, sales by period', () => {
   });
   assert.deepEqual(StoreFB.computeOrderTotals([{ price: 100, qty: 1 }]), {
     perLine: [{ saving: 0, pct: null }], baseSubtotal: 100, subtotal: 100, saleSavings: 0,
-    total: 100, deliveryFee: null, feeUnset: true,
-    feeWaived: false, amountDue: null, savingTotal: 0, insteadOf: null
+    total: 100, deliveryFee: 0, feeUnset: true,
+    feeWaived: false, amountDue: 100, savingTotal: 0, insteadOf: 100
   });
   assert.equal(StoreFB.computeInStock(10, 4), true);
   assert.equal(StoreFB.computeInStock(2, 2), false);
@@ -972,12 +973,12 @@ test('pricing % badge: exact percentages show, inexact ones are suppressed (§8)
   assert.equal(StoreFB.roundHalfUp(14.4), 14);
 });
 
-test('pricing fee: missing fee blocks with amountDue null; threshold waives the fee (D3)', () => {
+test('pricing fee: missing fee means free (decision 2026-11-27); threshold waives the fee (D3)', () => {
   const unset = StoreFB.computeOrderTotals([{ price: 300, qty: 1 }], {});
   assert.equal(unset.feeUnset, true);
-  assert.equal(unset.deliveryFee, null);
-  assert.equal(unset.amountDue, null);
-  assert.equal(unset.insteadOf, null);
+  assert.equal(unset.deliveryFee, 0);
+  assert.equal(unset.amountDue, 300);
+  assert.equal(unset.insteadOf, 300);
   const waived = StoreFB.computeOrderTotals([{ price: 300, qty: 1 }], { deliveryFee: 30, freeDeliveryThreshold: 300 });
   assert.equal(waived.feeWaived, true);
   assert.equal(waived.deliveryFee, 0);
@@ -1034,20 +1035,22 @@ test('createManualOrder: snapshots per-line basePrice + saleSavings + deliveryFe
   assert.ok(audit.docIds['orders/c-pr1'].includes('deliveryFee'));
 });
 
-test('createManualOrder: missing delivery fee rejects (FEE_NOT_SET) and writes nothing', async () => {
+test('createManualOrder: missing delivery fee means free — order created with deliveryFee 0 (decision 2026-11-27)', async () => {
   const { fake, fb } = await signedInFb();
   fake._store['products/p1'] = { name: 'منتج 1', price: 100 };
   fake._store['inventory/p1'] = { stock: 10, reserved: 0 };
-  // No storeSettings/settings doc at all.
-  await assert.rejects(
-    fb.createManualOrder({
-      clientOrderId: 'c-nofee',
-      items: [{ productId: 'p1', qty: 1 }],
-      customer: { name: 'أحمد', phone: '01012345678', address: 'القاهرة' }
-    }),
-    (e) => { assert.equal(e.code, 'FEE_NOT_SET'); return /رسوم التوصيل غير محددة/.test(e.message); });
-  assert.equal(fake._store['orders/c-nofee'], undefined);
-  assert.equal(fake._store['inventory/p1'].reserved, 0);
+  // No storeSettings/settings doc at all: delivery is free, not blocked.
+  const res = await fb.createManualOrder({
+    clientOrderId: 'c-nofee',
+    items: [{ productId: 'p1', qty: 1 }],
+    customer: { name: 'أحمد', phone: '01012345678', address: 'القاهرة' }
+  });
+  assert.equal(res.created, true);
+  const o = fake._store['orders/c-nofee'];
+  assert.equal(o.deliveryFee, 0);
+  assert.equal(o.amountDue, 100);
+  assert.equal(o.total, 100);
+  assert.equal(fake._store['inventory/p1'].reserved, 1); // the 1 unit is reserved
 });
 
 test('createManualOrder: free-delivery threshold from settings waives the fee', async () => {
@@ -1295,13 +1298,17 @@ test('convertDraft: rejects bad input and a dead draft', async () => {
     (e) => e.code === 'INVALID_INPUT');
 });
 
-test('convertDraft: throws FEE_NOT_SET when the delivery fee is unset', async () => {
+test('convertDraft: missing delivery fee means free — draft converts with deliveryFee 0 (decision 2026-11-27)', async () => {
   const { fake, fb } = await signedInFb();
   seedConvertDraftBase(fake);
   delete fake._store['storeSettings/settings'];
-  await assert.rejects(
-    fb.convertDraft(convertDraftInput()),
-    (e) => e.code === 'FEE_NOT_SET');
+  const res = await fb.convertDraft(convertDraftInput());
+  assert.equal(res.result, 'ok');
+  assert.equal(res.created, true);
+  const o = fake._store['orders/d1'];
+  assert.equal(o.deliveryFee, 0);
+  assert.equal(o.amountDue, 200);
+  assert.equal(o.total, 200);
 });
 
 // ════════════════════════════════════════

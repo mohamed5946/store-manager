@@ -868,6 +868,11 @@ test('templates pointer/rollback: activation appends to the history stack, rollb
   assert.equal(ptr.history.length, 2);
   assert.equal(ptr.history[1].templateId, 'gallery');
   assert.equal(ptr.history[1].bundleHash, 'b'.repeat(64));
+  // D2: the history `at` is a Firestore Timestamp (serverTimestamp
+  // sentinel in the fake), never an ISO string — the rules require
+  // `last.get('at') is timestamp` (pointerShapeOk).
+  assert.equal(typeof ptr.history[1].at, 'object');
+  assert.equal(ptr.history[1].at.__serverTimestamp, true);
   assert.equal(fake._store['templates/gallery'].status, 'active');
   const galleryActivations = activationRecords(fake, 'gallery');
   assert.equal(galleryActivations.length, 1);
@@ -877,6 +882,7 @@ test('templates pointer/rollback: activation appends to the history stack, rollb
   assert.equal(galleryActivations[0].shellVersion, '1.0.0');
   assert.equal(galleryActivations[0].previousTemplateId, 'classic');
   assert.ok(galleryActivations[0].at, 'activation record has at');
+  assert.equal(galleryActivations[0].at.__serverTimestamp, true);
 
   // Rollback once: classic is live again; gallery demoted to approved.
   const rb1 = await fb.rollbackTemplate();
@@ -888,6 +894,9 @@ test('templates pointer/rollback: activation appends to the history stack, rollb
   assert.equal(ptr.previousTemplateId, 'gallery');
   assert.equal(ptr.history.length, 3);
   assert.equal(ptr.history[2].templateId, 'classic');
+  // D2: the rollback entry's `at` is a Timestamp too.
+  assert.equal(typeof ptr.history[2].at, 'object');
+  assert.equal(ptr.history[2].at.__serverTimestamp, true);
   assert.equal(fake._store['templates/gallery'].status, 'approved');
 
   // Rollback again: walks the stack backwards, gallery is live again
@@ -923,6 +932,30 @@ test('templates pointer/rollback: activation appends to the history stack, rollb
   const classicRollbacks = activationRecords(fake, 'classic')
     .filter((r) => r.action === 'rollback' && r.deniedTemplateId === 'gallery');
   assert.equal(classicRollbacks.length, 1);
+  } finally {
+    restore();
+  }
+});
+
+test('templates approval: approval.at is a Timestamp (serverTimestamp), not an ISO string (D2)', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['templates/gallery'] = specRegistryDoc('gallery',
+    { nameAr: 'معرض', nameEn: 'White Gallery', hash: 'b'.repeat(64), status: 'preview', approval: false });
+  const restore = stubHostedManifests({
+    gallery: hostedManifest('gallery', { nameAr: 'معرض', nameEn: 'White Gallery', hash: 'b'.repeat(64) }),
+  });
+  try {
+    const ok = await fb.approveTemplate('gallery');
+    assert.equal(ok, true);
+    const doc = fake._store['templates/gallery'];
+    assert.equal(doc.status, 'approved');
+    // templateApprovalOk requires `at is timestamp` — an ISO string
+    // is denied by the rules, so this must be the serverTimestamp
+    // sentinel (a real Timestamp live), never a string.
+    assert.equal(typeof doc.approval.at, 'object');
+    assert.equal(doc.approval.at.__serverTimestamp, true);
+    assert.equal(doc.approval.approver, 'admin@store.test');
+    assert.equal(doc.approval.bundleHash, 'b'.repeat(64));
   } finally {
     restore();
   }
