@@ -150,6 +150,21 @@
     return (ORDER_TRANSITIONS[from] || []).indexOf(to) !== -1;
   }
 
+  // Normalizes an Egyptian phone to the sign-in lookup form: 12 digits
+  // starting with '20' (e.g. 01557887719 -> 201557887719). Same rule as
+  // the mobile app's lib/core/identifier.dart. Returns null when the
+  // input is not a plausible Egyptian mobile number. Pure (module scope)
+  // so the factory export and the tests can use it.
+  function normalizeEgyptPhone(raw) {
+    var digits = String(raw || '').replace(/[\s\-()]/g, '');
+    if (digits.charAt(0) === '+') digits = digits.slice(1);
+    if (digits.indexOf('00') === 0) digits = digits.slice(2);
+    if (digits.length === 11 && digits.indexOf('01') === 0) return '20' + digits.slice(1);
+    if (digits.length === 12 && digits.indexOf('20') === 0) return digits;
+    if (digits.length === 10 && digits.charAt(0) === '1') return '20' + digits;
+    return null;
+  }
+
   // ---- Diagnostics (in-memory, newest 200) ----
   // Best-effort background work (the lazy sweep, the inStock refresh)
   // logs here instead of failing silently; the UI reads it through
@@ -1587,6 +1602,15 @@
       return _subscribe(db().collection('feedback').orderBy('createdAt', 'desc').limit(100), cb);
     }
 
+    // Team (1.1.5): the admins collection — one doc per member (doc id =
+    // the Auth uid; fields email, phone, role, createdAt, plus name once
+    // the account panel writes it). The rules allow list only to
+    // isAdmin(); a manager login gets permission-denied on the snapshot,
+    // delivered to the callback as err.
+    function subscribeTeam(cb) {
+      return _subscribe(db().collection('admins'), cb);
+    }
+
     // Checkout attempts for the dashboard pricing counters
     // (Technical Plan §11): PRICE_CHANGED / FEE_CHANGED rejection
     // rate and failure rate by code come from attempt docs, not
@@ -2977,9 +3001,11 @@
       }
     }
 
-    // Demotes the template that stops being live back to 'approved'
-    // (spec transition table — it keeps its approval, so re-activation
-    // needs no re-approval unless its hash changed). Classic stays
+    // Demotes the template that stops being live. An approved template
+    // goes back to 'approved' (it keeps its approval); a template that
+    // went live directly, without approval (2026-11-27 direct
+    // activation), goes back to 'preview' — never 'approved', so the
+    // UI never shows an approval that never happened. Classic stays
     // 'active': it is the pinned rollback target.
     function _demotePreviousLive(currentId, operation) {
       if (currentId === 'classic') return Promise.resolve();
@@ -2987,12 +3013,13 @@
         if (!prevSnap.exists) return;
         var prev = prevSnap.data() || {};
         if (prev.status !== 'active') return;
+        var demoted = (prev.approval && typeof prev.approval === 'object') ? 'approved' : 'preview';
         return auditedWrite({
-          writes: { ['templates/' + currentId]: { status: 'approved' } },
-          sensitive: { ['templates/' + currentId]: { status: 'approved' } },
+          writes: { ['templates/' + currentId]: { status: demoted } },
+          sensitive: { ['templates/' + currentId]: { status: demoted } },
           operation: operation,
           oldValues: { ['templates/' + currentId]: { status: 'active' } },
-          topNewValues: { templateId: currentId, status: 'approved' }
+          topNewValues: { templateId: currentId, status: demoted }
         });
       });
     }
@@ -3000,9 +3027,10 @@
     // Entry 16: bundle activation. Same shape as Flutter entry 11 —
     // one pointer write (templateId + bundleVersion + bundleHash +
     // approver + timestamp) + pointer history-stack append + activation
-    // record. A bundle doc is validated through the bundle gateway and
-    // must pass the approval-hash freeze; a v1 doc goes through the
-    // old gateway as before.
+    // record. A bundle doc is validated through the bundle gateway
+    // (registry + hosted-manifest checks); since 2026-11-27 activation
+    // is DIRECT — no approval / preview gate (Mohamed's decision).
+    // A v1 doc goes through the old gateway as before.
     function activateTemplate(templateId) {
       requireAdmin();
       var actor = (state.user && (state.user.email || state.user.uid)) || '';
@@ -3017,11 +3045,12 @@
           // on registry data.
           var registryReport = validateRegistryManifest(data, templateId);
           if (!registryReport.passed) throw new Error('القالب مش صالح للتفعيل: ' + registryReport.failedChecks.join('، '));
-          if (templateId !== 'classic') {
-            if (data.status !== 'approved' && data.status !== 'active') throw new Error('القالب لسه مش معتمد — لازم اعتماد محمد الأول');
-            var freeze = checkApprovalFreeze(data);
-            if (!freeze.ok) throw new Error(freeze.reason);
-          }
+          // Direct activation (2026-11-27, Mohamed's decision): no
+          // approval / preview gate — any draft, preview, approved or
+          // active template activates once its bundle is valid
+          // (registry + hosted-manifest checks above). The D1 approval
+          // stays as an optional action; an approved template keeps
+          // its approval record, an unapproved one simply has none.
           return validateHostedManifest(templateId).then(function (hosted) {
             if (!hosted.passed) throw new Error('القالب المستضاف مش صالح للتفعيل: ' + hosted.failedChecks.join('، '));
             return { data: data, bundle: bundle };
@@ -3473,17 +3502,62 @@
       return function () { unsubs.forEach(function (u) { try { u(); } catch (e) {} }); };
     }
 
+    // ── Account profile (1.1.5): display name + mobile for the signed-in admin ──
+    // Writes to admins/{uid} (merge) so the Team page and the mobile app show
+    // the same name/phone. Also keeps the phones sign-in lookup in sync when
+    // the number changes (lookup key = SHA-256 hex of the normalized phone,
+    // same rule as the mobile app's lib/core/identifier.dart). Best-effort:
+    // any failure resolves {saved:false} — localStorage remains the chip's
+    // source of truth, so a failed sync never blocks the panel.
+    function sha256Hex(str) {
+      if (typeof crypto === 'undefined' || !crypto.subtle || !crypto.subtle.digest) return Promise.resolve(null);
+      if (typeof TextEncoder === 'undefined') return Promise.resolve(null);
+      return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)).then(function (buf) {
+        return Array.prototype.map.call(new Uint8Array(buf), function (b) {
+          return ('0' + b.toString(16)).slice(-2);
+        }).join('');
+      }).catch(function () { return null; });
+    }
+    function saveAccountProfile(profile) {
+      var st = state;
+      if (!st || !st.user || !st.user.uid) return Promise.resolve({ saved: false, reason: 'no-session' });
+      var name = (profile.name || 'محمد').trim() || 'محمد';
+      var phone = (profile.phone || '').trim();
+      var prevPhone = (profile.prevPhone || '').trim();
+      return db().collection('admins').doc(st.user.uid).set({ name: name, phone: phone }, { merge: true }).then(function () {
+        if (phone === prevPhone) return { saved: true };
+        var oldKey = normalizeEgyptPhone(prevPhone);
+        var newKey = normalizeEgyptPhone(phone);
+        var chain = Promise.resolve();
+        if (oldKey) {
+          chain = chain.then(function () { return sha256Hex(oldKey); }).then(function (h) {
+            if (!h) return null;
+            return db().collection('phones').doc(h).delete().catch(function () {});
+          });
+        }
+        if (newKey) {
+          chain = chain.then(function () { return sha256Hex(newKey); }).then(function (h) {
+            if (!h) return null;
+            return db().collection('phones').doc(h).set({ email: st.user.email || '', uid: st.user.uid }, { merge: true }).catch(function () {});
+          });
+        }
+        return chain.then(function () { return { saved: true }; });
+      }).catch(function () { return { saved: false, reason: 'admins-write-failed' }; });
+    }
+
     return {
       state: state,
       onStateChange: onStateChange,
       init: init,
       signIn: signIn,
       signOut: signOut,
+      saveAccountProfile: saveAccountProfile,
       setPersistenceMode: setPersistenceMode,
       updateTemplateGrid: updateTemplateGrid,
       subscribeOrders: subscribeOrders,
       subscribeTemplates: subscribeTemplates,
       subscribeFeedback: subscribeFeedback,
+      subscribeTeam: subscribeTeam,
       subscribeAttempts: subscribeAttempts,
       subscribeShippingCompanies: subscribeShippingCompanies,
       subscribeInventory: subscribeInventory,
@@ -3536,6 +3610,7 @@
       getDiagnostics: function () { return diagLog.slice(); },
       // Pure helpers (also exported on the factory for the tests).
       isAllowedOrderTransition: isAllowedOrderTransition,
+      normalizeEgyptPhone: normalizeEgyptPhone,
       validateTemplateDoc: validateTemplateDoc,
       friendlyCallableError: friendlyCallableError,
       newUuid: newUuid
@@ -3549,6 +3624,7 @@
     CLASSIC_TEMPLATE: CLASSIC_TEMPLATE,
     CLASSIC_BUNDLE_HASH: CLASSIC_BUNDLE_HASH,
     isAllowedOrderTransition: isAllowedOrderTransition,
+    normalizeEgyptPhone: normalizeEgyptPhone,
     validateTemplateDoc: validateTemplateDoc,
     // Template bundles (entries 16–17): mirror gateway + pointer
     // history + approval freeze + D2 end-date helpers (pure).

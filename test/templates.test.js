@@ -817,8 +817,8 @@ test('templates registry: the full-manifest validator still rejects a six-field 
   } finally {
     restore();
   }
-  // A hosted manifest whose hash CHANGED after approval is refused
-  // at the hosted check (approval freeze):
+  // A hosted manifest whose hash CHANGED is refused at the hosted
+  // check (the hosted-manifest hash check — the approval freeze is gone):
   const restore2 = stubHostedManifests({
     gallery: hostedManifest('gallery', { nameAr: 'معرض', nameEn: 'White Gallery', hash: 'd'.repeat(64) }),
   });
@@ -826,6 +826,45 @@ test('templates registry: the full-manifest validator still rejects a six-field 
     await assert.rejects(fb.activateTemplate('gallery'), /القالب المستضاف مش صالح للتفعيل: manifest\.bundleHash/);
   } finally {
     restore2();
+  }
+});
+
+// Direct activation (2026-11-27, Mohamed's decision): a draft or
+// preview template with NO approval record activates — the D1 approval
+// no longer gates going live. The bundle must still be valid
+// (registry + hosted-manifest checks); only the approval gate is gone.
+test('templates direct activation: draft + preview templates with no approval record activate', async () => {
+  const { fake, fb } = await signedInFb();
+  fake._store['templates/gallery'] = specRegistryDoc('gallery',
+    { nameAr: 'معرض', nameEn: 'White Gallery', hash: 'b'.repeat(64), status: 'draft', approval: false });
+  fake._store['templates/bazaar'] = specRegistryDoc('bazaar',
+    { nameAr: 'بازار', nameEn: 'Deal Bazaar', hash: HASH64, status: 'preview', approval: false });
+  fake._store['templates/classic'] = specRegistryDoc('classic',
+    { nameAr: 'الكلاسيكي', nameEn: 'Classic', hash: 'c'.repeat(64), status: 'active', approval: false });
+  fake._store['storeSettings/activeTemplate'] = {
+    templateId: 'classic', bundleVersion: '1.0.0', bundleHash: 'c'.repeat(64),
+    previousTemplateId: 'classic',
+    history: [{ templateId: 'classic', bundleVersion: '1.0.0', bundleHash: 'c'.repeat(64), at: 1, by: 'uid-admin' }],
+  };
+  const restore = stubHostedManifests({
+    gallery: hostedManifest('gallery', { nameAr: 'معرض', nameEn: 'White Gallery', hash: 'b'.repeat(64) }),
+    bazaar: hostedManifest('bazaar', { nameAr: 'بازار', nameEn: 'Deal Bazaar', hash: HASH64 }),
+  });
+  try {
+    // Draft gallery activates directly — no approval, no preview step.
+    const act = await fb.activateTemplate('gallery');
+    assert.equal(act.templateId, 'gallery');
+    assert.equal(fake._store['templates/gallery'].status, 'active');
+    assert.equal(fake._store['storeSettings/activeTemplate'].templateId, 'gallery');
+    assert.equal(fake._store['templates/gallery'].approval, undefined);
+    // Activating preview bazaar demotes gallery back to 'preview'
+    // (never to a false 'approved' — it was never approved).
+    await fb.activateTemplate('bazaar');
+    assert.equal(fake._store['templates/bazaar'].status, 'active');
+    assert.equal(fake._store['templates/gallery'].status, 'preview');
+    assert.equal(fake._store['storeSettings/activeTemplate'].templateId, 'bazaar');
+  } finally {
+    restore();
   }
 });
 
