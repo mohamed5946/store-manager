@@ -1113,6 +1113,7 @@ const SFX = (function(){
   </div>
   <div class="ng"><div class="ng-t" data-i18n="nav_admin_grp">الإدارة</div>
     <div class="ni" data-p="settings"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div><span class="ni-lbl" data-i18n="nav_settings">الإعدادات</span></div>
+    <div class="ni" data-p="team"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><span class="ni-lbl">الفريق</span></div>
     <div class="ni" data-p="activitylog"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div><span class="ni-lbl">سجل النشاط</span></div>
   </div>
   </div><!-- end scrollable nav -->
@@ -1124,11 +1125,11 @@ const SFX = (function(){
       onmouseout="this.style.color='var(--t2)';this.style.borderColor='var(--bdr2)'">
       <svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> فتح الموقع
     </button>
-    <div style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:12px;background:var(--hov);margin-bottom:8px">
+    <div id="sbUserChip" onclick="openAccountM()" title="حسابي — اضغط للتعديل" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:12px;background:var(--hov);margin-bottom:8px;cursor:pointer">
       <div id="sbUserAv" style="width:32px;height:32px;border-radius:9px;background:linear-gradient(145deg,var(--acc),var(--pur));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0"></div>
       <div style="flex:1;min-width:0">
         <div id="sbUserName" style="font-size:12px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
-        <div id="sbUserRole" style="font-size:10px;color:var(--t3)"></div>
+        <div id="sbUserPhone" style="font-size:10px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
       </div>
     </div>
     <button onclick="doLogout()" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--bdr2);background:var(--hov);color:var(--t2);cursor:pointer;font-family:-apple-system,'Cairo',sans-serif;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;position:relative;overflow:hidden"
@@ -1190,7 +1191,6 @@ const SFX = (function(){
     <div id="storeLowStockBody" style="padding:12px 16px;font-size:13px"></div>
   </div>
   </div>
-</div>
 
 <!-- INVENTORY -->
 <div id="pg-inventory" class="pg hidden">
@@ -1328,7 +1328,7 @@ const SFX = (function(){
         <button class="btn btn-g btn-sm" onclick="rollbackStoreTemplate()">رجوع للقالب السابق</button>
       </div>
       <div id="tplPointerMsg" style="font-size:12px;color:var(--red);margin-top:8px"></div>
-      <div style="font-size:11px;color:var(--t3);margin-top:8px">التفعيل والرجوع من هنا بيعدّوا على نفس فحص الاعتماد ونفس سجل التفعيل زي بطاقات القوالب — مش طريق مختصر.</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:8px">التفعيل من هنا مباشر — القالب بيبقى الموقع الرئيسي فورًا من غير اعتماد، وبيتسجل في سجل التفعيل زي بطاقات القوالب.</div>
     </div>
   </div>
   <div id="tplList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px"></div>
@@ -1661,6 +1661,12 @@ const SFX = (function(){
   <div id="actLogPager" style="display:flex;justify-content:center;gap:8px;padding:16px"></div>
 </div>
 
+<!-- TEAM -->
+<div id="pg-team" class="pg hidden">
+  <div class="pg-hd"><div><div class="pg-t"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> الفريق</div><div class="pg-s">كل المسجلين في البرنامج ولهم صلاحية الدخول</div></div></div>
+  <div class="cd"><table><thead><tr><th>#</th><th>الاسم</th><th>البريد</th><th>الهاتف</th><th>الدور</th></tr></thead><tbody id="teamList"></tbody></table></div>
+</div>
+
 </div><!-- /mn -->
 </div><!-- /app -->
 
@@ -1861,6 +1867,18 @@ const SFX = (function(){
     <div class="fgr full"><label><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> ملاحظات</label><textarea id="cNt" rows="2"></textarea></div>
   </div>
   <div class="md-ft"><button class="btn btn-g" onclick="closeM('mCust')">إلغاء</button><button class="btn btn-p" onclick="saveCust()"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> حفظ</button></div>
+</div></div>
+
+<!-- Account Modal -->
+<div id="mAccount" class="mo hidden"><div class="md">
+  <div class="md-t"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> حسابي</div>
+  <div class="fg">
+    <div class="fgr full"><label><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> الاسم المعروض *</label><input id="accName" placeholder="محمد"></div>
+    <div class="fgr full"><label><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> رقم الموبايل</label><input id="accPhone" type="tel" dir="ltr" style="text-align:left" placeholder="01xxxxxxxxx"></div>
+    <div class="fgr full"><label><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2-2-2z"/><polyline points="22,6 12,13 2,6"/></svg> البريد الإلكتروني</label><input id="accEmail" readonly dir="ltr" style="text-align:left;background:var(--hov)"></div>
+    <div class="fgr full"><label><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> الدور</label><input id="accRole" readonly style="background:var(--hov)"></div>
+  </div>
+  <div class="md-ft"><button class="btn btn-g" onclick="closeM('mAccount')">إلغاء</button><button class="btn btn-p" onclick="saveAccount()">حفظ</button></div>
 </div></div>
 
 <!-- Supplier Modal -->
@@ -2391,7 +2409,7 @@ function removeLogo(){
 document.querySelectorAll('.ni').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.p)));
 function nav(p){
   // store pages need the Firebase connection (admin/manager)
-  if((p==='templates'||p==='feedback'||p==='incomplete')&&(!window.StoreFB||!window.StoreFB.state.connected)){
+  if((p==='templates'||p==='feedback'||p==='incomplete'||p==='team')&&(!window.StoreFB||!window.StoreFB.state.connected)){
     toast('سجّل دخول المتجر الأول من شاشة الدخول','err'); return;
   }
 
@@ -2423,7 +2441,24 @@ function showPage(p){
     });
   }
   const ni=document.querySelector(`[data-p="${p}"]`);if(ni)ni.classList.add('active');
-  ({dashboard:rDash,inventory:rProds,sales:rSales,purchases:rPurchs,customers:rCusts,suppliers:rSups,returns:rRets,profits:()=>{calcPr();},expenses:rExps,settings:applyCfg,orders:()=>{ if(storeOrdersSource==='store'){ rStoreOrders(); runStoreSweep(); } else rOrders(); },activitylog:rFullActLog,templates:rStoreTemplates,feedback:rStoreFeedback,incomplete:rIncompleteOrders,'website-products':rWebsiteProducts,'website-categories':rWebsiteCategories,'website-homepage':()=>{ renderWebsiteSettings(true); },'website-preview':()=>{ reloadWebsitePreview(); }})[p]?.();
+  ({dashboard:rDash,inventory:rProds,sales:rSales,purchases:rPurchs,customers:rCusts,suppliers:rSups,returns:rRets,profits:()=>{calcPr();},expenses:rExps,settings:applyCfg,orders:()=>{ if(storeOrdersSource==='store'){ rStoreOrders(); runStoreSweep(); } else rOrders(); },activitylog:rFullActLog,team:rTeam,templates:rStoreTemplates,feedback:rStoreFeedback,incomplete:rIncompleteOrders,'website-products':rWebsiteProducts,'website-categories':rWebsiteCategories,'website-homepage':()=>{ renderWebsiteSettings(true); },'website-preview':()=>{ reloadWebsitePreview(); }})[p]?.();
+}
+
+// ── TEAM (1.1.5): read-only list of everyone registered with access ──
+// Source: the admins collection (doc id = Auth uid; fields email, phone,
+// role, createdAt, plus name once the account panel writes it). The name
+// shows '—' until a member sets one in their account panel. The list
+// rule is isAdmin()-only, so a manager login sees the admin-only note.
+function rTeam(){
+  const tb=$('teamList'); if(!tb) return;
+  if(teamDenied){
+    tb.innerHTML='<tr><td colspan="5">'+es(icOrDot('lock'),'عرض الفريق متاح لحساب الأدمن فقط')+'</td></tr>';
+    return;
+  }
+  tb.innerHTML=teamMembers.length?teamMembers.map((m,i)=>{
+    const nm=(m.name||'').trim();
+    return '<tr><td class="ci">'+(i+1)+'</td><td style="font-weight:700">'+escHtml(nm||'—')+'</td><td dir="ltr" style="text-align:left">'+escHtml(m.email||'—')+'</td><td dir="ltr" style="text-align:left">'+escHtml(m.phone||'—')+'</td><td>'+(m.role==='admin'?'أدمن':(m.role==='manager'?'مدير':'—'))+'</td></tr>';
+  }).join(''):'<tr><td colspan="5">'+es(icOrDot('users'),'مفيش أعضاء فريق لسه')+'</td></tr>';
 }
 
 // ════════════════════════════════════════
@@ -3399,6 +3434,7 @@ async function delOrder(id){const ok=await confirmAction('هل تريد حذف �
 // Settings card is gone — and a remembered session restores at boot.
 // ════════════════════════════════════════════════════════════════
 let storeOrders=[],storeTemplates=[],storeFeedback=[],storeShipping=[],storeInventoryMap={},storeAttempts=[];
+let teamMembers=[], teamDenied=false;
 let storePointer={}; // storeSettings/activeTemplate — full pointer doc (id + version + hash + history)
 let storeDrafts=[],storeGovernorates={},storeDeletion={autoDeleteDays:0},storeQuota={cutoffLevel:'none'},draftMootByPhone={};
 let storeProducts=[],storeCategories=[],storeWebsiteSettings={settings:{},homepage:{},design:{}};
@@ -3525,6 +3561,14 @@ function startStoreListeners(){
     if(err) return;
     storeFeedback=list||[];
     rStoreFeedback(); updateFbBadge();
+  }));
+  // Team (1.1.5): live list of the admins collection. A manager login
+  // gets permission-denied on the list (rules: list = isAdmin() only),
+  // which the page shows as an admin-only note instead of an error.
+  storeUnsubs.push(fb.subscribeTeam(function(list,err){
+    if(err){ teamDenied=true; teamMembers=[]; if(!$('pg-team').classList.contains('hidden')) rTeam(); return; }
+    teamDenied=false; teamMembers=list||[];
+    if(!$('pg-team').classList.contains('hidden')) rTeam();
   }));
   // Checkout drafts (incomplete orders) + their settings. The draft
   // subscription re-renders the list and the nav badge on every change.
@@ -3878,8 +3922,12 @@ function tplCardReport(t){
   const F=window.StoreFBFactory;
   if(!F) return {passed:true,failedChecks:[]};
   if(F.isBundleDoc(t)){
-    const m=F.manifestFromRegistryDoc(t); m.id=m.id||t.id;
-    return F.validateTemplateBundle(m,null,t.id);
+    // Registry docs are six-field copies — the full-manifest validator
+    // (motion/dark/sections) NEVER runs on registry data, it always
+    // fails there; the card uses the six-field registry check instead.
+    // (2026-11-27: the old call kept every bundle card's activate
+    // button disabled and showed a permanent "القالب مش صالح" line.)
+    return F.validateRegistryManifest(t,t.id);
   }
   return F.validateTemplateDoc(t);
 }
@@ -3908,13 +3956,13 @@ function renderTplPointerBox(){
   const sel=$('tplActivateSelect');
   if(sel){
     const opts=tplSorted(storeTemplates).filter(function(t){
-      if(tplIsBundle(t)) return t.status==='approved'||t.status==='active';
+      if(tplIsBundle(t)) return t.status==='draft'||t.status==='preview'||t.status==='approved'||t.status==='active';
       return t.status==='active';
     });
     sel.innerHTML=opts.map(function(t){
       const n=tplDisplayName(t);
       return '<option value="'+escHtml(t.id)+'"'+(t.id===live?' selected':'')+'>'+escHtml(n.ar)+' ('+escHtml(t.id)+')</option>';
-    }).join('')||'<option value="">— لا يوجد قالب معتمد —</option>';
+    }).join('')||'<option value="">— لا توجد قوالب —</option>';
   }
   fillTplPreviewSelect();
 }
@@ -3954,8 +4002,8 @@ function rStoreTemplates(){
     const tokens=t.tokens||{};
     let actions='';
     if(bundle){
-      if(status==='draft') actions='<button class="btn btn-p btn-sm" onclick="moveTemplateToPreview(\''+t.id+'\')">'+icOrDot('check')+' تحقق وانقل للمعاينة</button><button class="btn btn-g btn-sm" onclick="openTemplatePreview(\''+t.id+'\')">معاينة</button>';
-      else if(status==='preview') actions='<button class="btn btn-g btn-sm" onclick="openTemplatePreview(\''+t.id+'\')">معاينة</button><button class="btn btn-p btn-sm" onclick="approveStoreTemplate(\''+t.id+'\')">'+icOrDot('check')+' اعتماد</button><button class="btn btn-g btn-sm" onclick="draftStoreTemplate(\''+t.id+'\')">رجوع لمسودة</button>';
+      if(status==='draft') actions='<button class="btn btn-p btn-sm" '+(live||!rep.passed?'disabled':'')+' onclick="activateStoreTemplate(\''+t.id+'\')">'+icOrDot('check')+' تفعيل على الموقع</button><button class="btn btn-p btn-sm" onclick="moveTemplateToPreview(\''+t.id+'\')">'+icOrDot('check')+' تحقق وانقل للمعاينة</button><button class="btn btn-g btn-sm" onclick="openTemplatePreview(\''+t.id+'\')">معاينة</button>';
+      else if(status==='preview') actions='<button class="btn btn-p btn-sm" '+(live||!rep.passed?'disabled':'')+' onclick="activateStoreTemplate(\''+t.id+'\')">'+icOrDot('check')+' تفعيل على الموقع</button><button class="btn btn-g btn-sm" onclick="openTemplatePreview(\''+t.id+'\')">معاينة</button><button class="btn btn-p btn-sm" onclick="approveStoreTemplate(\''+t.id+'\')">'+icOrDot('check')+' اعتماد</button><button class="btn btn-g btn-sm" onclick="draftStoreTemplate(\''+t.id+'\')">رجوع لمسودة</button>';
       else if(status==='approved') actions='<button class="btn btn-p btn-sm" '+(live||!rep.passed?'disabled':'')+' onclick="activateStoreTemplate(\''+t.id+'\')">'+icOrDot('check')+' تفعيل على الموقع</button><button class="btn btn-g btn-sm" onclick="openTemplatePreview(\''+t.id+'\')">معاينة</button>';
       else if(status==='active') actions=live
         ?'<button class="btn btn-g btn-sm" onclick="rollbackStoreTemplate()">رجوع للقالب السابق</button>'
@@ -4023,7 +4071,7 @@ async function activateStoreTemplateSelected(){
   const sel=$('tplActivateSelect');
   const id=sel?sel.value:'';
   const msgEl=$('tplPointerMsg'); if(msgEl) msgEl.textContent='';
-  if(!id){ if(msgEl) msgEl.textContent='اختار قالب معتمد الأول.'; return; }
+  if(!id){ if(msgEl) msgEl.textContent='اختار قالب الأول.'; return; }
   const ok=await confirmAction('تفعيل القالب ده على الموقع؟',{ico:'palette',ok:'تفعيل'});
   if(!ok) return;
   try{
@@ -6788,10 +6836,55 @@ function enterProgram(){
 function renderStoreUserCard(){
   const st=window.StoreFB&&window.StoreFB.state;
   const email=st&&st.user?st.user.email:'';
+  const prof=getAccProfile(email);
+  $('sbUserAv').textContent=(prof.name||email||'S').charAt(0).toUpperCase();
+  $('sbUserName').textContent=prof.name||email;
+  $('sbUserPhone').textContent=prof.phone||'أضف رقم الموبايل';
+}
+
+// ── Account profile: display name + mobile, per signed-in account ──
+// localStorage is the chip's source of truth (keyed by email, so each
+// account keeps its own name/phone); the Firestore admins/{uid} doc is
+// synced best-effort so the Team page and the mobile app show the same
+// name/phone. Default display name is "محمد" until he types his own.
+function accProfileKey(email){ return 'sb_profile_' + String(email || '').toLowerCase(); }
+function getAccProfile(email){
+  try{
+    var d=JSON.parse(localStorage.getItem(accProfileKey(email)) || 'null');
+    if(d && typeof d === 'object') return { name: (d.name || 'محمد'), phone: (d.phone || '') };
+  }catch(e){}
+  return { name: 'محمد', phone: '' };
+}
+function saveAccProfile(email, prof){
+  try{ localStorage.setItem(accProfileKey(email), JSON.stringify({ name: prof.name || 'محمد', phone: prof.phone || '' })); }catch(e){}
+}
+function openAccountM(){
+  const st=window.StoreFB&&window.StoreFB.state;
+  const email=st&&st.user?st.user.email:'';
   const role=st?st.role:'';
-  $('sbUserAv').textContent=(email||'S').charAt(0).toUpperCase();
-  $('sbUserName').textContent=email;
-  $('sbUserRole').textContent=role==='admin'?'أدمن':(role==='manager'?'مدير':'');
+  const prof=getAccProfile(email);
+  $('accName').value=prof.name||'محمد';
+  $('accPhone').value=prof.phone||'';
+  $('accEmail').value=email;
+  $('accRole').value=role==='admin'?'أدمن':(role==='manager'?'مدير':'');
+  $('mAccount').classList.remove('hidden');
+}
+async function saveAccount(){
+  const st=window.StoreFB&&window.StoreFB.state;
+  const email=st&&st.user?st.user.email:'';
+  const prev=getAccProfile(email);
+  const name=($('accName').value||'').trim()||'محمد';
+  const phone=($('accPhone').value||'').trim();
+  saveAccProfile(email, { name: name, phone: phone });
+  renderStoreUserCard();
+  closeM('mAccount');
+  toast('تم حفظ بيانات حسابك');
+  // Sync to the admins/{uid} doc (best-effort, never blocks the chip).
+  try{
+    if(window.StoreFB && window.StoreFB.saveAccountProfile){
+      await window.StoreFB.saveAccountProfile({ name: name, phone: phone, prevPhone: prev.phone || '' });
+    }
+  }catch(e){}
 }
 
 // ── Sign out of the store ──

@@ -1893,7 +1893,7 @@ test('D2 end-date: Cairo offset winter +02:00, summer +03:00; invalid rejected; 
   assert.equal(StoreFB.isValidISODateTime(''), false);
 });
 
-test('activateTemplate (bundle): approval-hash gate + pointer write + history + activation record', async () => {
+test('activateTemplate (bundle): direct activation (no approval gate) + pointer write + history + activation record', async () => {
   const { fake, fb } = await signedInFb();
   const hash = 'b'.repeat(64);
   const approval = { approver: 'admin@store.test', at: '2026-11-27T00:00:00.000Z', shellVersion: '1.0.0', bundleHash: hash };
@@ -1904,8 +1904,13 @@ test('activateTemplate (bundle): approval-hash gate + pointer write + history + 
     history: [{ templateId: 'classic', bundleVersion: '1.0.0', bundleHash: null, at: '2026-11-26T00:00:00.000Z', by: 'admin@store.test' }],
   };
   // The hosted-manifest check (decision 2, shape A) fetches the
-  // manifest from Hosting; stub it to the matching manifest.
-  const restore = stubHostedManifests({ bazaar: bundleManifest({ bundleHash: hash }) });
+  // manifest from Hosting; stub it to the matching manifest — for
+  // bazaar and for the two direct-activation cases below.
+  const restore = stubHostedManifests({
+    bazaar: bundleManifest({ bundleHash: hash }),
+    gallery: bundleManifest({ id: 'gallery', nameAr: 'معرض', nameEn: 'White Gallery' }),
+    scroll: bundleManifest({ id: 'scroll', nameAr: 'اسكرول', nameEn: 'Scroll', bundleHash: 'c'.repeat(64) }),
+  });
   try {
     const res = await fb.activateTemplate('bazaar');
     assert.deepEqual(res, { previousTemplateId: 'classic', templateId: 'bazaar', bundleVersion: '1.0.0', bundleHash: hash });
@@ -1923,12 +1928,18 @@ test('activateTemplate (bundle): approval-hash gate + pointer write + history + 
     assert.equal(fake._store[actKeys[0]].action, 'activate');
     assert.equal(fake._store[actKeys[0]].approver, 'admin@store.test');
     assert.equal(fake._store[actKeys[0]].shellVersion, '1.0.0');
-    // Draft / unapproved / changed-hash bundles are refused (rejected
-    // before the hosted check, so no fetch is needed for these).
+    // Direct activation (2026-11-27): a draft with no approval record
+    // activates, and an approved template whose approval hash went
+    // stale activates too — the approval gate and the freeze are gone;
+    // only the bundle validity (registry + hosted manifest) matters.
     fake._store['templates/gallery'] = bundleRegistryDoc(bundleManifest({ id: 'gallery', nameAr: 'معرض', nameEn: 'White Gallery' }), 'draft');
-    await assert.rejects(fb.activateTemplate('gallery'), /مش معتمد/);
+    const gAct = await fb.activateTemplate('gallery');
+    assert.equal(gAct.templateId, 'gallery');
+    assert.equal(fake._store['templates/gallery'].status, 'active');
     fake._store['templates/scroll'] = bundleRegistryDoc(bundleManifest({ id: 'scroll', nameAr: 'اسكرول', nameEn: 'Scroll', bundleHash: 'c'.repeat(64) }), 'approved', { ...approval, bundleHash: 'd'.repeat(64) });
-    await assert.rejects(fb.activateTemplate('scroll'), /اعتماد جديد/);
+    const sAct = await fb.activateTemplate('scroll');
+    assert.equal(sAct.templateId, 'scroll');
+    assert.equal(fake._store['templates/scroll'].status, 'active');
   } finally {
     restore();
   }
@@ -1937,7 +1948,8 @@ test('activateTemplate (bundle): approval-hash gate + pointer write + history + 
 test('rollbackTemplate: restores the second-last history entry; double rollback walks back', async () => {
   const { fake, fb } = await signedInFb();
   fake._store['templates/classic'] = { ...StoreFB.CLASSIC_TEMPLATE, id: 'classic' };
-  fake._store['templates/bazaar'] = bundleRegistryDoc(bundleManifest(), 'active');
+  fake._store['templates/bazaar'] = bundleRegistryDoc(bundleManifest(), 'active',
+    { approver: 'admin@store.test', at: '2026-11-27T00:00:00.000Z', shellVersion: '1.0.0', bundleHash: 'a'.repeat(64) });
   fake._store['storeSettings/activeTemplate'] = {
     templateId: 'bazaar', bundleVersion: '1.0.0', bundleHash: 'a'.repeat(64), previousTemplateId: 'classic',
     history: [
@@ -1974,7 +1986,8 @@ test('rollbackTemplate: retired target is denied, classic restored, denial recor
   const { fake, fb } = await signedInFb();
   fake._store['templates/classic'] = { ...StoreFB.CLASSIC_TEMPLATE, id: 'classic' };
   fake._store['templates/gallery'] = bundleRegistryDoc(bundleManifest({ id: 'gallery', nameAr: 'معرض', nameEn: 'White Gallery' }), 'approved');
-  fake._store['templates/bazaar'] = bundleRegistryDoc(bundleManifest(), 'active');
+  fake._store['templates/bazaar'] = bundleRegistryDoc(bundleManifest(), 'active',
+    { approver: 'admin@store.test', at: '2026-11-27T00:00:00.000Z', shellVersion: '1.0.0', bundleHash: 'a'.repeat(64) });
   fake._store['storeSettings/activeTemplate'] = {
     templateId: 'bazaar', bundleVersion: '1.0.0', bundleHash: 'a'.repeat(64), previousTemplateId: 'gallery',
     history: [
