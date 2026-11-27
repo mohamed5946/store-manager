@@ -3037,8 +3037,7 @@
           if (currentId === templateId) throw new Error('القالب ده مفعّل أصلاً');
           var bundleVersion = bundle ? (data.version || BUNDLE_VERSION) : BUNDLE_VERSION;
           var bundleHash = bundle ? (data.bundleHash || null) : null;
-          var nowIso = new Date().toISOString();
-          var historyEntry = { templateId: templateId, bundleVersion: bundleVersion, bundleHash: bundleHash, at: nowIso, by: actor };
+          var historyEntry = { templateId: templateId, bundleVersion: bundleVersion, bundleHash: bundleHash, at: serverTimestamp(), by: actor };
           var history = pointerHistoryAppend(pointer, historyEntry);
           var chain = Promise.resolve();
           if (data.status !== 'active') {
@@ -3123,8 +3122,7 @@
           var bundle = isBundleDoc(targetData);
           var bundleVersion = bundle ? (targetData.version || BUNDLE_VERSION) : BUNDLE_VERSION;
           var bundleHash = bundle ? (targetData.bundleHash || null) : null;
-          var nowIso = new Date().toISOString();
-          var historyEntry = { templateId: targetId, bundleVersion: bundleVersion, bundleHash: bundleHash, at: nowIso, by: actor };
+          var historyEntry = { templateId: targetId, bundleVersion: bundleVersion, bundleHash: bundleHash, at: serverTimestamp(), by: actor };
           if (note) historyEntry.note = note;
           var history = pointerHistoryAppend(pointer, historyEntry);
           var chain = Promise.resolve();
@@ -3174,7 +3172,7 @@
         if (!registryReport.passed) throw new Error('القالب مش صالح للاعتماد: ' + registryReport.failedChecks.join('، '));
         return validateHostedManifest(templateId).then(function (hosted) {
           if (!hosted.passed) throw new Error('القالب المستضاف مش صالح للاعتماد: ' + hosted.failedChecks.join('، '));
-          var approval = { approver: actor, at: new Date().toISOString(), shellVersion: SHELL_VERSION, bundleHash: data.bundleHash || null };
+          var approval = { approver: actor, at: serverTimestamp(), shellVersion: SHELL_VERSION, bundleHash: data.bundleHash || null };
           return auditedWrite({
             writes: { ['templates/' + templateId]: { status: 'approved', approval: approval } },
             sensitive: { ['templates/' + templateId]: { status: 'approved' } },
