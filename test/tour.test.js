@@ -13,11 +13,11 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 // All real pages in the app, from the page containers.
 const pageIds = [...new Set([...html.matchAll(/id="pg-([a-z-]+)"/g)].map((m) => m[1]))];
 
-test('tour inventory: the app really has 20 pages', () => {
-  assert.equal(pageIds.length, 20);
+test('tour inventory: the app really has 19 pages', () => {
+  assert.equal(pageIds.length, 19);
   for (const p of ['dashboard', 'sales', 'customers', 'orders', 'incomplete', 'templates',
     'feedback', 'website-products', 'website-categories', 'website-homepage',
-    'website-preview', 'discounts', 'purchases', 'suppliers', 'inventory',
+    'website-preview', 'purchases', 'suppliers', 'inventory',
     'returns', 'profits', 'expenses', 'settings', 'activitylog']) {
     assert.ok(pageIds.includes(p), 'missing page ' + p);
   }
@@ -32,7 +32,7 @@ test('tour steps cover EVERY page exactly once, plus chrome steps', () => {
   }
   // Chrome steps (welcome / sidebar / top bar / stats / FAB / done) reuse dashboard.
   assert.equal(covered.filter((x) => x === 'dashboard').length, 6);
-  assert.equal(Tour.TOUR_STEPS.length, 25);
+  assert.equal(Tour.TOUR_STEPS.length, 24);
 });
 
 test('every step has a real target: page exists, selector id exists in index.html', () => {

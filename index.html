@@ -1098,7 +1098,6 @@ const SFX = (function(){
     <div class="ni" data-p="website-categories"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="13" x2="12" y2="17"/><line x1="12" y1="9" x2="12" y2="9.01"/></svg></div><span class="ni-lbl">فئات الموقع</span></div>
     <div class="ni" data-p="website-homepage"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></div><span class="ni-lbl">الرئيسية والتصميم</span></div>
     <div class="ni" data-p="website-preview"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div><span class="ni-lbl">معاينة الموقع</span></div>
-    <div class="ni" data-p="discounts"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41 12 22 2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div><span class="ni-lbl">أكواد الخصم</span></div>
   </div>
   <div class="ng"><div class="ng-t" data-i18n="nav_purchases_grp">المشتريات</div>
     <div class="ni" data-p="purchases"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div><span class="ni-lbl" data-i18n="nav_purchases">فواتير الشراء</span></div>
@@ -1445,20 +1444,7 @@ const SFX = (function(){
   </div>
 </div>
 
-<!-- DISCOUNTS -->
-<div id="pg-discounts" class="pg hidden">
-  <div class="pg-hd">
-    <div><div class="pg-t"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41 12 22 2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> أكواد الخصم</div><div class="pg-s">أكواد لمرة واحدة — الكود بيتقفل أول ما يتستخدم في طلب، وعمود «مستخدم في» بيوضح الطلب</div></div>
-    <div class="hda"><button class="btn btn-p" onclick="openDiscountM()">+ كود جديد</button></div>
-  </div>
-  <div id="discStatus" style="font-size:12px;color:var(--t3);margin-bottom:14px"></div>
-  <div class="cd"><table>
-    <thead><tr><th>الكود</th><th>النسبة</th><th>الحالة</th><th>ينتهي</th><th>مستخدم في</th><th></th></tr></thead>
-    <tbody id="discList"></tbody>
-  </table></div>
-</div>
 
-<!-- RETURNS -->
 <div id="pg-returns" class="pg hidden">
   <div class="pg-hd"><div><div class="pg-t" data-i18n="pg_returns"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg> المرتجعات</div></div><div class="hda"><button class="btn btn-p" onclick="openRetM()">＋ إضافة مرتجع</button></div></div>
   <div class="cd"><table><thead><tr><th data-i18n="th_num">رقم</th><th data-i18n="th_type">النوع</th><th data-i18n="th_party">الجهة</th><th data-i18n="th_date">التاريخ</th><th data-i18n="th_total">الإجمالي</th><th data-i18n="th_reason">السبب</th><th></th></tr></thead><tbody id="retList"></tbody></table></div>
@@ -1898,10 +1884,9 @@ const SFX = (function(){
       <div class="iv-hd"><span>المنتج</span><span style="text-align:center">الكمية</span><span style="text-align:center">السعر</span><span style="text-align:center">الإجمالي</span><span></span></div>
       <div id="ordItems"></div>
       <button class="btn btn-g btn-sm" style="margin-top:7px" onclick="addOrderItemRow()"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> إضافة صنف</button>
-      <div class="iv-sum"><div class="iv-lbl">الإجمالي (قبل الخصم — الخصم بيتحسب من المتجر)</div><div class="iv-val"><span id="ordSubtotal">0.00</span> <span id="ordCur" style="font-size:13px;opacity:.7"></span></div></div>
+      <div class="iv-sum"><div class="iv-lbl">إجمالي الأصناف</div><div class="iv-val"><span id="ordSubtotal">0.00</span> <span id="ordCur" style="font-size:13px;opacity:.7"></span></div></div>
       <div id="ordFeePreview" style="font-size:12px;color:var(--t2);margin-top:6px;line-height:1.8"></div>
     </div>
-    <div class="fgr" id="ordDiscRow" style="display:none"><label><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41 12 22 2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> كود الخصم</label><input id="ordDisc" placeholder="اختياري — كود لمرة واحدة"></div>
     <div class="fgr" id="ordShipCoRow" style="display:none"><label><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> شركة الشحن</label><select id="ordShipCo"><option value="">-- بدون شركة --</option></select></div>
     <div class="fgr" id="ordValRow"><label><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg> قيمة الطلب</label><input id="ordVal" type="number" step="0.01" placeholder="0.00"></div>
     <div class="fgr"><label><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> تاريخ الشحن</label><input type="date" id="ordShip"></div>
@@ -1967,20 +1952,7 @@ const SFX = (function(){
   <div class="md-ft"><button class="btn btn-g" onclick="closeM('mWebCategory')">إلغاء</button><button class="btn btn-p" onclick="saveWebCategory()">حفظ الفئة</button></div>
 </div></div>
 
-<!-- Discount Modal -->
-<div id="mDiscount" class="mo hidden"><div class="md" style="max-width:420px">
-  <div class="md-t" id="mDiscountT">كود خصم جديد</div>
-  <input type="hidden" id="dcId">
-  <div class="fg">
-    <div class="fgr full"><label>الكود *</label><input id="dcCode" placeholder="مثال: SAVE10" style="direction:ltr;text-align:left;text-transform:uppercase"></div>
-    <div class="fgr"><label>النسبة % *</label><input id="dcPercent" type="number" min="1" max="100" placeholder="10"></div>
-    <div class="fgr"><label>ينتهي في</label><input id="dcExpiry" type="date"></div>
-    <div class="fgr full"><label class="cbx" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="dcActive" checked><span class="cbx-box">✓</span> مفعّل</label></div>
-  </div>
-  <div class="md-ft"><button class="btn btn-g" onclick="closeM('mDiscount')">إلغاء</button><button class="btn btn-p" onclick="saveDiscount()">حفظ الكود</button></div>
-</div></div>
 
-<!-- Return Modal -->
 <div id="mRet" class="mo hidden"><div class="md md-w">
   <div class="md-t"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg> تسجيل مرتجع</div>
   <div class="fg" style="margin-bottom:14px">
@@ -2445,7 +2417,7 @@ function showPage(p){
     });
   }
   const ni=document.querySelector(`[data-p="${p}"]`);if(ni)ni.classList.add('active');
-  ({dashboard:rDash,inventory:rProds,sales:rSales,purchases:rPurchs,customers:rCusts,suppliers:rSups,returns:rRets,profits:()=>{calcPr();},expenses:rExps,settings:applyCfg,orders:()=>{ if(storeOrdersSource==='store'){ rStoreOrders(); runStoreSweep(); } else rOrders(); },activitylog:rFullActLog,templates:rStoreTemplates,feedback:rStoreFeedback,incomplete:rIncompleteOrders,'website-products':rWebsiteProducts,'website-categories':rWebsiteCategories,'website-homepage':()=>{ renderWebsiteSettings(true); },'website-preview':()=>{ reloadWebsitePreview(); },discounts:rDiscounts})[p]?.();
+  ({dashboard:rDash,inventory:rProds,sales:rSales,purchases:rPurchs,customers:rCusts,suppliers:rSups,returns:rRets,profits:()=>{calcPr();},expenses:rExps,settings:applyCfg,orders:()=>{ if(storeOrdersSource==='store'){ rStoreOrders(); runStoreSweep(); } else rOrders(); },activitylog:rFullActLog,templates:rStoreTemplates,feedback:rStoreFeedback,incomplete:rIncompleteOrders,'website-products':rWebsiteProducts,'website-categories':rWebsiteCategories,'website-homepage':()=>{ renderWebsiteSettings(true); },'website-preview':()=>{ reloadWebsitePreview(); }})[p]?.();
 }
 
 // ════════════════════════════════════════
@@ -3158,18 +3130,16 @@ function openOrderM(){
   $('ordVal').value='';$('ordStat').value='pending';toggleDelayFields();
   $('ordCust').innerHTML='<option value="">-- اختر عميل --</option>'+customers.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
   $('ordSaleLink').innerHTML='<option value="">-- بدون ربط --</option>';
-  // store mode: items + discount + shipping + address; the local-only
+  // store mode: items + shipping + address; the local-only
   // fields (manual value, local status, delay reason) stay hidden.
   $('ordAddrRow').style.display='';
   $('ordItemsRow').style.display='';
-  $('ordDiscRow').style.display='';
   $('ordShipCoRow').style.display='';
   $('ordValRow').style.display='none';
   $('ordStatRow').style.display='none';
   $('reasonRow').style.display='none';
   $('delayRow').style.display='none';
   $('ordAddr').value='';
-  $('ordDisc').value='';
   $('ordItems').innerHTML='';
   fillShipCoSelect();
   addOrderItemRow();
@@ -3226,16 +3196,15 @@ function updOrderItemsTotal(){
   });
   const el=$('ordSubtotal'); if(el) el.textContent=fmt(t);
   // Fee + amount-due preview (pricing): the canonical factory
-  // helper, fee from the settings doc. The code discount is NOT
-  // previewed — its percent is read by the transaction at save.
+  // helper, fee from the settings doc.
   const pv=$('ordFeePreview');
   if(pv){
     const st=(storeWebsiteSettings&&storeWebsiteSettings.settings)||{};
     let html='';
     try{
-      const tot=window.StoreFBFactory.computeOrderTotals(lines, null, { deliveryFee: st.deliveryFee, freeDeliveryThreshold: st.freeDeliveryThreshold });
+      const tot=window.StoreFBFactory.computeOrderTotals(lines, { deliveryFee: st.deliveryFee, freeDeliveryThreshold: st.freeDeliveryThreshold });
       if(tot.feeUnset) html='<span style="color:var(--red)">رسوم التوصيل غير محددة بعد — حدّدها من الإعدادات قبل إنشاء الطلب.</span>';
-      else html='رسوم التوصيل: '+(tot.deliveryFee===0?'مجاني':fmt(tot.deliveryFee)+' '+(cfg.currency||'ج.م'))+(tot.feeWaived?' (مجاني — فوق الحد)':'')+(tot.saleSavings>0?'<br>وفّرت من العرض: '+fmt(tot.saleSavings)+' '+(cfg.currency||'ج.م'):'')+'<br><b>المبلغ المستحق (قبل كود الخصم): '+fmt(tot.amountDue)+' '+(cfg.currency||'ج.م')+'</b>';
+      else html='رسوم التوصيل: '+(tot.deliveryFee===0?'مجاني':fmt(tot.deliveryFee)+' '+(cfg.currency||'ج.م'))+(tot.feeWaived?' (مجاني — فوق الحد)':'')+(tot.saleSavings>0?'<br>وفّرت من العرض: '+fmt(tot.saleSavings)+' '+(cfg.currency||'ج.م'):'')+'<br><b>المبلغ المستحق: '+fmt(tot.amountDue)+' '+(cfg.currency||'ج.م')+'</b>';
     }catch(e){ html=''; }
     pv.innerHTML=html;
   }
@@ -3293,7 +3262,6 @@ function editOrder(id){
   // local mode: the local fields back, the store fields hidden
   $('ordAddrRow').style.display='none';
   $('ordItemsRow').style.display='none';
-  $('ordDiscRow').style.display='none';
   $('ordShipCoRow').style.display='none';
   $('ordValRow').style.display='';
   $('ordStatRow').style.display='';
@@ -3313,8 +3281,8 @@ function markDelivered(id){
 }
 function saveOrder(){
   // A new order always goes through the client transaction (it
-  // reprices from the database, checks the stock, claims the discount
-  // and reserves — the client never sets a price or a total).
+  // reprices from the database, checks the stock and reserves —
+  // the client never sets a price or a total).
   if(orderMode==='store'){ saveStoreOrder(); return; }
   const cid=$('ordCust').value;
   if(!cid){toast('اختر عميلاً','err');return;}
@@ -3376,7 +3344,6 @@ async function saveStoreOrder(){
     const input={
       clientOrderId: fb.newUuid(),
       items: items,
-      discountCode: ($('ordDisc').value||'').trim()||null,
       customer: { name: (ct&&ct.name)||'-', phone: phone, address: address },
       shippingCompanyId: $('ordShipCo').value||null,
       notes: ($('ordNt').value||'').trim()||null,
@@ -3429,7 +3396,7 @@ async function delOrder(id){const ok=await confirmAction('هل تريد حذف �
 let storeOrders=[],storeTemplates=[],storeFeedback=[],storeShipping=[],storeInventoryMap={},storeAttempts=[];
 let storePointer={}; // storeSettings/activeTemplate — full pointer doc (id + version + hash + history)
 let storeDrafts=[],storeGovernorates={},storeDeletion={autoDeleteDays:0},storeQuota={cutoffLevel:'none'},draftMootByPhone={};
-let storeProducts=[],storeCategories=[],storeDiscounts=[],storeWebsiteSettings={settings:{},homepage:{},design:{}};
+let storeProducts=[],storeCategories=[],storeWebsiteSettings={settings:{},homepage:{},design:{}};
 let storeSweepTimer=null;
 let salesPeriod='day'; // 'day' | 'week' | 'month'
 let storeOrdersSource='store';
@@ -3451,9 +3418,11 @@ function fbDate(v){
 function fbDateStr(v){const d=fbDate(v);return d?d.toLocaleDateString('en-US',{year:'numeric',month:'2-digit',day:'2-digit'}):'-';}
 function storeShipName(id){const s=storeShipping.find(x=>x.id===id);return s?(s.name||id):(id||'-');}
 function storeInvAvail(pid){const inv=storeInventoryMap[pid];return inv?Math.max(0,(inv.stock||0)-(inv.reserved||0)):null;}
-// New (§1) orders carry flat customerName/Phone/Address + discountCode/
-// discountPercent/discountAmount; older orders carry a nested customer
-// block + discount{code,percent,amount}. Both render the same way.
+// New (§1) orders carry flat customerName/Phone/Address; older
+// orders carry a nested customer block. Pre-removal orders may
+// still carry a discount{code,percent,amount} from a promo code
+// that was applied back then — storeDisc() reads it only so those
+// old orders still render their real totals; no new order has one.
 function storeCust(o){
   if(!o) return {name:'',phone:'',email:'',address:''};
   if(o.customer) return {name:o.customer.name||'',phone:o.customer.phone||'',email:o.customer.email||'',address:o.customer.address||''};
@@ -3521,7 +3490,7 @@ function onStoreStateChange(snap){
     stopStoreSweepTimer();
     storeOrders=[]; storeTemplates=[]; storeFeedback=[]; storeShipping=[]; storeInventoryMap={}; storeAttempts=[];
     storeDrafts=[]; storeGovernorates={}; storeDeletion={autoDeleteDays:0}; storeQuota={cutoffLevel:'none'}; draftMootByPhone={};
-    storeProducts=[]; storeCategories=[]; storeDiscounts=[]; storeWebsiteSettings={settings:{},homepage:{},design:{}};
+    storeProducts=[]; storeCategories=[]; storeWebsiteSettings={settings:{},homepage:{},design:{}};
     if(storeOrdersSource==='store'){ setOrdersSource('local'); }
     rStoreTemplates(); rStoreFeedback(); rDash(); rRets(); calcPr();
     // Sign-out while inside the program returns to the store login
@@ -3603,11 +3572,6 @@ function startStoreListeners(){
     if(err) return;
     storeCategories=list||[];
     rWebsiteCategories(); fillWebProductSelects();
-  }));
-  storeUnsubs.push(fb.subscribeDiscounts(function(list,err){
-    if(err) return;
-    storeDiscounts=list||[];
-    rDiscounts();
   }));
   storeUnsubs.push(fb.subscribeWebsiteSettings(function(docs,err){
     if(err||!docs) return;
@@ -5447,113 +5411,7 @@ function reloadWebsitePreview(){
   fillTplPreviewSelect();
 }
 
-// ---- Discount codes ----
-function rDiscounts(){
-  const el=$('discList'); if(!el) return;
-  const st=$('discStatus');
-  if(!window.StoreFB||!window.StoreFB.state.connected){
-    if(st) st.textContent='غير متصل — سجّل دخول المتجر من شاشة الدخول عشان تشوف أكواد الخصم.';
-    el.innerHTML='';
-    return;
-  }
-  let l=[...storeDiscounts];
-  if(st) st.textContent=storeDiscounts.length?storeDiscounts.length+' كود':'لا توجد أكواد خصم بعد.';
-  el.innerHTML=l.length?l.map(function(d){
-    const exp=fbDate(d.expiresAt);
-    const expired=exp&&exp.getTime()<=Date.now();
-    const used=!!d.usedBy;
-    const stateTxt=used?'مستخدم':(!d.active?'موقوف':(expired?'منتهي':'مفعّل'));
-    const stateCls=used?'bx-r':(!d.active||expired?'bx-o':'bx-g');
-    const usedOrder=d.usedBy&&storeOrders.find(function(o){ return o.id===d.usedBy; });
-    const usedCell=d.usedBy
-      ? (usedOrder
-        ? `<button class="btn btn-g btn-sm" onclick="showStoreOrderDetail('${d.usedBy}')" title="فتح الطلب">#${String(d.usedBy).slice(-6)}</button>`
-        : `#${String(d.usedBy).slice(-6)}`)
-      : '—';
-    return`<tr>
-      <td style="font-weight:700;direction:ltr;text-align:right">${escHtml(d.code||d.id)}</td>
-      <td class="mn-t mo2">${d.percent||0}%</td>
-      <td><span class="bx ${stateCls}">${stateTxt}</span></td>
-      <td>${exp?fbDateStr(d.expiresAt):'—'}</td>
-      <td>${usedCell}</td>
-      <td><div class="row-acts">
-        <button class="btn btn-sm ${d.active?'btn-g':'btn-p'}" onclick="toggleDiscountActive('${d.code||d.id}',${d.active?1:0})">${d.active?'إيقاف':'تفعيل'}</button>
-        <button class="ra edit" onclick="editDiscount('${d.code||d.id}')" title="تعديل">${icOrDot('edit')}</button>
-        <button class="ra del" onclick="delDiscount('${d.code||d.id}')" title="حذف">${icOrDot('trash')}</button>
-      </div></td>
-    </tr>`;
-  }).join(''):'<tr><td colspan="6">'+es(icOrDot('tag'),'لا توجد أكواد خصم')+'</td></tr>';
-}
-function openDiscountM(){
-  if(!window.StoreFB||!window.StoreFB.state.connected){ toast('سجّل دخول المتجر الأول','err'); return; }
-  $('dcId').value='';$('dcCode').value='';$('dcPercent').value='';$('dcExpiry').value='';$('dcActive').checked=true;
-  $('dcCode').disabled=false;
-  $('mDiscountT').textContent='كود خصم جديد';
-  $('mDiscount').classList.remove('hidden');
-}
-function editDiscount(code){
-  const d=storeDiscounts.find(function(x){return (x.code||x.id)===code;});
-  if(!d) return;
-  $('dcId').value=d.code||d.id;
-  $('dcCode').value=d.code||d.id;
-  $('dcCode').disabled=true; // the code IS the document id — it never changes
-  $('dcPercent').value=d.percent||'';
-  const exp=fbDate(d.expiresAt);
-  $('dcExpiry').value=exp?exp.toISOString().slice(0,10):'';
-  $('dcActive').checked=d.active!==false;
-  $('mDiscountT').textContent='تعديل الكود';
-  $('mDiscount').classList.remove('hidden');
-}
-async function saveDiscount(){
-  const fb=window.StoreFB; if(!fb||!fb.state.connected){ toast('سجّل دخول المتجر الأول','err'); return; }
-  const code=(($('dcId').value||$('dcCode').value)||'').trim().toUpperCase();
-  if(!code){ toast('اكتب الكود','err'); return; }
-  const percent=parseInt($('dcPercent').value,10);
-  if(isNaN(percent)||percent<1||percent>100){ toast('النسبة لازم تكون من 1 لـ 100','err'); return; }
-  const expRaw=($('dcExpiry').value||'').trim();
-  try{
-    await fb.auditedWrite({
-      writes: { ['discounts/'+code]: {
-        code: code, percent: percent, active: $('dcActive').checked,
-        expiresAt: expRaw?new Date(expRaw+'T23:59:59'):null
-      } },
-      sensitive: { ['discounts/'+code]: { percent: percent } },
-      operation: $('dcId').value?'discount_update':'discount_create',
-      topNewValues: { code: code, percent: percent }
-    });
-    closeM('mDiscount');
-    toast('تم حفظ الكود');
-  }catch(e){
-    toast(e.message||'تعذر حفظ الكود','err');
-  }
-}
-async function toggleDiscountActive(code, currentlyActive){
-  const fb=window.StoreFB; if(!fb) return;
-  try{
-    await fb.auditedWrite({
-      writes: { ['discounts/'+code]: { active: !currentlyActive } },
-      sensitive: {},
-      operation: 'discount_update',
-      topNewValues: { code: code, active: !currentlyActive }
-    });
-    toast(!currentlyActive?'الكود بقى مفعّل':'الكود اتوقف');
-  }catch(e){
-    toast(e.message||'تعذر التعديل','err');
-  }
-}
-async function delDiscount(code){
-  const ok=await confirmAction('حذف كود الخصم ده؟',{ico:'trash',ok:'حذف',danger:true});
-  if(!ok) return;
-  const fb=window.StoreFB; if(!fb) return;
-  try{
-    await fb.deleteDiscount(code);
-    toast('تم حذف الكود');
-  }catch(e){
-    toast(e.message||'تعذر الحذف','err');
-  }
-}
-
-// ---- In-app update (Hosting manifest, /updates/) ----
+ (Hosting manifest, /updates/) ----
 let _updInfo=null;
 let _updProgSubscribed=false; // progress listener is attached once, not per click
 async function checkForUpdate(){

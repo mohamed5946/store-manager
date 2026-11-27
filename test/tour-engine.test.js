@@ -108,11 +108,11 @@ test('engine: first run shows step 1 on the dashboard, ring positioned', async (
   vm.runInContext('maybeShowTour()', ctx);
   await sleep(400);
   assert.equal(els.tourOverlay.classList.contains('hidden'), false);
-  assert.equal(els.tourStepNo.textContent, 'خطوة 1 من 25');
+  assert.equal(els.tourStepNo.textContent, 'خطوة 1 من 24');
   assert.equal(els.tourTitle.textContent, 'أهلاً بيك في Store Manager');
   assert.ok(els.tourRing.style.top !== '' && els.tourRing.style.width !== '');
   assert.ok(els.tourDots.innerHTML.includes('tourGoTo(0)'));
-  assert.ok(els.tourDots.innerHTML.includes('tourGoTo(24)'));
+  assert.ok(els.tourDots.innerHTML.includes('tourGoTo(23)'));
 });
 
 test('engine: Next walks steps and navigates pages; Skip ends + marks done', async () => {
@@ -194,7 +194,7 @@ test('engine: last step finishes the tour', async () => {
   const { ctx, els, store } = makeWorld();
   vm.runInContext('startTour(true)', ctx);
   await sleep(300);
-  vm.runInContext('tourGoTo(24)', ctx);
+  vm.runInContext('tourGoTo(23)', ctx); // last step (24 steps, 0-based)
   await sleep(300);
   assert.equal(els.tourTitle.textContent, 'خلصت الجولة');
   assert.equal(els.tourNextBtn.textContent, 'إنهاء');

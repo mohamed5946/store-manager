@@ -5,8 +5,7 @@
 // companies, inventory) read Firestore directly. There are NO Cloud
 // Functions on this project (Spark, no-functions contract 2026-11-26):
 // orders are created by ONE client transaction (runTransaction) that
-// reserves stock, claims the discount, writes the order + movements +
-// audit atomically, and order-status transitions move stock in a
+// reserves stock, writes the order + movements + audit atomically, and order-status transitions move stock in a
 // transaction too. The ERP sections (sales, purchases, returns,
 // customers, suppliers, expenses, local orders) stay on the local
 // JSON files; they are NOT migrated here and local accounts are
@@ -61,7 +60,7 @@
   // Sensitive fields whose new value the audit entry must record
   // correctly (firestore.rules sensitiveValuesOk). Pricing adds
   // basePrice, deliveryFee, saleSavings and amountDue (spec NFR).
-  var SENSITIVE_FIELDS = ['price', 'basePrice', 'stock', 'reserved', 'status', 'paymentStatus', 'inStock', 'percent', 'deliveryFee', 'saleSavings', 'amountDue'];
+  var SENSITIVE_FIELDS = ['price', 'basePrice', 'stock', 'reserved', 'status', 'paymentStatus', 'inStock', 'deliveryFee', 'saleSavings', 'amountDue'];
 
   // ---- Template registry (mirrors lib/services/templates_service.dart) ----
   var TEMPLATE_TOKEN_KEYS = ['bg', 'bg2', 'surface', 'surfaceStrong', 'border', 'text', 'textSoft', 'accent', 'accent2', 'warm', 'radius'];
@@ -401,7 +400,7 @@
   // fields, same rounding, same matrix totals). All money is
   // integer EGP; all savings are exact integer sums, never rounded.
   // `roundHalfUp` is nearest integer, halves up, identically for
-  // the displayed % and the code discount.
+  // the displayed %.
   function roundHalfUp(x) { return Math.floor(x + 0.5); }
 
   function isOnSale(p) {
@@ -425,12 +424,11 @@
   // opts: { deliveryFee (int|null — null means the settings doc has
   //   no fee field: missing != 0, unset), freeDeliveryThreshold
   //   (int|null — admin setting, decision D3: int > 0 waives the fee
-  //   once the post-code total reaches it; absent/null/0 = no waiver) }.
+  //   once the post-sale total reaches it; absent/null/0 = no waiver) }.
   // Returns every figure the storefront, review, transaction and
   // WhatsApp quote share — one computation, no divergent copies.
-  function computeOrderTotals(lines, percent, opts) {
+  function computeOrderTotals(lines, opts) {
     var o = opts || {};
-    var codePercent = Number(percent) || 0;
     var baseSubtotal = 0;
     var subtotal = 0;
     var saleSavings = 0;
@@ -445,8 +443,7 @@
       saleSavings += lineSaving;
       perLine.push({ saving: lineSaving, pct: base != null ? salePercent({ price: price, basePrice: base }) : null });
     });
-    var discountAmount = codePercent > 0 ? roundHalfUp((subtotal * codePercent) / 100) : 0;
-    var total = subtotal - discountAmount;
+    var total = subtotal;
     var feeUnset = !(Number.isInteger(o.deliveryFee) && o.deliveryFee >= 0);
     var threshold = (Number.isInteger(o.freeDeliveryThreshold) && o.freeDeliveryThreshold > 0)
       ? o.freeDeliveryThreshold : null;
@@ -458,14 +455,12 @@
       baseSubtotal: baseSubtotal,
       subtotal: subtotal,
       saleSavings: saleSavings,
-      discountPercent: percent == null ? null : codePercent,
-      discountAmount: discountAmount,
       total: total,
       deliveryFee: deliveryFee,
       feeUnset: feeUnset,
       feeWaived: feeWaived,
       amountDue: amountDue,
-      savingTotal: saleSavings + discountAmount,
+      savingTotal: saleSavings,
       insteadOf: feeUnset ? null : baseSubtotal + deliveryFee
     };
   }
@@ -1289,8 +1284,6 @@
       case 'PRICE_CHANGED': return 'اتغير سعر منتج من اللي شفتهم — راجع الأسعار وحاول تاني';
       case 'TOTAL_CHANGED': return 'اتغير الإجمالي — راجع الإجمالي وحاول تاني';
       case 'INSUFFICIENT_STOCK': return 'الكمية المطلوبة أكبر من المتاح في المخزون';
-      case 'DISCOUNT_INVALID': return 'كود الخصم مش صحيح';
-      case 'DISCOUNT_USED': return 'كود الخصم ده اتستخدم قبل كده';
       case 'ORDER_TOO_LARGE': return 'الطلب فيه منتجات أكتر من الحد المسموح (10)';
       case 'RATE_LIMITED': return 'محاولات كتير في وقت قصير — استنى شوية وحاول تاني';
       case 'PERMISSION_DENIED': return 'ماعندكش صلاحية تعمل العملية دي';
@@ -1759,9 +1752,9 @@
     // ---- No-functions order creation (contract §1) ----
     // ONE client transaction: idempotency first (the order doc id IS
     // the clientOrderId — a retry reuses it and returns the existing
-    // order, created:false), then read products + inventory + discount,
-    // validate, total from DATABASE prices, reserve stock, claim the
-    // discount, create the order + movements + audit, atomically.
+    // order, created:false), then read products + inventory,
+    // validate, total from DATABASE prices, reserve stock,
+    // create the order + movements + audit, atomically.
     // The rules enforce reserved <= stock on the reservation writes,
     // so an over-reservation is denied; the client then re-reads
     // inventory and shows the available count only.
@@ -1780,7 +1773,6 @@
       var custName = (inp.customerName || customer.name || '').trim();
       var custPhone = String(inp.customerPhone || customer.phone || '').replace(/\D/g, '');
       var custAddress = (inp.customerAddress || customer.address || '').trim();
-      var discountCode = (inp.discountCode || '').trim() || null;
       var seenPrices = inp.seenPrices || null;
       var seenTotal = (inp.seenTotal == null) ? null : inp.seenTotal;
       var lines = dedupeOrderLines(inp.items || []);
@@ -1790,10 +1782,9 @@
       if (!custAddress) return Promise.reject(_txError('INVALID_INPUT', 'عنوان العميل مطلوب'));
       if (!lines.length || lines.length > 7) return Promise.reject(_txError('ORDER_TOO_LARGE', 'الطلب فيه منتجات أكتر من الحد المسموح (7)'));
       /* Cap is 7 lines (coordinator fix 2026-11-26): the rules
-       * allow 10 get()/getAfter() calls per operation, and the
-       * order-create rule costs N+3 for a manual order, so an
-       * 8-line manual order with a code is denied by the platform
-       * (7 lines = 10 calls, the safe max). */
+       * allow 10 get()/getAfter() calls per operation. The cap
+       * stays at 7 — the discount-code read that used to cost an
+       * extra call is gone, but the cap is NOT raised here. */
       for (var vi = 0; vi < lines.length; vi++) {
         if (!Number.isInteger(lines[vi].qty) || lines[vi].qty < 1 || lines[vi].qty > 20) {
           return Promise.reject(_txError('INVALID_INPUT', 'الكمية لازم تكون من 1 لـ 20 لكل صنف'));
@@ -1817,8 +1808,6 @@
           var invRefs = lines.map(function (l) { return db().collection('inventory').doc(l.productId); });
           var reads = productRefs.map(function (r) { return tx.get(r); })
             .concat(invRefs.map(function (r) { return tx.get(r); }));
-          var discountRef = discountCode ? db().collection('discounts').doc(discountCode) : null;
-          if (discountRef) reads.push(tx.get(discountRef));
           // The fixed delivery fee rides the settings doc (Technical
           // Plan §2/§5): missing ≠ 0 — a manual order cannot be
           // created while the fee is unset. Client-asserted on the
@@ -1864,20 +1853,6 @@
                 }
               }
             }
-            var percent = null;
-            // Discount is the read after products+inventory; the
-            // settings read is always last.
-            var discountSnap = discountRef ? snaps[lines.length * 2] : null;
-            if (discountCode) {
-              if (!discountSnap || !discountSnap.exists) throw _txError('DISCOUNT_INVALID', 'كود الخصم مش صحيح');
-              var dData = discountSnap.data() || {};
-              if (dData.usedBy != null) throw _txError('DISCOUNT_USED', 'كود الخصم ده اتستخدم قبل كده');
-              if (dData.active !== true) throw _txError('DISCOUNT_INVALID', 'كود الخصم مش صحيح');
-              var exp = orderDateValue(dData.expiresAt);
-              if (exp && exp.getTime() <= Date.now()) throw _txError('DISCOUNT_INVALID', 'كود الخصم منتهي');
-              percent = dData.percent;
-              if (!Number.isInteger(percent) || percent < 1 || percent > 100) throw _txError('DISCOUNT_INVALID', 'كود الخصم مش صحيح');
-            }
             var settingsSnap = snaps[snaps.length - 1];
             var settings = settingsSnap.exists ? (settingsSnap.data() || {}) : {};
             var fee = settings.deliveryFee;
@@ -1885,7 +1860,7 @@
             if (!(Number.isInteger(fee) && fee >= 0)) {
               throw _txError('FEE_NOT_SET', 'رسوم التوصيل غير محددة بعد — حدّدها من الإعدادات', {});
             }
-            var totals = computeOrderTotals(priced, percent, { deliveryFee: fee, freeDeliveryThreshold: threshold });
+            var totals = computeOrderTotals(priced, { deliveryFee: fee, freeDeliveryThreshold: threshold });
             if (seenTotal != null && Math.abs(seenTotal - totals.total) > 0.009) {
               throw _txError('TOTAL_CHANGED', 'اتغير الإجمالي — راجع الإجمالي وحاول تاني', { currentPrices: currentPrices, currentTotal: totals.total });
             }
@@ -1897,8 +1872,8 @@
               id: clientOrderId, clientOrderId: clientOrderId,
               customerName: custName, customerPhone: custPhone, customerAddress: custAddress,
               items: priced.map(function (l) { return { productId: l.productId, name: l.name, price: l.price, basePrice: l.basePrice, qty: l.qty }; }),
-              subtotal: totals.subtotal, discountCode: discountCode, discountPercent: percent,
-              discountAmount: totals.discountAmount, total: totals.total,
+              subtotal: totals.subtotal,
+              total: totals.total,
               saleSavings: totals.saleSavings, deliveryFee: totals.deliveryFee, amountDue: totals.amountDue,
               status: 'new', paymentStatus: 'cod_pending', source: 'admin_manual',
               createdBy: actorUid, shippingCompanyId: inp.shippingCompanyId || null,
@@ -1916,11 +1891,6 @@
               writes['inventory/' + l.productId] = { reserved: l.newReserved };
               sensitive['inventory/' + l.productId] = { reserved: l.newReserved };
             });
-            if (discountRef) {
-              tx.set(discountRef, { usedBy: clientOrderId, usedAt: now, operationId: opId, updatedAt: now }, { merge: true });
-              writes['discounts/' + discountCode] = { usedBy: clientOrderId };
-              sensitive['discounts/' + discountCode] = {};
-            }
             priced.forEach(function (l) {
               var mvRef = db().collection('movements').doc();
               tx.set(mvRef, {
@@ -2122,7 +2092,7 @@
               if (!(Number.isInteger(fee) && fee >= 0)) {
                 throw _txError('FEE_NOT_SET', 'رسوم التوصيل غير محددة بعد — حدّدها من الإعدادات', {});
               }
-              var totals = computeOrderTotals(priced, null, { deliveryFee: fee, freeDeliveryThreshold: threshold });
+              var totals = computeOrderTotals(priced, { deliveryFee: fee, freeDeliveryThreshold: threshold });
               var auditId = newUuid();
               var auditRef = db().collection('audit').doc(auditId);
               var opId = auditId;
@@ -2135,8 +2105,8 @@
                 governorate: governorate, detailedAddress: detailedAddress,
                 customerAddress: custAddress,
                 items: orderItems,
-                subtotal: totals.subtotal, discountCode: null, discountPercent: null,
-                discountAmount: totals.discountAmount, total: totals.total,
+                subtotal: totals.subtotal,
+                total: totals.total,
                 saleSavings: totals.saleSavings, deliveryFee: totals.deliveryFee, amountDue: totals.amountDue,
                 status: 'new', paymentStatus: 'cod_pending', source: 'admin_manual',
                 createdBy: actorUid, shippingCompanyId: inp.shippingCompanyId || null,
@@ -3243,7 +3213,7 @@
     // deterministic — `del_<collection>_<docId>` — with operation
     // 'delete'. The old random id + '<collection>_delete'
     // operation (pre-existing, v1.1.0) was denied live for
-    // products / categories / discounts (feedback has no audit
+    // products / categories (feedback has no audit
     // requirement, so it worked by accident). Mirrors deleteDraft's
     // deterministic entry below.
     function auditedDelete(collection, docId, operation, oldValues) {
@@ -3292,10 +3262,6 @@
       return auditedDelete('categories', categoryId, 'delete', {});
     }
 
-    function deleteDiscount(code) {
-      return auditedDelete('discounts', code, 'delete', {});
-    }
-
     // ---- Website-control subscriptions (contract §8) ----
     function subscribeProducts(cb) {
       return _subscribe(db().collection('products').orderBy('name'), cb);
@@ -3303,10 +3269,6 @@
 
     function subscribeCategories(cb) {
       return _subscribe(db().collection('categories').orderBy('name'), cb);
-    }
-
-    function subscribeDiscounts(cb) {
-      return _subscribe(db().collection('discounts').orderBy('code'), cb);
     }
 
     // The three website-settings docs in one callback:
@@ -3346,7 +3308,6 @@
       subscribeActiveTemplate: subscribeActiveTemplate,
       subscribeProducts: subscribeProducts,
       subscribeCategories: subscribeCategories,
-      subscribeDiscounts: subscribeDiscounts,
       subscribeWebsiteSettings: subscribeWebsiteSettings,
       createManualOrder: createManualOrder,
       convertDraft: convertDraft,
@@ -3388,7 +3349,6 @@
       deleteFeedback: deleteFeedback,
       deleteWebsiteProduct: deleteWebsiteProduct,
       deleteCategory: deleteCategory,
-      deleteDiscount: deleteDiscount,
       getDiagnostics: function () { return diagLog.slice(); },
       // Pure helpers (also exported on the factory for the tests).
       isAllowedOrderTransition: isAllowedOrderTransition,

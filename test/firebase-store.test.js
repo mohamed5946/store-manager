@@ -354,16 +354,14 @@ test('activateTemplate: validates, seeds classic, moves the pointer', async () =
   await assert.rejects(fb.activateTemplate('broken'), /مش صالح للتفعيل/);
 });
 
-test('createManualOrder: one transaction reserves, claims the discount, writes order + movements + audit, refreshes inStock', async () => {
+test('createManualOrder: one transaction reserves, writes order + movements + audit, refreshes inStock', async () => {
   const { fake, fb } = await signedInFb();
   fake._store['products/p1'] = { name: 'منتج 1', price: 100, inStock: true };
   fake._store['inventory/p1'] = { stock: 10, reserved: 2 };
-  fake._store['discounts/X10'] = { code: 'X10', active: true, usedBy: null, percent: 10, expiresAt: null };
   fake._store['storeSettings/settings'] = { deliveryFee: 30 };
   const input = {
     clientOrderId: 'c-1',
     items: [{ productId: 'p1', qty: 2 }],
-    discountCode: 'X10',
     customer: { name: 'أحمد', phone: '01012345678', address: 'القاهرة' },
     shippingCompanyId: 'ship-1',
     notes: 'ملاحظة'
@@ -380,20 +378,19 @@ test('createManualOrder: one transaction reserves, claims the discount, writes o
   assert.equal(o.customerPhone, '01012345678');
   assert.equal(o.customerAddress, 'القاهرة');
   assert.equal(o.subtotal, 200);
-  assert.equal(o.discountCode, 'X10');
-  assert.equal(o.discountPercent, 10);
-  assert.equal(o.discountAmount, 20);
-  assert.equal(o.total, 180);
+  assert.equal(o.discountCode, undefined);
+  assert.equal(o.discountPercent, undefined);
+  assert.equal(o.discountAmount, undefined);
+  assert.equal(o.total, 200);
   assert.equal(o.saleSavings, 0);
   assert.equal(o.deliveryFee, 30);
-  assert.equal(o.amountDue, 210);
+  assert.equal(o.amountDue, 230);
   assert.deepEqual(o.items, [{ productId: 'p1', name: 'منتج 1', price: 100, basePrice: null, qty: 2 }]);
   assert.equal(o.acceptedAt, null);
   assert.equal(o.cancelReason, null);
   assert.equal(o.trackingNumber, null);
   assert.ok(o.auditId);
   assert.equal(fake._store['inventory/p1'].reserved, 4); // 2 + 2 reserved
-  assert.equal(fake._store['discounts/X10'].usedBy, 'c-1');
   assert.equal(fake._store['products/p1'].inStock, true); // §13 refresh: 10 - 4 > 0
   const mvKeys = Object.keys(fake._store).filter((k) => k.startsWith('movements/'));
   assert.equal(mvKeys.length, 1);
@@ -430,13 +427,12 @@ test('createManualOrder: idempotent — a retry with the same clientOrderId retu
   assert.equal(Object.keys(fake._store).filter((k) => k.startsWith('orders/')).length, 1);
 });
 
-test('createManualOrder: dedupes lines, rejects short stock with the available count, price/total changes, used discount', async () => {
+test('createManualOrder: dedupes lines, rejects short stock with the available count, price/total changes', async () => {
   const { fake, fb } = await signedInFb();
   fake._store['products/p1'] = { name: 'منتج 1', price: 100 };
   fake._store['products/p2'] = { name: 'منتج 2', price: 50 };
   fake._store['inventory/p1'] = { stock: 1, reserved: 0 };
   fake._store['inventory/p2'] = { stock: 10, reserved: 0 };
-  fake._store['discounts/USED'] = { code: 'USED', active: true, usedBy: 'other-order', percent: 10 };
   fake._store['storeSettings/settings'] = { deliveryFee: 30 };
   const base = {
     clientOrderId: 'c-x',
@@ -456,9 +452,6 @@ test('createManualOrder: dedupes lines, rejects short stock with the available c
   await assert.rejects(
     fb.createManualOrder({ ...base, clientOrderId: 'c-w', seenTotal: 999 }),
     (e) => e.code === 'TOTAL_CHANGED');
-  await assert.rejects(
-    fb.createManualOrder({ ...base, clientOrderId: 'c-v', discountCode: 'USED' }),
-    (e) => e.code === 'DISCOUNT_USED');
   await assert.rejects(
     fb.createManualOrder({ ...base, clientOrderId: 'c-u', customer: { name: 'أحمد', phone: '010', address: 'القاهرة' } }),
     (e) => e.code === 'INVALID_INPUT');
@@ -555,14 +548,14 @@ test('pure helpers: dedupe, totals, low stock, sales by period', () => {
   // Pricing (§8): the canonical helper returns every shared figure —
   // feeUnset / feeWaived / amountDue (null while the fee is unset) /
   // savingTotal / insteadOf, identical to the storefront + Flutter.
-  assert.deepEqual(StoreFB.computeOrderTotals([{ price: 100, qty: 2 }], 10, { deliveryFee: 30 }), {
+  assert.deepEqual(StoreFB.computeOrderTotals([{ price: 100, qty: 2 }], { deliveryFee: 30 }), {
     perLine: [{ saving: 0, pct: null }], baseSubtotal: 200, subtotal: 200, saleSavings: 0,
-    discountPercent: 10, discountAmount: 20, total: 180, deliveryFee: 30, feeUnset: false,
-    feeWaived: false, amountDue: 210, savingTotal: 20, insteadOf: 230
+    total: 200, deliveryFee: 30, feeUnset: false,
+    feeWaived: false, amountDue: 230, savingTotal: 0, insteadOf: 230
   });
-  assert.deepEqual(StoreFB.computeOrderTotals([{ price: 100, qty: 1 }], null), {
+  assert.deepEqual(StoreFB.computeOrderTotals([{ price: 100, qty: 1 }]), {
     perLine: [{ saving: 0, pct: null }], baseSubtotal: 100, subtotal: 100, saleSavings: 0,
-    discountPercent: null, discountAmount: 0, total: 100, deliveryFee: null, feeUnset: true,
+    total: 100, deliveryFee: null, feeUnset: true,
     feeWaived: false, amountDue: null, savingTotal: 0, insteadOf: null
   });
   assert.equal(StoreFB.computeInStock(10, 4), true);
@@ -683,7 +676,6 @@ test('newUuid: UUID-shaped and unique', () => {
 
 test('friendlyCallableError: maps the structured codes', () => {
   assert.equal(StoreFB.friendlyCallableError({ details: { code: 'PRICE_CHANGED' } }), 'اتغير سعر منتج من اللي شفتهم — راجع الأسعار وحاول تاني');
-  assert.equal(StoreFB.friendlyCallableError({ details: { code: 'DISCOUNT_USED' } }), 'كود الخصم ده اتستخدم قبل كده');
   assert.equal(StoreFB.friendlyCallableError({ code: 'not-found' }), 'حصل خطأ: not-found');
 });
 
@@ -862,17 +854,18 @@ test('setPersistenceMode: remember-me picks LOCAL, otherwise SESSION', async () 
 });
 
 // ---- Pricing (pricing-bundle.md, Technical Plan §8 + Verification
-// Plan matrix cases A–G). The shared numeric matrix is the test
-// oracle: the PC path passes only when it reproduces every row
+// Plan matrix cases A, B, D, E). The code cases C, F, G were removed
+// with the discount code (2026-11-27) — they tested only the code
+// percent, which no longer exists. The shared numeric matrix is the
+// test oracle: the PC path passes only when it reproduces every row
 // exactly, with identical expected totals to the storefront and
 // Flutter paths. No ±1 EGP tolerance anywhere.
 
 test('pricing matrix A — worked example: 500 → 300 x1, no code, fee 30', () => {
-  const t = StoreFB.computeOrderTotals([{ price: 300, basePrice: 500, qty: 1 }], null, { deliveryFee: 30 });
+  const t = StoreFB.computeOrderTotals([{ price: 300, basePrice: 500, qty: 1 }], { deliveryFee: 30 });
   assert.equal(t.baseSubtotal, 500);
   assert.equal(t.subtotal, 300);
   assert.equal(t.saleSavings, 200);
-  assert.equal(t.discountAmount, 0);
   assert.equal(t.total, 300);
   assert.equal(t.deliveryFee, 30);
   assert.equal(t.amountDue, 330);
@@ -882,36 +875,23 @@ test('pricing matrix A — worked example: 500 → 300 x1, no code, fee 30', () 
 });
 
 test('pricing matrix B — fee 0: amountDue == items total', () => {
-  const t = StoreFB.computeOrderTotals([{ price: 300, basePrice: 500, qty: 1 }], null, { deliveryFee: 0 });
+  const t = StoreFB.computeOrderTotals([{ price: 300, basePrice: 500, qty: 1 }], { deliveryFee: 0 });
   assert.equal(t.baseSubtotal, 500);
   assert.equal(t.subtotal, 300);
   assert.equal(t.saleSavings, 200);
-  assert.equal(t.discountAmount, 0);
   assert.equal(t.total, 300);
   assert.equal(t.deliveryFee, 0);
   assert.equal(t.amountDue, 300);
   assert.equal(t.insteadOf, 500);
 });
 
-test('pricing matrix C — code on sale: 10% on the post-sale subtotal', () => {
-  const t = StoreFB.computeOrderTotals([{ price: 300, basePrice: 500, qty: 1 }], 10, { deliveryFee: 30 });
-  assert.equal(t.baseSubtotal, 500);
-  assert.equal(t.subtotal, 300);
-  assert.equal(t.saleSavings, 200);
-  assert.equal(t.discountAmount, 30);
-  assert.equal(t.total, 270);
-  assert.equal(t.deliveryFee, 30);
-  assert.equal(t.amountDue, 300);
-});
-
 test('pricing matrix D — multi-line: 500 → 300 x2 + 150 x1', () => {
   const t = StoreFB.computeOrderTotals(
     [{ price: 300, basePrice: 500, qty: 2 }, { price: 150, basePrice: null, qty: 1 }],
-    null, { deliveryFee: 30 });
+    { deliveryFee: 30 });
   assert.equal(t.baseSubtotal, 1150);
   assert.equal(t.subtotal, 750);
   assert.equal(t.saleSavings, 400);
-  assert.equal(t.discountAmount, 0);
   assert.equal(t.total, 750);
   assert.equal(t.deliveryFee, 30);
   assert.equal(t.amountDue, 780);
@@ -919,11 +899,10 @@ test('pricing matrix D — multi-line: 500 → 300 x2 + 150 x1', () => {
 });
 
 test('pricing matrix E — rounding, % display: 199 → 149 saves exactly 50', () => {
-  const t = StoreFB.computeOrderTotals([{ price: 149, basePrice: 199, qty: 1 }], null, { deliveryFee: 30 });
+  const t = StoreFB.computeOrderTotals([{ price: 149, basePrice: 199, qty: 1 }], { deliveryFee: 30 });
   assert.equal(t.baseSubtotal, 199);
   assert.equal(t.subtotal, 149);
   assert.equal(t.saleSavings, 50);
-  assert.equal(t.discountAmount, 0);
   assert.equal(t.total, 149);
   assert.equal(t.deliveryFee, 30);
   assert.equal(t.amountDue, 179);
@@ -934,28 +913,6 @@ test('pricing matrix E — rounding, % display: 199 → 149 saves exactly 50', (
   assert.equal(t.perLine[0].pct, null);
   assert.equal(t.savingTotal, 50);
   assert.equal(t.insteadOf, 229);
-});
-
-test('pricing matrix F — rounding, code: round(149 x 10 / 100) = round(14.9) = 15', () => {
-  const t = StoreFB.computeOrderTotals([{ price: 149, basePrice: 199, qty: 1 }], 10, { deliveryFee: 30 });
-  assert.equal(t.baseSubtotal, 199);
-  assert.equal(t.subtotal, 149);
-  assert.equal(t.saleSavings, 50);
-  assert.equal(t.discountAmount, 15);
-  assert.equal(t.total, 134);
-  assert.equal(t.deliveryFee, 30);
-  assert.equal(t.amountDue, 164);
-});
-
-test('pricing matrix G — code halves-up: round(305 x 10 / 100) = round(30.5) = 31', () => {
-  const t = StoreFB.computeOrderTotals([{ price: 305, basePrice: null, qty: 1 }], 10, { deliveryFee: 30 });
-  assert.equal(t.baseSubtotal, 305);
-  assert.equal(t.subtotal, 305);
-  assert.equal(t.saleSavings, 0);
-  assert.equal(t.discountAmount, 31);
-  assert.equal(t.total, 274);
-  assert.equal(t.deliveryFee, 30);
-  assert.equal(t.amountDue, 304);
 });
 
 test('pricing % badge: exact percentages show, inexact ones are suppressed (§8)', () => {
@@ -974,25 +931,25 @@ test('pricing % badge: exact percentages show, inexact ones are suppressed (§8)
 });
 
 test('pricing fee: missing fee blocks with amountDue null; threshold waives the fee (D3)', () => {
-  const unset = StoreFB.computeOrderTotals([{ price: 300, qty: 1 }], null, {});
+  const unset = StoreFB.computeOrderTotals([{ price: 300, qty: 1 }], {});
   assert.equal(unset.feeUnset, true);
   assert.equal(unset.deliveryFee, null);
   assert.equal(unset.amountDue, null);
   assert.equal(unset.insteadOf, null);
-  const waived = StoreFB.computeOrderTotals([{ price: 300, qty: 1 }], null, { deliveryFee: 30, freeDeliveryThreshold: 300 });
+  const waived = StoreFB.computeOrderTotals([{ price: 300, qty: 1 }], { deliveryFee: 30, freeDeliveryThreshold: 300 });
   assert.equal(waived.feeWaived, true);
   assert.equal(waived.deliveryFee, 0);
   assert.equal(waived.amountDue, 300);
-  const below = StoreFB.computeOrderTotals([{ price: 299, qty: 1 }], null, { deliveryFee: 30, freeDeliveryThreshold: 300 });
+  const below = StoreFB.computeOrderTotals([{ price: 299, qty: 1 }], { deliveryFee: 30, freeDeliveryThreshold: 300 });
   assert.equal(below.feeWaived, false);
   assert.equal(below.deliveryFee, 30);
   assert.equal(below.amountDue, 329);
   // Threshold 0 (or absent) never waives.
-  const zero = StoreFB.computeOrderTotals([{ price: 300, qty: 1 }], null, { deliveryFee: 30, freeDeliveryThreshold: 0 });
+  const zero = StoreFB.computeOrderTotals([{ price: 300, qty: 1 }], { deliveryFee: 30, freeDeliveryThreshold: 0 });
   assert.equal(zero.feeWaived, false);
   assert.equal(zero.amountDue, 330);
   // An invalid stored base (base <= price) is no sale.
-  const bad = StoreFB.computeOrderTotals([{ price: 100, basePrice: 90, qty: 1 }], null, { deliveryFee: 30 });
+  const bad = StoreFB.computeOrderTotals([{ price: 100, basePrice: 90, qty: 1 }], { deliveryFee: 30 });
   assert.equal(bad.baseSubtotal, 100);
   assert.equal(bad.saleSavings, 0);
 });
@@ -1492,23 +1449,20 @@ test('createManualOrder: audit covers items when a line is on sale, and only the
   assert.equal(audit2.newValuesByDoc['orders/c-plain'].items, undefined);
 });
 
-test('auditedDelete: deterministic delete audit for products, categories, discounts', async () => {
+test('auditedDelete: deterministic delete audit for products, categories', async () => {
   const { fake, fb } = await signedInFb();
   fake._store['products/p1'] = { name: 'منتج 1', price: 100 };
   fake._store['categories/c1'] = { name: 'فئة 1' };
-  fake._store['discounts/X10'] = { code: 'X10', percent: 10 };
   assert.equal(await fb.deleteWebsiteProduct('p1'), true);
   assert.equal(await fb.deleteCategory('c1'), true);
-  assert.equal(await fb.deleteDiscount('X10'), true);
   assert.equal(fake._store['products/p1'], undefined);
   assert.equal(fake._store['categories/c1'], undefined);
-  assert.equal(fake._store['discounts/X10'], undefined);
   // One audit entry per delete, at the deterministic id the rules
   // enforce (hasDeleteAudit), all with operation 'delete'.
   assert.deepEqual(
     Object.keys(fake._store).filter((k) => k.startsWith('audit/')).sort(),
-    ['audit/del_categories_c1', 'audit/del_discounts_X10', 'audit/del_products_p1']);
-  for (const key of ['audit/del_products_p1', 'audit/del_categories_c1', 'audit/del_discounts_X10']) {
+    ['audit/del_categories_c1', 'audit/del_products_p1']);
+  for (const key of ['audit/del_products_p1', 'audit/del_categories_c1']) {
     const entry = fake._store[key];
     assert.equal(entry.operation, 'delete');
     assert.equal(entry.operationId, key.slice('audit/'.length));
@@ -1517,7 +1471,6 @@ test('auditedDelete: deterministic delete audit for products, categories, discou
   }
   assert.equal(fake._store['audit/del_products_p1'].docId, 'p1');
   assert.equal(fake._store['audit/del_categories_c1'].docId, 'c1');
-  assert.equal(fake._store['audit/del_discounts_X10'].docId, 'X10');
 });
 
 // ---- Template bundles (entries 16–17): mirror gateway + pointer
