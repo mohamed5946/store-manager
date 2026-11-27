@@ -5,10 +5,10 @@
 // companies, inventory) read Firestore directly. There are NO Cloud
 // Functions on this project (Spark, no-functions contract 2026-11-26):
 // orders are created by ONE client transaction (runTransaction) that
-// reserves stock, claims the discount and writes the order; the
-// movements + audit entry are written AFTER the commit, best-effort
-// (M1: Option 3 + audit-split, 2026-11-27) — an order whose audit
-// entry never landed is recovered by the orphan repair. Order-status
+// reserves stock and writes the order; the movements + audit entry
+// are written AFTER the commit, best-effort (M1: Option 3 +
+// audit-split, 2026-11-27) — an order whose audit entry never
+// landed is recovered by the orphan repair. Order-status
 // transitions move stock in a transaction too. The ERP sections (sales, purchases, returns,
 // customers, suppliers, expenses, local orders) stay on the local
 // JSON files; they are NOT migrated here and local accounts are
@@ -1764,7 +1764,9 @@
     // the clientOrderId — a retry reuses it and returns the existing
     // order, created:false), then read products + inventory,
     // validate, total from DATABASE prices, reserve stock,
-    // create the order + movements + audit, atomically.
+    // create the order, atomically. Movements + audit leave the
+    // transaction — written AFTER the commit, best-effort
+    // (M1: Option 3 + audit-split, 2026-11-27).
     // The rules enforce reserved <= stock on the reservation writes,
     // so an over-reservation is denied; the client then re-reads
     // inventory and shows the available count only.
