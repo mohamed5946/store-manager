@@ -800,13 +800,34 @@ label{font-size:12px;font-weight:600;color:var(--t2);display:flex;align-items:ce
 
 /* ══ PRINT ══ */
 @media print{
-  #tb,#sb,.fab,.fab-menu,#autosave,#toast,#spotlight,#notifPanel{display:none!important}
+  #tb,#sb,.fab,.fab-menu,#autosave,#toast,#spotlight,#notifPanel,#tourOverlay{display:none!important}
   #app{height:auto}
   #mn{overflow:visible;padding:0}
   .pg.hidden{display:none!important}
   body{background:#fff;color:#000}
   .cd{box-shadow:none;border:1px solid #ddd;border-radius:0}
 }
+
+/* ══ ONBOARDING TOUR ══ */
+#tourOverlay{position:fixed;inset:0;z-index:9900;pointer-events:none}
+#tourOverlay.hidden{display:none}
+#tourRing{position:fixed;border:3px solid var(--acc);border-radius:14px;
+  box-shadow:0 0 0 9999px rgba(5,10,30,.55),0 0 0 4px rgba(255,122,26,.25);
+  transition:top .3s var(--ease),left .3s var(--ease),width .3s var(--ease),height .3s var(--ease);
+  pointer-events:none}
+#tourCard{position:fixed;z-index:9901;width:min(360px,calc(100vw - 32px));
+  background:var(--card);color:var(--t1);border:1px solid var(--br);border-radius:16px;
+  box-shadow:0 12px 40px rgba(0,0,0,.35);padding:18px;pointer-events:auto}
+#tourStepNo{font-size:11px;font-weight:700;color:var(--acc);margin-bottom:4px}
+#tourTitle{font-size:17px;font-weight:900;margin-bottom:6px}
+#tourText{font-size:13.5px;line-height:1.9;color:var(--t2);margin-bottom:12px}
+.tour-never{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t3);cursor:pointer;margin-bottom:12px}
+.tour-never input{accent-color:var(--acc);width:16px;height:16px;cursor:pointer}
+.tour-btns{display:flex;gap:8px;align-items:center}
+.tour-btns .spacer{flex:1}
+#tourDots{display:flex;gap:5px;justify-content:center;margin-top:14px}
+#tourDots .dt{width:7px;height:7px;border-radius:50%;background:var(--br);cursor:pointer}
+#tourDots .dt.on{background:var(--acc);transform:scale(1.3)}
 
 /* ══ SPLASH SCREEN ══ */
 #splash{
@@ -1068,6 +1089,7 @@ const SFX = (function(){
   </div>
   <div class="ng"><div class="ng-t" data-i18n="nav_orders_grp">الطلبات والشحن</div>
     <div class="ni" data-p="orders"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><span class="ni-lbl" data-i18n="nav_orders">الطلبات والتوصيل</span><span class="ni-badge" id="pendBadge" style="display:none">0</span></div>
+    <div class="ni" data-p="incomplete"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div><span class="ni-lbl">طلبات ناقصة</span><span class="ni-badge" id="incompleteBadge" style="display:none">0</span></div>
   </div>
   <div class="ng"><div class="ng-t"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> المتجر</div>
     <div class="ni" data-p="templates"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg></div><span class="ni-lbl">قوالب المتجر</span></div>
@@ -1076,7 +1098,6 @@ const SFX = (function(){
     <div class="ni" data-p="website-categories"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="13" x2="12" y2="17"/><line x1="12" y1="9" x2="12" y2="9.01"/></svg></div><span class="ni-lbl">فئات الموقع</span></div>
     <div class="ni" data-p="website-homepage"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></div><span class="ni-lbl">الرئيسية والتصميم</span></div>
     <div class="ni" data-p="website-preview"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div><span class="ni-lbl">معاينة الموقع</span></div>
-    <div class="ni" data-p="discounts"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41 12 22 2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div><span class="ni-lbl">أكواد الخصم</span></div>
   </div>
   <div class="ng"><div class="ng-t" data-i18n="nav_purchases_grp">المشتريات</div>
     <div class="ni" data-p="purchases"><div class="ni-ic"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div><span class="ni-lbl" data-i18n="nav_purchases">فواتير الشراء</span></div>
@@ -1159,6 +1180,11 @@ const SFX = (function(){
     <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--grng)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><span>آخر طلبات المتجر</span></div><span id="storeDashCount" class="bx">غير متصل</span></div>
     <div id="dStoreStats" style="display:flex;gap:12px;flex-wrap:wrap;padding:12px 16px 0;font-size:12px;color:var(--t2)"></div>
     <table><thead><tr><th>رقم الطلب</th><th>العميل</th><th>الأصناف</th><th>الإجمالي</th><th>الحالة</th><th>الدفع</th><th>التاريخ</th></tr></thead><tbody id="dStoreOrders"></tbody></table>
+  </div>
+  <div class="cd" style="margin-top:18px">
+    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--orng)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div><span>طلبات ناقصة وزيارات</span></div><button class="btn btn-g btn-sm" onclick="nav('incomplete')">عرض الطلبات الناقصة</button></div>
+    <div id="draftFunnelBody" style="display:flex;gap:12px;flex-wrap:wrap;padding:12px 16px;font-size:12px;color:var(--t2)"></div>
+  </div>
   <div class="cd" id="storeLowStockCard" style="margin-top:18px">
     <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--redg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><span>مخزون المتجر المنخفض</span></div><span id="storeLowStockCount" class="bx">غير متصل</span></div>
     <div id="storeLowStockBody" style="padding:12px 16px;font-size:13px"></div>
@@ -1266,6 +1292,13 @@ const SFX = (function(){
       </select>
       <button class="btn btn-g btn-sm" onclick="storeOrdFilter.value='';storeOrdCancelFilter.value='';rStoreOrders()"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
+    <div class="cd" style="margin-bottom:14px">
+      <div class="cd-hd"><div class="cd-t"><span>طلبات بلا قيد تدقيق (يتيمة)</span></div><button class="btn btn-g btn-sm" onclick="checkOrphanOrders()">فحص آخر 100 طلب</button></div>
+      <div style="padding:12px 16px">
+        <div id="orphanStatus" style="font-size:12px;color:var(--t3)">لو انقطع الاتصال بعد حفظ طلب وقبل كتابة قيد التدقيق، الطلب يفضل موجود بس من غير قيد — الفحص ده بيلاقي الطلبات دي عشان تصلّحها.</div>
+        <div id="orphanList" style="margin-top:10px"></div>
+      </div>
+    </div>
     <div class="cd"><table>
       <thead><tr><th>رقم الطلب</th><th>العميل</th><th>الأصناف</th><th>الإجمالي</th><th>الحالة</th><th>الدفع</th><th>شركة الشحن</th><th>موعد التسليم</th><th>ملاحظات</th><th></th></tr></thead>
       <tbody id="storeOrdList"></tbody>
@@ -1285,10 +1318,35 @@ const SFX = (function(){
     <div><div class="pg-t"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg> قوالب المتجر</div><div class="pg-s">اختار القالب اللي يظهر على الموقع — التفعيل فوري، والرجوع بضغطة واحدة</div></div>
   </div>
   <div id="storeTplStatus" style="font-size:12px;color:var(--t3);margin-bottom:14px"></div>
+  <div class="cd" style="max-width:640px;margin-bottom:16px">
+    <div class="cd-hd"><div class="cd-t"><span>تفعيل سريع — إجراء متقدم</span></div></div>
+    <div style="padding:16px">
+      <div id="tplPointerBox" style="font-size:13px;line-height:1.9">—</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center">
+        <select id="tplActivateSelect" style="flex:1;min-width:180px;padding:8px 10px"></select>
+        <button class="btn btn-p btn-sm" onclick="activateStoreTemplateSelected()">تفعيل</button>
+        <button class="btn btn-g btn-sm" onclick="rollbackStoreTemplate()">رجوع للقالب السابق</button>
+      </div>
+      <div id="tplPointerMsg" style="font-size:12px;color:var(--red);margin-top:8px"></div>
+      <div style="font-size:11px;color:var(--t3);margin-top:8px">التفعيل والرجوع من هنا بيعدّوا على نفس فحص الاعتماد ونفس سجل التفعيل زي بطاقات القوالب — مش طريق مختصر.</div>
+    </div>
+  </div>
   <div id="tplList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px"></div>
 </div>
 
 <!-- STORE FEEDBACK -->
+<!-- INCOMPLETE ORDERS (checkout drafts) -->
+<div id="pg-incomplete" class="pg hidden">
+  <div class="pg-hd">
+    <div><div class="pg-t"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> طلبات ناقصة</div><div class="pg-s">عملاء بدأوا الطلب من الموقع ومكملوش — اتصل بيهم وحوّل الطلب لطلب حقيقي بعد ما يأكدوا بالتلفون</div></div>
+    <div class="hda">
+      <select id="draftFilter" onchange="rIncompleteOrders()" style="width:auto;padding:6px 10px"><option value="">كل الحالات</option><option value="new">جديدة</option><option value="contacted">تم الاتصال</option><option value="no-answer">مردش</option><option value="converted">تم التحويل</option><option value="dead">ملغاة</option></select>
+    </div>
+  </div>
+  <div id="draftStatus" style="font-size:12px;color:var(--t3);margin-bottom:12px"></div>
+  <div class="cd"><table><thead><tr><th>العميل</th><th>السلة</th><th>اكتمال البيانات</th><th>آخر تحديث</th><th>الحالة</th><th></th></tr></thead><tbody id="incompleteList"></tbody></table></div>
+</div>
+
 <div id="pg-feedback" class="pg hidden">
   <div class="pg-hd">
     <div><div class="pg-t"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> الشكاوى والاقتراحات</div><div class="pg-s">رسائل العملاء من الموقع — بطاقات للقراءة فقط، واحذف اللي سبام</div></div>
@@ -1332,6 +1390,7 @@ const SFX = (function(){
   <div class="cd" style="max-width:640px;margin-bottom:16px">
     <div class="cd-hd"><div class="cd-t"><span>الواجهة الرئيسية (Hero)</span></div></div>
     <div style="padding:22px">
+      <div id="hpHeroNote" style="display:none;font-size:12px;color:var(--t3);background:var(--hov);border-radius:8px;padding:8px 10px;margin-bottom:12px">controlled by the active template</div>
       <div class="fg">
         <div class="fgr full"><label>عنوان الواجهة</label><input id="hpTitle" placeholder="عنوان الموقع الرئيسي"></div>
         <div class="fgr full"><label>العنوان الفرعي</label><input id="hpSubtitle" placeholder="جملة تحت العنوان"></div>
@@ -1349,7 +1408,10 @@ const SFX = (function(){
         <div class="fgr full"><label>عنوان بانر التوصيل</label><input id="hpDelTitle" placeholder="عنوان بانر التوصيل"></div>
         <div class="fgr"><label>نص بانر التوصيل</label><input id="hpDelSubtitle" placeholder="نص بانر التوصيل"></div>
         <div class="fgr"><label>صورة بانر التوصيل</label><input id="hpDelImage" placeholder="https://…"></div>
-        <div class="fgr full"><label>بانرات ترويجية (JSON — مصفوفة {imageUrl, title, subtitle, linkType, linkId})</label><textarea id="hpPromos" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--br);border-radius:8px;background:var(--bg2);color:var(--t1);font-family:monospace;direction:ltr;text-align:left" placeholder="[]"></textarea></div>
+        <div class="fgr full"><label>بانرات ترويجية (JSON — مصفوفة {imageUrl, title, subtitle, linkType, linkId, endDate})</label><textarea id="hpPromos" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--br);border-radius:8px;background:var(--bg2);color:var(--t1);font-family:monospace;direction:ltr;text-align:left" placeholder="[]"></textarea>
+          <div style="font-size:11px;color:var(--t3);margin-top:6px">تاريخ انتهاء العرض (ISO 8601 — توقيت القاهرة): العدّ التنازلي بيظهر بس لو فيه تاريخ انتهاء، وبيختفي لما يخلص.</div>
+          <div id="hpPromoEndDates" style="margin-top:10px"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1378,6 +1440,8 @@ const SFX = (function(){
   <div class="pg-hd">
     <div><div class="pg-t"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> معاينة الموقع</div><div class="pg-s">الموقع زي ما العميل بيشوفه — المعاينة جوه البرنامج، و«فتح الموقع» بيفتحه في المتصفح</div></div>
     <div class="hda">
+      <select id="tplPreviewSelect" style="padding:8px 10px;max-width:260px"></select>
+      <button class="btn btn-g" onclick="openSelectedTemplatePreview()">فتح رابط المعاينة</button>
       <button class="btn btn-g" onclick="reloadWebsitePreview()">تحديث المعاينة</button>
       <button class="btn btn-p" onclick="openStoreSite()">فتح الموقع</button>
     </div>
@@ -1387,20 +1451,7 @@ const SFX = (function(){
   </div>
 </div>
 
-<!-- DISCOUNTS -->
-<div id="pg-discounts" class="pg hidden">
-  <div class="pg-hd">
-    <div><div class="pg-t"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41 12 22 2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> أكواد الخصم</div><div class="pg-s">أكواد لمرة واحدة — الكود بيتقفل أول ما يتستخدم في طلب، وعمود «مستخدم في» بيوضح الطلب</div></div>
-    <div class="hda"><button class="btn btn-p" onclick="openDiscountM()">+ كود جديد</button></div>
-  </div>
-  <div id="discStatus" style="font-size:12px;color:var(--t3);margin-bottom:14px"></div>
-  <div class="cd"><table>
-    <thead><tr><th>الكود</th><th>النسبة</th><th>الحالة</th><th>ينتهي</th><th>مستخدم في</th><th></th></tr></thead>
-    <tbody id="discList"></tbody>
-  </table></div>
-</div>
 
-<!-- RETURNS -->
 <div id="pg-returns" class="pg hidden">
   <div class="pg-hd"><div><div class="pg-t" data-i18n="pg_returns"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg> المرتجعات</div></div><div class="hda"><button class="btn btn-p" onclick="openRetM()">＋ إضافة مرتجع</button></div></div>
   <div class="cd"><table><thead><tr><th data-i18n="th_num">رقم</th><th data-i18n="th_type">النوع</th><th data-i18n="th_party">الجهة</th><th data-i18n="th_date">التاريخ</th><th data-i18n="th_total">الإجمالي</th><th data-i18n="th_reason">السبب</th><th></th></tr></thead><tbody id="retList"></tbody></table></div>
@@ -1527,6 +1578,46 @@ const SFX = (function(){
       <div style="margin-top:16px"><button class="btn btn-p" onclick="saveWhatsAppSettings()">حفظ إعدادات واتساب</button></div>
     </div>
   </div>
+  <div class="cd" style="max-width:500px;margin-top:16px">
+    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--accg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><span>رسوم التوصيل</span></div><span id="feeStatus" class="bx">مجاني</span></div>
+    <div style="padding:22px">
+      <div class="fg">
+        <div class="fgr"><label>رسوم التوصيل (ج.م)</label><input id="feeAmount" type="number" min="0" step="1" placeholder="مثال: 30 — صفر يعني التوصيل مجاني"></div>
+        <div class="fgr"><label>حد التوصيل المجاني (اختياري)</label><input id="feeThreshold" type="number" min="0" step="1" placeholder="فاضي = مفيش حد — فوق المبلغ ده التوصيل مجاني"></div>
+      </div>
+      <div style="margin-top:16px"><button class="btn btn-p" onclick="saveDeliveryFeeSettings()">حفظ رسوم التوصيل</button></div>
+    </div>
+  </div>
+<div class="cd" style="max-width:500px;margin-top:16px">
+    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--accg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div><span>محافظات التوصيل</span></div><span id="govStatus" class="bx">—</span></div>
+    <div style="padding:22px">
+      <div style="font-size:12px;color:var(--t3);margin-bottom:12px">المحافظات المفعّلة بس هي اللي بتظهر للعميل في نموذج الطلب. لو مفيش ولا محافظة مفعّلة، الموقع بيقول للعميل إن التوصيل لسه مش متظبط.</div>
+      <div id="govList" style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:13px"></div>
+      <div style="margin-top:16px;display:flex;gap:8px"><button class="btn btn-p" onclick="saveGovernoratesSettings()">حفظ المحافظات</button><button class="btn btn-g" onclick="renderGovernoratesSettings()">إلغاء التعديلات</button></div>
+    </div>
+  </div>
+<div class="cd" style="max-width:500px;margin-top:16px">
+    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--redg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div><span>حذف الطلبات الناقصة تلقائياً</span></div></div>
+    <div style="padding:22px">
+      <div style="font-size:12px;color:var(--t3);margin-bottom:12px">الطلبات الناقصة بتفضل لحد ما تحذفها بنفسك. لو حددت عدد أيام، البرنامج بيحذف تلقائياً أي طلب ناقص أقدم من كده كل ما يفتح — وبيحتفظ دايماً بأحدث 100 طلب مهما كان العدد.</div>
+      <div class="fg">
+        <div class="fgr"><label>احذف الطلبات الناقصة الأقدم من (يوم) — صفر يعني يدوي بس</label><input id="delDays" type="number" min="0" max="365" step="1" placeholder="0"></div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:8px"><button class="btn btn-p" onclick="saveDeletionSettings()">حفظ</button><button class="btn btn-g" onclick="renderDeletionSettings()">إلغاء</button></div>
+      <div id="delLastRun" style="font-size:12px;color:var(--t3);margin-top:10px"></div>
+    </div>
+  </div>
+<div class="cd" style="max-width:500px;margin-top:16px">
+    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--orng)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div><span>حصّة الكتابة اليومية</span></div><span id="quotaStatus" class="bx">—</span></div>
+    <div style="padding:22px">
+      <div id="quotaInfo" style="font-size:13px;line-height:1.9"></div>
+      <div class="fg" style="margin-top:12px">
+        <div class="fgr full"><label>لو الحصّة قربت تخلص — إيقاف مؤقت</label><select id="quotaCutoff"><option value="none">بدون إيقاف</option><option value="journeys">أوقف تتبّع الزيارات أولاً</option><option value="drafts">أوقف تتبّع الزيارات + مزامنة الطلبات الناقصة</option></select>
+        <div style="font-size:11px;color:var(--t3);margin-top:6px">الإيقاف ده يدوي بس، وطلبات العملاء الحقيقية عمرها ما بتتوقف.</div></div>
+      </div>
+      <div style="margin-top:16px"><button class="btn btn-p" onclick="saveQuotaSettings()">حفظ</button></div>
+    </div>
+  </div>
 <div class="cd" style="max-width:500px;margin-top:16px">
     <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--accg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></div><span>التحديثات</span></div><span id="updVerBadge" class="bx">الإصدار الحالي</span></div>
     <div style="padding:22px">
@@ -1536,6 +1627,13 @@ const SFX = (function(){
         <button class="btn btn-g" id="updDlBtn" onclick="downloadAndInstallUpdate()" style="display:none"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg> تنزيل وتثبيت</button>
       </div>
       <div id="updProgress" style="font-size:12px;color:var(--t3);margin-top:10px;min-height:16px"></div>
+    </div>
+  </div>
+<div class="cd" style="max-width:500px;margin-top:16px">
+    <div class="cd-hd"><div class="cd-t"><div class="cd-ti" style="background:var(--accg)"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 16 16 12 12 8"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div><span>الجولة التعريفية</span></div></div>
+    <div style="padding:22px">
+      <div style="font-size:12px;color:var(--t3);margin-bottom:12px">جولة سريعة في كل أقسام البرنامج — بتظهر لوحدها أول مرة بس، وتقدر تعيدها من هنا في أي وقت.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-p" onclick="startTour(true)">ابدأ الجولة من جديد</button></div>
     </div>
   </div>
 </div>
@@ -1647,6 +1745,24 @@ const SFX = (function(){
 
 <!-- ═══ TOAST ═══ -->
 <div id="toast"><span class="td"></span><span id="toastIco" style="display:inline-flex"></span><span id="toastTxt"></span></div>
+
+<!-- ═══ ONBOARDING TOUR ═══ -->
+<div id="tourOverlay" class="hidden">
+  <div id="tourRing"></div>
+  <div id="tourCard" role="dialog" aria-label="جولة تعريفية">
+    <div id="tourStepNo"></div>
+    <div id="tourTitle"></div>
+    <div id="tourText"></div>
+    <label class="tour-never"><input type="checkbox" id="tourNever"> متعرضش الجولة دي تاني</label>
+    <div class="tour-btns">
+      <button class="btn btn-g btn-sm" id="tourPrevBtn" onclick="tourPrev()">السابق</button>
+      <button class="btn btn-g btn-sm" onclick="tourSkip()">تخطي</button>
+      <span class="spacer"></span>
+      <button class="btn btn-p btn-sm" id="tourNextBtn" onclick="tourNext()">التالي</button>
+    </div>
+    <div id="tourDots"></div>
+  </div>
+</div>
 
 <!-- ═══════ MODALS ═══════ -->
 
@@ -1774,9 +1890,9 @@ const SFX = (function(){
       <div class="iv-hd"><span>المنتج</span><span style="text-align:center">الكمية</span><span style="text-align:center">السعر</span><span style="text-align:center">الإجمالي</span><span></span></div>
       <div id="ordItems"></div>
       <button class="btn btn-g btn-sm" style="margin-top:7px" onclick="addOrderItemRow()"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> إضافة صنف</button>
-      <div class="iv-sum"><div class="iv-lbl">الإجمالي (قبل الخصم — الخصم بيتحسب من المتجر)</div><div class="iv-val"><span id="ordSubtotal">0.00</span> <span id="ordCur" style="font-size:13px;opacity:.7"></span></div></div>
+      <div class="iv-sum"><div class="iv-lbl">إجمالي الأصناف</div><div class="iv-val"><span id="ordSubtotal">0.00</span> <span id="ordCur" style="font-size:13px;opacity:.7"></span></div></div>
+      <div id="ordFeePreview" style="font-size:12px;color:var(--t2);margin-top:6px;line-height:1.8"></div>
     </div>
-    <div class="fgr" id="ordDiscRow" style="display:none"><label><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41 12 22 2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> كود الخصم</label><input id="ordDisc" placeholder="اختياري — كود لمرة واحدة"></div>
     <div class="fgr" id="ordShipCoRow" style="display:none"><label><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> شركة الشحن</label><select id="ordShipCo"><option value="">-- بدون شركة --</option></select></div>
     <div class="fgr" id="ordValRow"><label><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg> قيمة الطلب</label><input id="ordVal" type="number" step="0.01" placeholder="0.00"></div>
     <div class="fgr"><label><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> تاريخ الشحن</label><input type="date" id="ordShip"></div>
@@ -1813,6 +1929,7 @@ const SFX = (function(){
     <div class="fgr full"><label>اسم المنتج *</label><input id="wpName" placeholder="اسم المنتج"></div>
     <div class="fgr"><label>الفئة</label><select id="wpCat"><option value="">— بدون فئة —</option></select></div>
     <div class="fgr"><label>السعر *</label><input id="wpPrice" type="number" step="0.01" min="0" placeholder="0.00"></div>
+    <div class="fgr"><label>السعر قبل الخصم (اختياري)</label><input id="wpBasePrice" type="number" step="1" min="0" placeholder="فاضي = مفيش خصم"></div>
     <div class="fgr"><label>سعر التكلفة</label><input id="wpCost" type="number" step="0.01" min="0" placeholder="0.00"></div>
     <div class="fgr"><label>المخزون (قطع)</label><input id="wpStock" type="number" min="0" placeholder="0"></div>
     <div class="fgr"><label>حد التنبيه (minStock)</label><input id="wpMinStock" type="number" min="0" placeholder="5"></div>
@@ -1841,20 +1958,7 @@ const SFX = (function(){
   <div class="md-ft"><button class="btn btn-g" onclick="closeM('mWebCategory')">إلغاء</button><button class="btn btn-p" onclick="saveWebCategory()">حفظ الفئة</button></div>
 </div></div>
 
-<!-- Discount Modal -->
-<div id="mDiscount" class="mo hidden"><div class="md" style="max-width:420px">
-  <div class="md-t" id="mDiscountT">كود خصم جديد</div>
-  <input type="hidden" id="dcId">
-  <div class="fg">
-    <div class="fgr full"><label>الكود *</label><input id="dcCode" placeholder="مثال: SAVE10" style="direction:ltr;text-align:left;text-transform:uppercase"></div>
-    <div class="fgr"><label>النسبة % *</label><input id="dcPercent" type="number" min="1" max="100" placeholder="10"></div>
-    <div class="fgr"><label>ينتهي في</label><input id="dcExpiry" type="date"></div>
-    <div class="fgr full"><label class="cbx" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="dcActive" checked><span class="cbx-box">✓</span> مفعّل</label></div>
-  </div>
-  <div class="md-ft"><button class="btn btn-g" onclick="closeM('mDiscount')">إلغاء</button><button class="btn btn-p" onclick="saveDiscount()">حفظ الكود</button></div>
-</div></div>
 
-<!-- Return Modal -->
 <div id="mRet" class="mo hidden"><div class="md md-w">
   <div class="md-t"><svg class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg> تسجيل مرتجع</div>
   <div class="fg" style="margin-bottom:14px">
@@ -1891,6 +1995,8 @@ const SFX = (function(){
 <script src="node_modules/firebase/firebase-auth-compat.js"></script>
 <script src="node_modules/firebase/firebase-firestore-compat.js"></script>
 <script src="firebase-store.js"></script>
+<script src="waybill.js"></script>
+<script src="tour.js"></script>
 <script>
 window.STORE_FIREBASE_CONFIG={
   apiKey:'AIzaSyA-66Gg5n92-wqyVJcjatmUJUYnQG_b7Qg',
@@ -2224,6 +2330,7 @@ async function init(){
     ]);
   }
   applyCfg();nav('dashboard');updatePendBadge();patchLoggers();
+  setTimeout(maybeShowTour,1500); // first-run onboarding tour (once only)
 }
 
 function applyCfg(){
@@ -2284,7 +2391,7 @@ function removeLogo(){
 document.querySelectorAll('.ni').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.p)));
 function nav(p){
   // store pages need the Firebase connection (admin/manager)
-  if((p==='templates'||p==='feedback')&&(!window.StoreFB||!window.StoreFB.state.connected)){
+  if((p==='templates'||p==='feedback'||p==='incomplete')&&(!window.StoreFB||!window.StoreFB.state.connected)){
     toast('سجّل دخول المتجر الأول من شاشة الدخول','err'); return;
   }
 
@@ -2316,7 +2423,7 @@ function showPage(p){
     });
   }
   const ni=document.querySelector(`[data-p="${p}"]`);if(ni)ni.classList.add('active');
-  ({dashboard:rDash,inventory:rProds,sales:rSales,purchases:rPurchs,customers:rCusts,suppliers:rSups,returns:rRets,profits:()=>{calcPr();},expenses:rExps,settings:applyCfg,orders:()=>{ if(storeOrdersSource==='store'){ rStoreOrders(); runStoreSweep(); } else rOrders(); },activitylog:rFullActLog,templates:rStoreTemplates,feedback:rStoreFeedback,'website-products':rWebsiteProducts,'website-categories':rWebsiteCategories,'website-homepage':()=>{ renderWebsiteSettings(true); },'website-preview':()=>{ reloadWebsitePreview(); },discounts:rDiscounts})[p]?.();
+  ({dashboard:rDash,inventory:rProds,sales:rSales,purchases:rPurchs,customers:rCusts,suppliers:rSups,returns:rRets,profits:()=>{calcPr();},expenses:rExps,settings:applyCfg,orders:()=>{ if(storeOrdersSource==='store'){ rStoreOrders(); runStoreSweep(); } else rOrders(); },activitylog:rFullActLog,templates:rStoreTemplates,feedback:rStoreFeedback,incomplete:rIncompleteOrders,'website-products':rWebsiteProducts,'website-categories':rWebsiteCategories,'website-homepage':()=>{ renderWebsiteSettings(true); },'website-preview':()=>{ reloadWebsitePreview(); }})[p]?.();
 }
 
 // ════════════════════════════════════════
@@ -2329,6 +2436,121 @@ function staggerRows(container){
     tr.style.animationFillMode='both';
   });
 }
+
+// ════════════════════════════════════════
+// ONBOARDING TOUR — first-run overlay guide (steps + storage in
+// tour.js / window.Tour). Shows automatically on first run only
+// (localStorage sb_tour_done), Skip on every step, "don't show
+// again" checkbox, restartable from Settings via startTour(true).
+// Overlay only — no existing feature behaviour is changed.
+// ════════════════════════════════════════
+let tourIdx=-1, tourActive=false, tourNavTimer=null, tourAutoTries=0;
+function tourStoreConnected(){ return !!(window.StoreFB&&window.StoreFB.state&&window.StoreFB.state.connected); }
+function startTour(manual){
+  if(!window.Tour||tourActive) return;
+  tourActive=true; tourIdx=0;
+  if($('tourNever')) $('tourNever').checked=false;
+  showTourStep();
+}
+function tourStepTarget(st){
+  // Gated pages refuse nav() while logged out: highlight the
+  // sidebar item instead so the step still lands somewhere real.
+  if(st.gated && !tourStoreConnected()){
+    const ni=document.querySelector('.ni[data-p="'+st.page+'"]');
+    if(ni) return {el:ni, gated:true};
+  }
+  return {el:document.querySelector(st.sel), gated:false};
+}
+function showTourStep(){
+  if(!window.Tour) return;
+  const steps=window.Tour.TOUR_STEPS;
+  if(tourIdx<0||tourIdx>=steps.length){ endTour(true); return; }
+  const st=steps[tourIdx];
+  const gatedBlocked=st.gated && !tourStoreConnected();
+  const pg=$('pg-'+st.page);
+  const alreadyThere=pg && !pg.classList.contains('hidden');
+  const delay=(gatedBlocked||alreadyThere)?60:260; // nav() animates out over ~160ms
+  if(st.page && !gatedBlocked && !alreadyThere){ try{ nav(st.page); }catch(e){} }
+  clearTimeout(tourNavTimer);
+  tourNavTimer=setTimeout(function(){ positionTourStep(st); }, delay);
+}
+function positionTourStep(st){
+  if(!tourActive||!window.Tour) return;
+  const t=tourStepTarget(st);
+  const ov=$('tourOverlay'), ring=$('tourRing'), card=$('tourCard');
+  if(!ov||!ring||!card) return;
+  ov.classList.remove('hidden');
+  const steps=window.Tour.TOUR_STEPS;
+  $('tourStepNo').textContent='خطوة '+(tourIdx+1)+' من '+steps.length;
+  $('tourTitle').textContent=st.title;
+  $('tourText').textContent=st.text+((st.gated&&t.gated)?window.Tour.TOUR_GATED_NOTE:'');
+  $('tourPrevBtn').style.visibility=tourIdx===0?'hidden':'visible';
+  $('tourNextBtn').textContent=tourIdx===steps.length-1?'إنهاء':'التالي';
+  $('tourDots').innerHTML=steps.map(function(_,i){
+    return '<span class="dt'+(i===tourIdx?' on':'')+'" onclick="tourGoTo('+i+')"></span>';
+  }).join('');
+  let el=t.el;
+  if(!el||!el.getBoundingClientRect||el.getBoundingClientRect().width===0){
+    el=document.querySelector('#pg-'+st.page+' .pg-hd')||document.querySelector('#pg-'+st.page)||document.body;
+  }
+  const r=el.getBoundingClientRect();
+  const pad=8;
+  ring.style.top=Math.max(4,r.top-pad)+'px';
+  ring.style.left=Math.max(4,r.left-pad)+'px';
+  ring.style.width=Math.min(window.innerWidth-8,r.width+pad*2)+'px';
+  ring.style.height=Math.min(window.innerHeight-8,r.height+pad*2)+'px';
+  const cw=Math.min(360,window.innerWidth-32);
+  const ch=card.offsetHeight||220;
+  let top=r.bottom+16, left=Math.min(Math.max(16,r.left),window.innerWidth-cw-16);
+  if(top+ch>window.innerHeight-12){ top=r.top-ch-16; }
+  if(top<12){ top=Math.max(12,window.innerHeight-ch-12); }
+  card.style.top=Math.max(12,top)+'px';
+  card.style.left=Math.max(16,left)+'px';
+  if(el.scrollIntoView&&(r.top<0||r.bottom>window.innerHeight)){
+    el.scrollIntoView({block:'nearest'});
+    setTimeout(function(){ if(tourActive) positionTourStep(st); },200);
+  }
+}
+function tourGoTo(i){ tourIdx=i; showTourStep(); }
+function tourNext(){
+  if($('tourNever')&&$('tourNever').checked){ endTour(true); return; }
+  if(tourIdx>=window.Tour.TOUR_STEPS.length-1){ endTour(true); return; }
+  tourIdx++; showTourStep();
+}
+function tourPrev(){ if(tourIdx>0){ tourIdx--; showTourStep(); } }
+function tourSkip(){ endTour(true); }
+function endTour(markDone){
+  tourActive=false; tourIdx=-1;
+  clearTimeout(tourNavTimer);
+  const ov=$('tourOverlay'); if(ov) ov.classList.add('hidden');
+  if(markDone&&window.Tour){ try{ Tour.markTourDone(localStorage); }catch(e){} }
+  try{ nav('dashboard'); }catch(e){}
+}
+// First-run auto-show: waits for the daily-summary modal to close
+// first (it pops 800ms after login), then starts — once only.
+function maybeShowTour(){
+  if(!window.Tour) return;
+  // Existing install (local state from past use) — never auto-show
+  // the tour on the user's real install; fresh installs still get
+  // it. Manual restart from Settings bypasses this entirely.
+  try{ if(Tour.seedTourDoneForExistingInstall) Tour.seedTourDoneForExistingInstall(localStorage); }catch(e){}
+  try{ if(!Tour.shouldShowTour(localStorage)) return; }catch(e){ return; }
+  if(tourActive) return;
+  const sum=$('mDailySummary');
+  if(sum&&!sum.classList.contains('hidden')){
+    if(tourAutoTries++<90){ setTimeout(maybeShowTour,1000); }
+    return;
+  }
+  startTour(false);
+}
+window.addEventListener('resize',function(){
+  if(tourActive&&window.Tour){
+    const st=window.Tour.TOUR_STEPS[tourIdx]; if(st) positionTourStep(st);
+  }
+});
+document.addEventListener('keydown',function(e){
+  if(tourActive&&e.key==='Escape'){ endTour(true); }
+});
 
 // ════════════════════════════════════════
 // RIPPLE EFFECT
@@ -2539,7 +2761,14 @@ function renderStoreDash(){
     return d&&d.toISOString().split('T')[0]===td()&&(o.status==='delivered'||o.paymentStatus==='cod_paid');
   }).reduce((a,o)=>a+(o.total||0),0);
   if(countEl) countEl.textContent=total+'طلب';
-  if(statsEl) statsEl.innerHTML=`<span>إيراد المتجر اليوم: <b>${curr(todayRev)}</b></span><span>تم التوصيل: <b>${del}</b></span><span>ملغي: <b>${canc}</b></span>`;
+  // Pricing counters (Technical Plan §11, entry 8) — from existing
+  // order docs (cash = Σ amountDue) and attempt docs (rejections).
+  let pcHtml='';
+  try{
+    const pc=window.StoreFBFactory.computePricingCounters(storeOrders, storeAttempts);
+    pcHtml=`<span>طلبات عليها خصم: <b>${pc.saleOrders} (${pc.saleOrderShare}٪)</b></span><span>إجمالي التوفير من العروض: <b>${curr(pc.totalSaleSavings)}</b></span><span>رسوم توصيل محصلة: <b>${curr(pc.totalFeeCollected)}</b></span><span>نقدية مستحقة: <b>${curr(pc.cashCollected)}</b></span>`+(pc.attempts?`<span>محاولات مرفوضة (سعر/رسوم): <b>${pc.priceChangeRejections} (${pc.rejectionRate}٪)</b></span>`:'');
+  }catch(e){}
+  if(statsEl) statsEl.innerHTML=`<span>إيراد المتجر اليوم: <b>${curr(todayRev)}</b></span><span>تم التوصيل: <b>${del}</b></span><span>ملغي: <b>${canc}</b></span>`+pcHtml;
   const rec=[...storeOrders].sort((a,b)=>{
     const da=fbDate(a.createdAt), db=fbDate(b.createdAt);
     return (db?db.getTime():0)-(da?da.getTime():0);
@@ -2552,12 +2781,13 @@ function renderStoreDash(){
       <td><span class="ci">#${String(o.id||'').slice(-6)}</span></td>
       <td style="font-weight:600">${storeCust(o).name||'-'}<br><span style="font-weight:400;font-size:11px;color:var(--t3)">${storeCust(o).phone||''}</span></td>
       <td style="font-size:12px">${(o.items||[]).map(it=>(it.name||it.productId)+' ×'+(it.qty||0)).join('<br>')||'-'}</td>
-      <td class="mn-t mo2">${curr(o.total||0)}</td>
+      <td class="mn-t mo2">${curr(o.amountDue!=null?o.amountDue:(o.total||0))}</td>
       <td><span class="ds ${STORE_STATUS_CLASS[st]||'ds-pend'}"><span class="ds-dot"></span>${STORE_STATUS_LABEL[st]||st}</span></td>
       <td style="font-size:12px">${STORE_PAY_LABEL[pay]||pay}</td>
       <td>${fbDateStr(o.createdAt)}</td>
     </tr>`;
   }).join(''):`<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--t3)">لا توجد طلبات من المتجر بعد</td></tr>`;
+  renderDraftFunnel();
 }
 
 // ════════════════════════════════════════
@@ -2906,18 +3136,16 @@ function openOrderM(){
   $('ordVal').value='';$('ordStat').value='pending';toggleDelayFields();
   $('ordCust').innerHTML='<option value="">-- اختر عميل --</option>'+customers.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
   $('ordSaleLink').innerHTML='<option value="">-- بدون ربط --</option>';
-  // store mode: items + discount + shipping + address; the local-only
+  // store mode: items + shipping + address; the local-only
   // fields (manual value, local status, delay reason) stay hidden.
   $('ordAddrRow').style.display='';
   $('ordItemsRow').style.display='';
-  $('ordDiscRow').style.display='';
   $('ordShipCoRow').style.display='';
   $('ordValRow').style.display='none';
   $('ordStatRow').style.display='none';
   $('reasonRow').style.display='none';
   $('delayRow').style.display='none';
   $('ordAddr').value='';
-  $('ordDisc').value='';
   $('ordItems').innerHTML='';
   fillShipCoSelect();
   addOrderItemRow();
@@ -2961,14 +3189,30 @@ function updOrderItemPrice(sel){
 }
 function updOrderItemsTotal(){
   let t=0;
+  const lines=[];
   document.querySelectorAll('#ordItems .iv-row').forEach(function(r){
     const q=parseFloat(r.querySelector('.rq').value)||0;
     const p=parseFloat(r.querySelector('.rpr').value)||0;
     const s=q*p;
     r.querySelector('.rt').textContent=fmt(s);
     t+=s;
+    const pid=r.querySelector('.rp').value;
+    const prod=storeProducts.find(function(x){return x.id===pid;});
+    lines.push({ price: p, basePrice: (prod&&prod.basePrice!=null)?prod.basePrice:null, qty: q });
   });
   const el=$('ordSubtotal'); if(el) el.textContent=fmt(t);
+  // Fee + amount-due preview (pricing): the canonical factory
+  // helper, fee from the settings doc.
+  const pv=$('ordFeePreview');
+  if(pv){
+    const st=(storeWebsiteSettings&&storeWebsiteSettings.settings)||{};
+    let html='';
+    try{
+      const tot=window.StoreFBFactory.computeOrderTotals(lines, { deliveryFee: st.deliveryFee, freeDeliveryThreshold: st.freeDeliveryThreshold });
+      html='رسوم التوصيل: '+(tot.deliveryFee===0?'مجاني':fmt(tot.deliveryFee)+' '+(cfg.currency||'ج.م'))+(tot.feeWaived?' (مجاني — فوق الحد)':'')+(tot.feeUnset?' (مفيش رسوم محددة)':'')+(tot.saleSavings>0?'<br>وفّرت من العرض: '+fmt(tot.saleSavings)+' '+(cfg.currency||'ج.م'):'')+'<br><b>المبلغ المستحق: '+fmt(tot.amountDue)+' '+(cfg.currency||'ج.م')+'</b>';
+    }catch(e){ html=''; }
+    pv.innerHTML=html;
+  }
 }
 function filterSalesByCustomer(){
   const cid=$('ordCust').value;
@@ -3023,7 +3267,6 @@ function editOrder(id){
   // local mode: the local fields back, the store fields hidden
   $('ordAddrRow').style.display='none';
   $('ordItemsRow').style.display='none';
-  $('ordDiscRow').style.display='none';
   $('ordShipCoRow').style.display='none';
   $('ordValRow').style.display='';
   $('ordStatRow').style.display='';
@@ -3043,8 +3286,8 @@ function markDelivered(id){
 }
 function saveOrder(){
   // A new order always goes through the client transaction (it
-  // reprices from the database, checks the stock, claims the discount
-  // and reserves — the client never sets a price or a total).
+  // reprices from the database, checks the stock and reserves —
+  // the client never sets a price or a total).
   if(orderMode==='store'){ saveStoreOrder(); return; }
   const cid=$('ordCust').value;
   if(!cid){toast('اختر عميلاً','err');return;}
@@ -3106,7 +3349,6 @@ async function saveStoreOrder(){
     const input={
       clientOrderId: fb.newUuid(),
       items: items,
-      discountCode: ($('ordDisc').value||'').trim()||null,
       customer: { name: (ct&&ct.name)||'-', phone: phone, address: address },
       shippingCompanyId: $('ordShipCo').value||null,
       notes: ($('ordNt').value||'').trim()||null,
@@ -3156,8 +3398,10 @@ async function delOrder(id){const ok=await confirmAction('هل تريد حذف �
 // The sign-in itself lives on the startup login screen (B2) — the
 // Settings card is gone — and a remembered session restores at boot.
 // ════════════════════════════════════════════════════════════════
-let storeOrders=[],storeTemplates=[],storeFeedback=[],storeShipping=[],storeInventoryMap={};
-let storeProducts=[],storeCategories=[],storeDiscounts=[],storeWebsiteSettings={settings:{},homepage:{},design:{}};
+let storeOrders=[],storeTemplates=[],storeFeedback=[],storeShipping=[],storeInventoryMap={},storeAttempts=[];
+let storePointer={}; // storeSettings/activeTemplate — full pointer doc (id + version + hash + history)
+let storeDrafts=[],storeGovernorates={},storeDeletion={autoDeleteDays:0},storeQuota={cutoffLevel:'none'},draftMootByPhone={};
+let storeProducts=[],storeCategories=[],storeWebsiteSettings={settings:{},homepage:{},design:{}};
 let storeSweepTimer=null;
 let salesPeriod='day'; // 'day' | 'week' | 'month'
 let storeOrdersSource='store';
@@ -3179,9 +3423,11 @@ function fbDate(v){
 function fbDateStr(v){const d=fbDate(v);return d?d.toLocaleDateString('en-US',{year:'numeric',month:'2-digit',day:'2-digit'}):'-';}
 function storeShipName(id){const s=storeShipping.find(x=>x.id===id);return s?(s.name||id):(id||'-');}
 function storeInvAvail(pid){const inv=storeInventoryMap[pid];return inv?Math.max(0,(inv.stock||0)-(inv.reserved||0)):null;}
-// New (§1) orders carry flat customerName/Phone/Address + discountCode/
-// discountPercent/discountAmount; older orders carry a nested customer
-// block + discount{code,percent,amount}. Both render the same way.
+// New (§1) orders carry flat customerName/Phone/Address; older
+// orders carry a nested customer block. Pre-removal orders may
+// still carry a discount{code,percent,amount} from a promo code
+// that was applied back then — storeDisc() reads it only so those
+// old orders still render their real totals; no new order has one.
 function storeCust(o){
   if(!o) return {name:'',phone:'',email:'',address:''};
   if(o.customer) return {name:o.customer.name||'',phone:o.customer.phone||'',email:o.customer.email||'',address:o.customer.address||''};
@@ -3242,12 +3488,14 @@ function onStoreStateChange(snap){
     startStoreSweepTimer();
     if(storeOrdersSource==='store') rStoreOrders();
     rStoreTemplates(); rStoreFeedback();
+    rIncompleteOrders(); renderDraftFunnel(); runDraftDeletion();
     enterProgram();
   }else{
     stopStoreListeners();
     stopStoreSweepTimer();
-    storeOrders=[]; storeTemplates=[]; storeFeedback=[]; storeShipping=[]; storeInventoryMap={};
-    storeProducts=[]; storeCategories=[]; storeDiscounts=[]; storeWebsiteSettings={settings:{},homepage:{},design:{}};
+    storeOrders=[]; storeTemplates=[]; storeFeedback=[]; storeShipping=[]; storeInventoryMap={}; storeAttempts=[];
+    storeDrafts=[]; storeGovernorates={}; storeDeletion={autoDeleteDays:0}; storeQuota={cutoffLevel:'none'}; draftMootByPhone={};
+    storeProducts=[]; storeCategories=[]; storeWebsiteSettings={settings:{},homepage:{},design:{}};
     if(storeOrdersSource==='store'){ setOrdersSource('local'); }
     rStoreTemplates(); rStoreFeedback(); rDash(); rRets(); calcPr();
     // Sign-out while inside the program returns to the store login
@@ -3278,6 +3526,38 @@ function startStoreListeners(){
     storeFeedback=list||[];
     rStoreFeedback(); updateFbBadge();
   }));
+  // Checkout drafts (incomplete orders) + their settings. The draft
+  // subscription re-renders the list and the nav badge on every change.
+  storeUnsubs.push(fb.subscribeDrafts(function(list,err){
+    if(err) return;
+    storeDrafts=list||[];
+    updateDraftBadge();
+    if(!$('pg-incomplete').classList.contains('hidden')) rIncompleteOrders();
+    renderDraftFunnel();
+  }));
+  storeUnsubs.push(fb.subscribeGovernorates(function(doc,err){
+    if(err||!doc) return;
+    storeGovernorates=doc||{};
+    renderGovernoratesSettings();
+  }));
+  storeUnsubs.push(fb.subscribeDeletionConfig(function(doc,err){
+    if(err||!doc) return;
+    storeDeletion=doc||{autoDeleteDays:0};
+    renderDeletionSettings();
+  }));
+  storeUnsubs.push(fb.subscribeQuota(function(doc,err){
+    if(err||!doc) return;
+    storeQuota=doc||{cutoffLevel:'none'};
+    renderQuotaSettings();
+  }));
+  // Checkout attempts for the dashboard pricing counters
+  // (Technical Plan §11): rejection / failure rates come from
+  // attempt docs, not order docs.
+  storeUnsubs.push(fb.subscribeAttempts(function(list,err){
+    if(err) return;
+    storeAttempts=list||[];
+    renderStoreDash();
+  }));
   storeUnsubs.push(fb.subscribeShippingCompanies(function(list,err){
     if(err) return;
     storeShipping=list||[];
@@ -3298,11 +3578,6 @@ function startStoreListeners(){
     storeCategories=list||[];
     rWebsiteCategories(); fillWebProductSelects();
   }));
-  storeUnsubs.push(fb.subscribeDiscounts(function(list,err){
-    if(err) return;
-    storeDiscounts=list||[];
-    rDiscounts();
-  }));
   storeUnsubs.push(fb.subscribeWebsiteSettings(function(docs,err){
     if(err||!docs) return;
     storeWebsiteSettings=docs;
@@ -3312,6 +3587,14 @@ function startStoreListeners(){
     if(err||!templateId) return;
     window._storeLiveTemplateId=templateId;
     rStoreTemplates();
+    renderWebsiteSettings();
+  }));
+  storeUnsubs.push(fb.subscribeActiveTemplatePointer(function(doc,err){
+    if(err||!doc) return;
+    storePointer=doc||{};
+    renderTplPointerBox();
+    rStoreTemplates();
+    renderWebsiteSettings();
   }));
 }
 
@@ -3439,7 +3722,7 @@ function rStoreOrders(){
       <td><span class="ci">#${String(o.id||'').slice(-6)}</span>${o.source==='admin_manual'?'<br><span class="bx bx-b" style="font-size:9px;margin-top:3px">يدوي</span>':''}<br><span style="font-size:11px;color:var(--t3)">${fbDateStr(o.createdAt)}</span></td>
       <td style="font-weight:700">${storeCust(o).name||'-'}<br><span style="font-weight:400;font-size:11px;color:var(--t3)">${storeCust(o).phone||''}</span>${storeCust(o).email?`<br><span style="font-weight:400;font-size:11px;color:var(--t3)">${storeCust(o).email}</span>`:''}</td>
       <td style="font-size:12px">${items||'-'}</td>
-      <td class="mn-t mo2">${curr(o.total||0)}</td>
+      <td class="mn-t mo2">${curr(o.amountDue!=null?o.amountDue:(o.total||0))}</td>
       <td><span class="ds ${STORE_STATUS_CLASS[st]||'ds-pend'}"><span class="ds-dot"></span>${STORE_STATUS_LABEL[st]||st}</span>
         ${next.length?`<br><select style="margin-top:6px;padding:4px 8px;font-size:11px" onchange="setStoreOrderStatus('${o.id}','${st}',this.value)"><option value="">نقل إلى…</option>${next.map(function(n){return `<option value="${n}">${STORE_STATUS_LABEL[n]||n}</option>`;}).join('')}</select>`:''}
       </td>
@@ -3450,6 +3733,7 @@ function rStoreOrders(){
       <td><div class="row-acts">
         <button class="ra view" onclick="showStoreOrderDetail('${o.id}')" title="التفاصيل">${icOrDot('eye')}</button>
         <button class="ra view" onclick="printStoreOrder('${o.id}')" title="طباعة الفاتورة">${icOrDot('printer')}</button>
+        <button class="ra view" onclick="printWaybill('${o.id}')" title="بوليصة شحن">${icOrDot('truck')}</button>
       </div></td>
     </tr>`;
   }).join(''):'<tr><td colspan="10">'+es(icOrDot('truck'),'لا توجد طلبات من المتجر')+'</td></tr>';
@@ -3461,7 +3745,7 @@ function rStoreOrders(){
       <td style="font-weight:700">${storeCust(o).name||'-'}</td>
       <td>${o.dueDate?fdt(o.dueDate):'-'}</td>
       <td><span class="ds ${STORE_STATUS_CLASS[o.status||'new']||'ds-pend'}"><span class="ds-dot"></span>${STORE_STATUS_LABEL[o.status||'new']||o.status}</span></td>
-      <td class="mn-t mo2">${curr(o.total||0)}</td>
+      <td class="mn-t mo2">${curr(o.amountDue!=null?o.amountDue:(o.total||0))}</td>
     </tr>`;
   }).join(''):`<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--t3)">لا توجد طلبات غير مستلمة</td></tr>`;
 }
@@ -3537,68 +3821,174 @@ function showStoreOrderDetail(id){
   const next=(window.StoreFBFactory?window.StoreFBFactory.ORDER_TRANSITIONS[st]:[])||[];
   const pay=o.paymentStatus||'cod_pending';
   const items=(o.items||[]).map(function(it){
-    return `<tr><td>${it.name||it.productId}${(it.name&&it.productId)?`<br><span style="font-size:11px;color:var(--t3)">${it.productId}</span>`:''}</td><td style="text-align:center">${it.qty||0}</td><td class="mn-t">${curr(it.price||0)}</td><td class="mn-t">${curr(it.subtotal||((it.price||0)*(it.qty||0)))}</td></tr>`;
+    const lineTotal=it.subtotal||((it.price||0)*(it.qty||0));
+    const lineSaving=(it.basePrice!=null&&it.basePrice>it.price)?(it.basePrice-it.price)*(it.qty||0):0;
+    return `<tr><td>${it.name||it.productId}${(it.name&&it.productId)?`<br><span style="font-size:11px;color:var(--t3)">${it.productId}</span>`:''}</td><td style="text-align:center">${it.qty||0}</td><td class="mn-t">${(it.basePrice!=null&&it.basePrice>it.price)?`<span style="text-decoration:line-through;color:var(--t3);font-size:11px">${curr(it.basePrice)}</span> `:''}${curr(it.price||0)}</td><td class="mn-t">${curr(lineTotal)}${lineSaving>0?`<br><span style="font-size:11px;color:var(--grn)">وفّر ${curr(lineSaving)}</span>`:''}</td></tr>`;
   }).join('');
   const _d=storeDisc(o);
-  const disc=_d?`<div style="font-size:13px">${icOrDot('tag')} خصم ${_d.code} (${_d.percent||0}%) — ${curr(_d.amount||0)}</div>`:'';
+  const saleSave=o.saleSavings||0;
+  const codeSave=o.discountAmount||0;
+  // Two savings lines (pricing): sale savings, then code discount —
+  // the single "خصم {code} ({percent}%)" line is replaced. A legacy
+  // order with a discount but no stored discountAmount keeps the
+  // old-style line.
+  const saveLines=(saleSave>0?`<div style="font-size:13px">${icOrDot('tag')} وفّرت من العرض ${curr(saleSave)}</div>`:'')+(codeSave>0?`<div style="font-size:13px">${icOrDot('tag')} خصم الكود ${curr(codeSave)}${_d?' ('+_d.code+')':''}</div>`:'')+((saleSave===0&&codeSave===0&&_d)?`<div style="font-size:13px">${icOrDot('tag')} خصم ${_d.code} (${_d.percent||0}%) — ${curr(_d.amount||0)}</div>`:'');
+  const feeLine=(o.deliveryFee!=null)?`<div style="font-size:13px">${icOrDot('truck')} رسوم التوصيل: ${o.deliveryFee===0?'مجاني':curr(o.deliveryFee)}</div>`:'';
+  const due=o.amountDue!=null?o.amountDue:(o.total||0);
   showInfoModal('طلب #'+String(o.id||'').slice(-6),
     `<div style="font-size:13px;line-height:1.9">
       <div>الحالة: <span class="ds ${STORE_STATUS_CLASS[o.status||'new']||'ds-pend'}"><span class="ds-dot"></span>${STORE_STATUS_LABEL[o.status||'new']||o.status}</span>${(o.status||'new')==='cancelled'?'· طلب ملغي — يُحسب مرتجع':''}</div>
-      <div>${icOrDot('user')} ${storeCust(o).name||'-'} — ${storeCust(o).phone||''}${storeCust(o).email?' — '+storeCust(o).email:''}</div>
-      <div>${icOrDot('pin')} ${storeCust(o).address||'-'}</div>
+      <div>${icOrDot('user')} ${storeCust(o).name||'-'} — ${storeCust(o).phone||''}${o.customerPhone2?' · تليفون تاني: '+o.customerPhone2:''}${storeCust(o).email?' — '+storeCust(o).email:''}</div>
+      <div>${icOrDot('pin')} ${o.governorate?draftGovName(o.governorate)+' — ':''}${o.detailedAddress||storeCust(o).address||'-'}</div>
       <div>${icOrDot('truck')} ${storeShipName(o.shippingCompanyId)} · ${o.dueDate?('موعد التسليم'+fdt(o.dueDate)):'بدون موعد'}</div>
       ${o.saleId?`<div>${icOrDot('receipt')} مرتبط بفاتورة بيع #${String(o.saleId).slice(-6)}</div>`:''}
       ${o.notes?`<div>${icOrDot('file')} ${o.notes}</div>`:''}
-      ${disc}
-      <div>${icOrDot('money')} الإجمالي: <b>${curr(o.total||0)}</b> · الدفع: ${STORE_PAY_LABEL[o.paymentStatus||'cod_pending']}</div>
+      ${saveLines}
+      ${feeLine}
+      <div>${icOrDot('money')} المبلغ المستحق: <b>${curr(due)}</b> · الدفع: ${STORE_PAY_LABEL[o.paymentStatus||'cod_pending']}</div>
       <div>${icOrDot('calendar')} ${fbDateStr(o.createdAt)}</div>
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
         ${next.length?`<select style="padding:6px 10px;font-size:12px" onchange="setStoreOrderStatusFromDetail('${o.id}','${st}',this.value)"><option value="">نقل الحالة إلى…</option>${next.map(function(n){return `<option value="${n}">${STORE_STATUS_LABEL[n]||n}</option>`;}).join('')}</select>`:''}
         <select style="padding:6px 10px;font-size:12px" onchange="setStoreOrderPaymentFromDetail('${o.id}','${pay}',this.value)">${['cod_pending','cod_paid','cod_refused','cod_failed'].map(function(p){return `<option value="${p}"${p===pay?' selected':''}>${STORE_PAY_LABEL[p]}</option>`;}).join('')}</select>
         <button class="btn btn-g btn-sm" onclick="printStoreOrder('${o.id}')">${icOrDot('printer')} طباعة الفاتورة</button>
+        <button class="btn btn-g btn-sm" onclick="printWaybill('${o.id}')">${icOrDot('truck')} بوليصة شحن</button>
       </div>
     </div>
     <table style="margin-top:12px"><thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead><tbody>${items||'<tr><td colspan="4">—</td></tr>'}</tbody></table>`);
 }
 
-// ---- Store templates ----
+// ---- Store templates (entries 16–17) ----
+// Phase 2 card UI (same content as Flutter entry 12) + the Phase 1
+// minimal pointer action kept above as the admin-only advanced action
+// (D7 — same approval-hash check, same history as the card UI).
+// A bundle doc (the registry carries the manifest copy) shows the
+// bundle card; a v1 doc (classic today) keeps the old grid editor.
+const TPL_STATUS_LABEL={draft:'مسودة',preview:'معاينة',approved:'معتمد',active:'مفعّل',retired:'متقاعد',archived:'مؤرشف'};
+function tplShortHash(h){ return h?String(h).slice(0,12)+'…':'—'; }
+function tplDisplayName(t){
+  const F=window.StoreFBFactory;
+  const ident=F&&F.TEMPLATE_IDENTITY?F.TEMPLATE_IDENTITY[t.id]:null;
+  return {ar:t.nameAr||t.name||(ident?ident.nameAr:t.id),en:t.nameEn||(ident?ident.nameEn:''),identity:(ident?ident.identity:'')||t.description||''};
+}
+function tplIsBundle(t){
+  const F=window.StoreFBFactory;
+  return F?F.isBundleDoc(t):(t.bundleHash!=null||t.shellMinVersion!=null);
+}
+function tplCardReport(t){
+  const F=window.StoreFBFactory;
+  if(!F) return {passed:true,failedChecks:[]};
+  if(F.isBundleDoc(t)){
+    const m=F.manifestFromRegistryDoc(t); m.id=m.id||t.id;
+    return F.validateTemplateBundle(m,null,t.id);
+  }
+  return F.validateTemplateDoc(t);
+}
+function tplHistoryHtml(id){
+  const h=(typeof storePointer!=='undefined'&&Array.isArray(storePointer.history))?storePointer.history.filter(function(e){return e&&e.templateId===id;}):[];
+  if(!h.length) return '<div style="font-size:11px;color:var(--t3)">لا يوجد سجل تفعيل بعد.</div>';
+  return '<div style="font-size:11px;color:var(--t3);line-height:1.9">'+h.slice(-3).reverse().map(function(e){
+    return escHtml(e.at?fbDateStr(e.at):'—')+' — '+escHtml(e.by||'')+(e.note?' — '+escHtml(e.note):'');
+  }).join('<br>')+'</div>';
+}
+function tplSorted(list){
+  return (list||[]).slice().sort(function(a,b){
+    const na=tplDisplayName(a).ar, nb=tplDisplayName(b).ar;
+    return na<nb?-1:(na>nb?1:0);
+  });
+}
+function renderTplPointerBox(){
+  const box=$('tplPointerBox'); if(!box) return;
+  const p=(typeof storePointer!=='undefined')?storePointer:{};
+  const live=p.templateId||window._storeLiveTemplateId||'classic';
+  const ident=tplDisplayName({id:live});
+  box.innerHTML='القالب الحالي: <b>'+escHtml(ident.ar)+'</b> ('+escHtml(live)+')'
+    +'<br>الإصدار: '+escHtml(p.bundleVersion||'—')
+    +' · الهاش: <span title="'+escHtml(p.bundleHash||'')+'" style="direction:ltr">'+escHtml(tplShortHash(p.bundleHash))+'</span>'
+    +'<br>القالب السابق: '+escHtml(p.previousTemplateId||'—');
+  const sel=$('tplActivateSelect');
+  if(sel){
+    const opts=tplSorted(storeTemplates).filter(function(t){
+      if(tplIsBundle(t)) return t.status==='approved'||t.status==='active';
+      return t.status==='active';
+    });
+    sel.innerHTML=opts.map(function(t){
+      const n=tplDisplayName(t);
+      return '<option value="'+escHtml(t.id)+'"'+(t.id===live?' selected':'')+'>'+escHtml(n.ar)+' ('+escHtml(t.id)+')</option>';
+    }).join('')||'<option value="">— لا يوجد قالب معتمد —</option>';
+  }
+  fillTplPreviewSelect();
+}
+function fillTplPreviewSelect(){
+  const sel=$('tplPreviewSelect'); if(!sel) return;
+  const opts=tplSorted(storeTemplates).filter(function(t){ return tplIsBundle(t)&&(t.status==='draft'||t.status==='preview'||t.status==='approved'); });
+  const cur=sel.value;
+  sel.innerHTML=opts.map(function(t){
+    const n=tplDisplayName(t);
+    return '<option value="'+escHtml(t.id)+'">'+escHtml(n.ar)+' ('+escHtml(t.id)+') — '+escHtml(TPL_STATUS_LABEL[t.status]||t.status)+'</option>';
+  }).join('')||'<option value="">— لا توجد مسودات —</option>';
+  if(cur&&opts.some(function(t){return t.id===cur;})) sel.value=cur;
+}
 function rStoreTemplates(){
   const el=$('tplList'); if(!el) return;
   const st=$('storeTplStatus');
   if(!window.StoreFB||!window.StoreFB.state.connected){
     if(st) st.textContent='غير متصل — سجّل دخول المتجر من شاشة الدخول عشان تشوف القوالب.';
     el.innerHTML='';
+    renderTplPointerBox();
     return;
   }
   if(st) st.textContent=storeTemplates.length?storeTemplates.length+'قالب': 'لا توجد قوالب بعد — أول تفعيل بيضيف قالب التصميم الحالي.';
-  el.innerHTML=storeTemplates.length?storeTemplates.map(function(t){
-    const rep=window.StoreFBFactory?window.StoreFBFactory.validateTemplateDoc(t):{passed:true,failedChecks:[]};
+  renderTplPointerBox();
+  el.innerHTML=storeTemplates.length?tplSorted(storeTemplates).map(function(t){
+    const rep=tplCardReport(t);
     const live=window._storeLiveTemplateId===t.id;
+    const bundle=tplIsBundle(t);
+    const nm=tplDisplayName(t);
+    const thumb=t.previewImageUrl||t.thumbnailUrl||'';
+    const status=t.status||'';
+    const approval=t.approval||null;
+    const hashOk=bundle&&approval?approval.bundleHash===t.bundleHash:null;
     const grid=t.grid||{};
     const cols=grid.columns?grid.columns+'في الصف':'تلقائي';
     const rows=grid.rows?grid.rows+'صفوف':'كل المنتجات';
     const tokens=t.tokens||{};
+    let actions='';
+    if(bundle){
+      if(status==='draft') actions='<button class="btn btn-p btn-sm" onclick="moveTemplateToPreview(\''+t.id+'\')">'+icOrDot('check')+' تحقق وانقل للمعاينة</button><button class="btn btn-g btn-sm" onclick="openTemplatePreview(\''+t.id+'\')">معاينة</button>';
+      else if(status==='preview') actions='<button class="btn btn-g btn-sm" onclick="openTemplatePreview(\''+t.id+'\')">معاينة</button><button class="btn btn-p btn-sm" onclick="approveStoreTemplate(\''+t.id+'\')">'+icOrDot('check')+' اعتماد</button><button class="btn btn-g btn-sm" onclick="draftStoreTemplate(\''+t.id+'\')">رجوع لمسودة</button>';
+      else if(status==='approved') actions='<button class="btn btn-p btn-sm" '+(live||!rep.passed?'disabled':'')+' onclick="activateStoreTemplate(\''+t.id+'\')">'+icOrDot('check')+' تفعيل على الموقع</button><button class="btn btn-g btn-sm" onclick="openTemplatePreview(\''+t.id+'\')">معاينة</button>';
+      else if(status==='active') actions=live
+        ?'<button class="btn btn-g btn-sm" onclick="rollbackStoreTemplate()">رجوع للقالب السابق</button>'
+        :'<button class="btn btn-p btn-sm" '+(rep.passed?'':'disabled')+' onclick="activateStoreTemplate(\''+t.id+'\')">'+icOrDot('check')+' تفعيل على الموقع</button><button class="btn btn-g btn-sm" onclick="openTemplatePreview(\''+t.id+'\')">معاينة</button>';
+      else if(status==='retired') actions='<span style="font-size:12px;color:var(--t3)">متقاعد — مش بيتفعّل تاني</span>';
+      if(status!=='retired'&&t.id!=='classic') actions+=' <button class="btn btn-g btn-sm" onclick="retireStoreTemplate(\''+t.id+'\')">تقاعد</button>';
+      actions+=' <button class="btn btn-g btn-sm" onclick="validateStoreTemplate(\''+t.id+'\')">تحقق</button>';
+    }else{
+      actions='<button class="btn btn-p btn-sm" '+(live||!rep.passed?'disabled':'')+' onclick="activateStoreTemplate(\''+t.id+'\')">'+icOrDot('check')+' تفعيل على الموقع</button>'
+        +'<button class="btn btn-g btn-sm" onclick="toggleTplGridEdit(\''+t.id+'\')">تعديل الشبكة</button>';
+    }
     return`<div class="cd" style="padding:16px;${live?'border:2px solid var(--grn)':''}">
+      ${thumb?'<img src="'+escHtml(thumb)+'" style="width:100%;height:180px;object-fit:cover;border-radius:10px;margin-bottom:10px" alt="معاينة '+escHtml(nm.ar)+'">':''}
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-        <div style="font-size:15px;font-weight:800">${t.name||t.id}</div>
+        <div><div style="font-size:15px;font-weight:800">${escHtml(nm.ar)}</div><div style="font-size:12px;color:var(--t3)" dir="ltr">${escHtml(nm.en)}</div></div>
         ${live?'<span class="bx bx-g">● مباشر</span>':''}
       </div>
-      <div style="font-size:12px;color:var(--t3);margin:6px 0">${t.description||''}</div>
+      <div style="font-size:12px;color:var(--t3);margin:6px 0">${escHtml(nm.identity)}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0">
-        <span class="bx">الشبكة: ${cols} · ${rows}</span>
-        <span class="bx">الإصدار ${t.version||1}</span>
-        <span class="bx">${t.status||''}</span>
+        <span class="bx">${escHtml(TPL_STATUS_LABEL[status]||status)}</span>
+        <span class="bx">الإصدار ${escHtml(String(t.version!=null?t.version:1))}</span>
+        ${bundle?'<span class="bx" title="'+escHtml(t.bundleHash||'')+'">الهاش <span style="direction:ltr">'+escHtml(tplShortHash(t.bundleHash))+'</span></span>':''}
+        ${bundle?'':'<span class="bx">الشبكة: '+cols+' · '+rows+'</span>'}
       </div>
-      <div style="display:flex;gap:6px;align-items:center;margin:8px 0">
-        ${['bg','accent','text'].map(function(k){return tokens[k]?`<span style="display:inline-block;width:22px;height:22px;border-radius:6px;background:${tokens[k]};border:1px solid var(--br)" title="${k}"></span>`:'';}).join('')}
-        <span style="font-size:11px;color:var(--t3)">${tokens.accent||''}</span>
-      </div>
-      ${rep.passed?'':`<div style="font-size:12px;color:var(--red)">${icOrDot('alert')} القالب مش صالح: ${rep.failedChecks.join('، ')}</div>`}
-      <div style="display:flex;gap:8px;margin-top:10px">
-        <button class="btn btn-p btn-sm" ${live||!rep.passed?'disabled':''} onclick="activateStoreTemplate('${t.id}')">${icOrDot('check')} تفعيل على الموقع</button>
-        <button class="btn btn-g btn-sm" onclick="toggleTplGridEdit('${t.id}')">تعديل الشبكة</button>
-      </div>
-      <div id="tplGrid-${t.id}" style="display:none;margin-top:10px;padding:12px;background:var(--hov);border-radius:10px">
+      ${bundle&&t.shellMinVersion?'<div style="font-size:11px;color:var(--t3)">يتطلب شل '+escHtml(t.shellMinVersion)+' · التخطيط: '+escHtml(t.cartLayout||'drawer')+' / '+escHtml(t.modalLayout||'default')+'</div>':''}
+      ${bundle&&approval?'<div style="font-size:11px;color:var(--t3);margin-top:4px">اعتُمد بواسطة '+escHtml(approval.approver||'')+' — '+escHtml(approval.at?fbDateStr(approval.at):'')+(hashOk===false?' <span style="color:var(--red)">القالب اتغير بعد الاعتماد — لازم اعتماد جديد</span>':'')+'</div>':''}
+      ${bundle&&t.validation?'<div style="font-size:11px;color:var(--t3);margin-top:4px">آخر تحقق: '+(t.validation.passed?'ناجح':'فاشل')+' — '+escHtml(t.validation.at?fbDateStr(t.validation.at):'')+(t.validation.passed?'':' ('+escHtml((t.validation.checks||[]).join('، '))+')')+'</div>':''}
+      <div style="font-size:11px;color:var(--t3);margin-top:6px">الاسم والشعار والواتساب ورسالة الدفع عند الاستلام ثابتة — القالب مبيغيّرهاش.</div>
+      <div style="margin-top:8px"><div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:4px">سجل التفعيل</div>${tplHistoryHtml(t.id)}</div>
+      ${rep.passed?'':`<div style="font-size:12px;color:var(--red);margin-top:8px">${icOrDot('alert')} القالب مش صالح: ${rep.failedChecks.join('، ')}</div>`}
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">${actions}</div>
+      <div id="tplVal-${t.id}" style="font-size:12px;margin-top:8px"></div>
+      ${bundle?'':`<div id="tplGrid-${t.id}" style="display:none;margin-top:10px;padding:12px;background:var(--hov);border-radius:10px">
         <div style="display:flex;gap:14px;flex-wrap:wrap">
           <label style="font-size:12px;color:var(--t2)">الأعمدة — منتجات في الصف<br><input id="tplCols-${t.id}" type="number" min="1" max="12" placeholder="تلقائي" value="${grid.columns!=null?grid.columns:''}" oninput="updTplCap('${t.id}')" style="width:90px;padding:6px 8px;margin-top:4px"></label>
           <label style="font-size:12px;color:var(--t2)">الصفوف قبل «عرض المزيد»<br><input id="tplRows-${t.id}" type="number" min="1" max="20" placeholder="كل المنتجات" value="${grid.rows!=null?grid.rows:''}" oninput="updTplCap('${t.id}')" style="width:90px;padding:6px 8px;margin-top:4px"></label>
@@ -3609,7 +3999,7 @@ function rStoreTemplates(){
           <button class="btn btn-g btn-sm" onclick="toggleTplGridEdit('${t.id}')">إلغاء</button>
         </div>
         <div id="tplGridMsg-${t.id}" style="font-size:12px;color:var(--red);margin-top:6px"></div>
-      </div>
+      </div>`}
     </div>`;
   }).join(''):es(icOrDot('palette'),'لا توجد قوالب');
 }
@@ -3626,6 +4016,144 @@ async function activateStoreTemplate(id){
   }catch(e){
     toast(e.message||'تعذر التفعيل','err');
   }
+}
+
+async function activateStoreTemplateSelected(){
+  const fb=window.StoreFB; if(!fb) return;
+  const sel=$('tplActivateSelect');
+  const id=sel?sel.value:'';
+  const msgEl=$('tplPointerMsg'); if(msgEl) msgEl.textContent='';
+  if(!id){ if(msgEl) msgEl.textContent='اختار قالب معتمد الأول.'; return; }
+  const ok=await confirmAction('تفعيل القالب ده على الموقع؟',{ico:'palette',ok:'تفعيل'});
+  if(!ok) return;
+  try{
+    await fb.activateTemplate(id);
+    window._storeLiveTemplateId=id;
+    toast('تم تفعيل القالب على الموقع');
+    rStoreTemplates();
+  }catch(e){
+    if(msgEl) msgEl.textContent=e.message||'تعذر التفعيل';
+    toast(e.message||'تعذر التفعيل','err');
+  }
+}
+
+async function rollbackStoreTemplate(){
+  const fb=window.StoreFB; if(!fb) return;
+  const ok=await confirmAction('رجوع الموقع للقالب اللي كان شغال قبل الحالي؟',{ico:'alert',ok:'رجوع'});
+  if(!ok) return;
+  const msgEl=$('tplPointerMsg'); if(msgEl) msgEl.textContent='';
+  try{
+    const res=await fb.rollbackTemplate();
+    window._storeLiveTemplateId=res.templateId;
+    toast(res.fellBack?'الرجوع للقالب السابق مرفوض — رجعنا للكلاسيكي':'تم الرجوع للقالب السابق');
+    rStoreTemplates();
+  }catch(e){
+    if(msgEl) msgEl.textContent=e.message||'تعذر الرجوع';
+    toast(e.message||'تعذر الرجوع','err');
+  }
+}
+
+function tplValShow(id,rep){
+  const el=$('tplVal-'+id); if(!el) return;
+  if(rep.passed){
+    el.style.color='var(--grn)';
+    el.textContent='التحقق ناجح — القالب صالح.'+(rep.warnings&&rep.warnings.length?' تحذيرات: '+rep.warnings.join('، '):'');
+  }else{
+    el.style.color='var(--red)';
+    el.textContent='القالب مش صالح: '+(rep.failedChecks||[]).join('، ');
+  }
+}
+
+async function validateStoreTemplate(id){
+  const fb=window.StoreFB; if(!fb) return;
+  const el=$('tplVal-'+id); if(el){ el.style.color='var(--t3)'; el.textContent='جارٍ التحقق…'; }
+  try{
+    const rep=await fb.validateBundleFromHosting(id);
+    try{ await fb.saveTemplateValidation(id,rep); }catch(e){}
+    tplValShow(id,rep);
+    // No rStoreTemplates() here: the saved report re-renders through
+    // the subscription, and re-rendering now would wipe the message.
+  }catch(e){
+    if(el){ el.style.color='var(--red)'; el.textContent=e.message||'تعذر التحقق'; }
+  }
+}
+
+async function moveTemplateToPreview(id){
+  const fb=window.StoreFB; if(!fb) return;
+  const el=$('tplVal-'+id); if(el){ el.style.color='var(--t3)'; el.textContent='جارٍ التحقق من ملفات القالب…'; }
+  try{
+    await fb.markTemplatePreview(id);
+    toast('القالب بقى في المعاينة — ابعت رابط المعاينة لمحمد');
+    rStoreTemplates();
+  }catch(e){
+    if(el){ el.style.color='var(--red)'; el.textContent=e.message||'تعذر النقل للمعاينة'; }
+    toast(e.message||'تعذر النقل للمعاينة','err');
+  }
+}
+
+// D1 checklist — Mohamed judges; the admin records the approval here.
+const TPL_D1_CHECKLIST='قائمة الاعتماد (لازم كلها تعدّي):\n1) مختلف عن الكلاسيكي وعن باقي القوالب\n2) الطلب زي ما هو — طلب واحد، نفس الأسعار، نفس خطوتي الدفع عند الاستلام\n3) مفيش ادعاء مخترع — مفيش عد تنازلي من غير موعد حقيقي، ولا سعر قديم من غير سعر حقيقي، ولا تقييم من غير تقييمات حقيقية\n4) سريع على التليفون — بيحمّل وبيسكرول من غير تهنيج\n5) السلة والمودال والشكاوى وزر الواتساب كلهم بيفتحوا ويشتغلوا';
+async function approveStoreTemplate(id){
+  const fb=window.StoreFB; if(!fb) return;
+  const ok=await confirmAction(TPL_D1_CHECKLIST+'\n\nاعتمد القالب ده؟',{ico:'check',ok:'اعتماد',title:'اعتماد القالب'});
+  if(!ok) return;
+  try{
+    await fb.approveTemplate(id);
+    toast('تم اعتماد القالب — جاهز للتفعيل');
+    rStoreTemplates();
+  }catch(e){
+    toast(e.message||'تعذر الاعتماد','err');
+  }
+}
+
+async function draftStoreTemplate(id){
+  const fb=window.StoreFB; if(!fb) return;
+  const ok=await confirmAction('رجوع القالب ده لمسودة؟ (ده بيتحسب جولة رفض من جولتين الاعتماد)',{ico:'alert',ok:'رجوع لمسودة'});
+  if(!ok) return;
+  try{
+    await fb.setTemplateStatus(id,'draft');
+    toast('القالب رجع مسودة');
+    rStoreTemplates();
+  }catch(e){
+    toast(e.message||'تعذر الرجوع لمسودة','err');
+  }
+}
+
+async function retireStoreTemplate(id){
+  const fb=window.StoreFB; if(!fb) return;
+  const ok=await confirmAction('تقاعد القالب ده؟ مش هيتفعّل تاني، والرجوع ليه بعد كده هيرجع للكلاسيكي.',{ico:'alert',ok:'تقاعد',danger:true});
+  if(!ok) return;
+  try{
+    await fb.setTemplateStatus(id,'retired');
+    toast('تم تقاعد القالب');
+    rStoreTemplates();
+  }catch(e){
+    toast(e.message||'تعذر التقاعد','err');
+  }
+}
+
+function openPreviewUrl(slug){
+  const url=STORE_SITE_URL+'?preview='+encodeURIComponent(slug);
+  if(window.api&&window.api.openExternal) window.api.openExternal(url);
+  else window.open(url,'_blank');
+}
+
+async function openTemplatePreview(id){
+  const fb=window.StoreFB; if(!fb) return;
+  try{
+    toast('جارٍ تجهيز رابط المعاينة…');
+    const slug=await fb.getOrIssuePreviewSlug(id);
+    openPreviewUrl(slug);
+  }catch(e){
+    toast(e.message||'تعذر فتح المعاينة','err');
+  }
+}
+
+async function openSelectedTemplatePreview(){
+  const sel=$('tplPreviewSelect');
+  const id=sel?sel.value:'';
+  if(!id){ toast('اختار مسودة الأول','err'); return; }
+  await openTemplatePreview(id);
 }
 
 // ---- Template grid editing (B9) ----
@@ -3685,12 +4213,13 @@ function rStoreFeedback(){
   let l=[...storeFeedback];
   if(st) st.textContent=storeFeedback.length?storeFeedback.length+'رسالة': 'لا توجد رسائل بعد.';
   el.innerHTML=l.length?l.map(function(f){
+    const srcLbl=f.source==='exit-feedback'?' · من رسالة المغادرة':(f.source==='footer-feedback'?' · من رابط التذييل':'');
     return`<div class="cd" style="padding:16px">
       <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
         <div style="font-weight:800;font-size:14px">${escHtml(f.name||'(بدون اسم)')}</div>
         <span style="font-size:12px;color:var(--t3)">${fbDateStr(f.createdAt)}</span>
       </div>
-      <div style="font-size:12px;color:var(--t3);margin:6px 0">${escHtml(f.email||'—')}${(f.phone||f.address)?' · '+escHtml(f.phone||f.address):''}</div>
+      <div style="font-size:12px;color:var(--t3);margin:6px 0">${escHtml(f.email||'—')}${(f.phone||f.address)?' · '+escHtml(f.phone||f.address):''}${srcLbl}</div>
       <div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${escHtml(f.message||'')}</div>
       <div style="display:flex;gap:8px;margin-top:12px">
         <button class="btn btn-g btn-sm" onclick="deleteFeedbackCard('${f.id}')">${icOrDot('trash')} حذف (سبام)</button>
@@ -3709,6 +4238,392 @@ async function deleteFeedbackCard(id){
   }catch(e){
     toast(e.message||'تعذر الحذف','err');
   }
+}
+
+// ════════════════════════════════════════
+// INCOMPLETE ORDERS (checkout drafts)
+// A draft is a LEAD, not an order — conversion happens only after the
+// customer confirms by phone. Rows come from the live subscribeDrafts
+// listener; conversion runs the same transaction as the Flutter app
+// (status check + stock/price re-check + reserve + create order with
+// doc id = draft id + mark converted).
+// ════════════════════════════════════════
+const DRAFT_STATUS_LABEL={new:'جديدة',contacted:'تم الاتصال','no-answer':'مردش',converted:'تم التحويل',dead:'ملغاة'};
+
+function draftGovName(id){
+  if(!id) return '';
+  const list=(storeGovernorates&&storeGovernorates.entries)||[];
+  const hit=list.find(function(g){return g.id===id;});
+  if(hit) return hit.name;
+  const F=window.StoreFBFactory;
+  if(F&&F.GOVERNORATES_27){ const f=F.GOVERNORATES_27.find(function(g){return g.id===id;}); if(f) return f.name; }
+  return id;
+}
+
+function draftScore(d){
+  const F=window.StoreFBFactory;
+  if(F&&F.draftTriageScore) return F.draftTriageScore({name:!!(d.name||'').trim(),phone:!!(d.phone||'').trim(),cart:(d.cart||[]).length>0,address:!!(d.detailedAddress||d.address||'').trim()});
+  let s=0; if((d.name||'').trim())s+=25; if((d.phone||'').trim())s+=25; if((d.cart||[]).length)s+=25; if((d.detailedAddress||d.address||'').trim())s+=25; return s;
+}
+
+// Triage minimum (same rule as the factory's draftIsCallable):
+// name + non-empty cart + full valid Egyptian mobile. Below-minimum
+// drafts are not callable leads — the list hides them.
+function draftIsCallable(d){
+  const F=window.StoreFBFactory;
+  if(F&&F.draftIsCallable) return F.draftIsCallable(d);
+  const digits=String(d.phone||'').replace(/\D/g,'');
+  const local=digits.length===12&&digits.indexOf('20')===0?'0'+digits.slice(2):digits;
+  return !!(d.name||'').trim()&&(d.cart||[]).length>0&&/^01[0125][0-9]{8}$/.test(local);
+}
+
+function draftCartTotal(d){
+  return (d.cart||[]).reduce(function(a,it){return a+((it.price||0)*(it.qty||0));},0);
+}
+
+function draftAvail(it){
+  const inv=storeInventoryMap[it.productId];
+  const avail=inv?((inv.stock||0)-(inv.reserved||0)):null;
+  if(avail==null) return null;
+  const F=window.StoreFBFactory;
+  if(F&&F.lineAvailability) return F.lineAvailability(avail,it.qty||0);
+  return {state:(avail<=0?'out':(avail<(it.qty||0)?'short':'ok')),availableQty:avail};
+}
+
+function draftProdName(pid){
+  const p=(storeProducts||[]).find(function(x){return x.id===pid;});
+  return p?p.name:pid;
+}
+
+function updateDraftBadge(){
+  const b=$('incompleteBadge'); if(!b) return;
+  // The badge counts callable new leads only — below-minimum drafts
+  // are hidden from the list, so they must not inflate the badge.
+  const n=(storeDrafts||[]).filter(function(d){return (d.status||'new')==='new'&&draftIsCallable(d);}).length;
+  b.style.display=n?'':'none';
+  b.textContent=n;
+}
+
+function rIncompleteOrders(){
+  const el=$('incompleteList'); if(!el) return;
+  const st=$('draftStatus');
+  const fb=window.StoreFB;
+  if(!fb||!fb.state.connected){
+    if(st) st.textContent='غير متصل — سجّل دخول المتجر من شاشة الدخول عشان تشوف الطلبات الناقصة.';
+    el.innerHTML='';
+    updateDraftBadge();
+    return;
+  }
+  const filt=$('draftFilter')?.value||'';
+  // Dedup by phone (newest first) — a customer on two devices leaves
+  // two drafts; the list shows one row per phone.
+  let list=[...storeDrafts];
+  const F=window.StoreFBFactory;
+  if(F&&F.dedupDraftsByPhone) list=F.dedupDraftsByPhone(list);
+  // Triage: below-minimum drafts (no name, empty cart, or no full
+  // valid phone) are not callable leads — hide them from the list.
+  // Closed records (converted / dead) stay visible as history.
+  list=list.filter(function(d){const stt=d.status||'new'; return stt==='converted'||stt==='dead'||draftIsCallable(d);});
+  const newCount=list.filter(function(d){return (d.status||'new')==='new';}).length;
+  const visTotal=list.length;
+  if(filt) list=list.filter(function(d){return (d.status||'new')===filt;});
+  updateDraftBadge();
+  if(st) st.textContent=visTotal?newCount+' طلب ناقص جديد · '+visTotal+' إجمالي':'لا توجد طلبات ناقصة بعد.';
+  el.innerHTML=list.length?list.map(function(d){
+    const sc=draftScore(d);
+    const cart=(d.cart||[]).length+' منتجات — '+curr(draftCartTotal(d));
+    const moot=draftMootByPhone[d.phone||''];
+    const stt=d.status||'new';
+    return`<tr>
+      <td style="font-weight:700">${escHtml(d.name||'(بدون اسم)')}<br><span style="font-weight:400;font-size:11px;color:var(--t3)" dir="ltr">${escHtml(d.phone||'')}</span>${d.phone2?`<br><span style="font-weight:400;font-size:11px;color:var(--t3)" dir="ltr">${escHtml(d.phone2)}</span>`:''}${moot?`<br><button class="btn btn-g btn-sm" style="font-size:10px;padding:2px 8px;margin-top:3px" onclick="showStoreOrderDetail('${moot}')" title="فتح الطلب">طلب قبل كده</button>`:''}</td>
+      <td style="font-size:12px">${cart}</td>
+      <td><div style="font-size:12px;font-weight:700">${sc}٪</div><div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:4px"><div style="height:100%;width:${sc}%;background:${sc>=75?'var(--grn)':(sc>=50?'var(--gold)':'var(--red)')}"></div></div></td>
+      <td style="font-size:12px;color:var(--t3)">${fbDateStr(d.lastSyncAt||d.createdAt)}</td>
+      <td><span class="ds ${stt==='converted'?'ds-ok':(stt==='dead'?'ds-bad':'ds-pend')}"><span class="ds-dot"></span>${DRAFT_STATUS_LABEL[stt]||stt}</span></td>
+      <td><div class="row-acts"><button class="ra view" onclick="showDraftDetail('${d.id}')" title="التفاصيل">${icOrDot('eye')}</button></div></td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="6">'+es(icOrDot('phone'),'لا توجد طلبات ناقصة')+'</td></tr>';
+  // Moot badges: one query over the visible phones — did this customer
+  // already place a real order after the draft started?
+  const phones=[...new Set(list.map(function(d){return d.phone||'';}).filter(Boolean))];
+  if(phones.length&&fb.fetchOrdersByPhones){
+    fb.fetchOrdersByPhones(phones).then(function(byPhone){
+      let changed=false;
+      phones.forEach(function(ph){
+        const o=byPhone[ph];
+        const d=list.find(function(x){return x.phone===ph;});
+        if(o&&d){
+          const od=fbDate(o.createdAt), dd=fbDate(d.createdAt);
+          if(od&&dd&&od.getTime()>=dd.getTime()&&!draftMootByPhone[ph]){ draftMootByPhone[ph]=o.id; changed=true; }
+        }
+      });
+      if(changed) rIncompleteOrders();
+    }).catch(function(){});
+  }
+}
+
+function draftGovOptions(selected){
+  const F=window.StoreFBFactory;
+  let entries=(storeGovernorates&&storeGovernorates.entries)||[];
+  if(!entries.length&&F&&F.GOVERNORATES_27) entries=F.GOVERNORATES_27.map(function(g){return {id:g.id,name:g.name,active:true};});
+  const active=entries.filter(function(g){return g.active!==false;});
+  if(!active.length) return '<option value="">التوصيل غير متاح حالياً — لم يتم إعداد مناطق التوصيل بعد</option>';
+  return active.map(function(g){return `<option value="${g.id}"${g.id===selected?' selected':''}>${escHtml(g.name)}</option>`;}).join('');
+}
+
+function showDraftDetail(id){
+  const d=(storeDrafts||[]).find(function(x){return x.id===id;});
+  if(!d) return;
+  const stt=d.status||'new';
+  const terminal=(stt==='converted'||stt==='dead');
+  const mootId=draftMootByPhone[d.phone||'']||'';
+  const lines=(d.cart||[]).map(function(it){
+    const av=draftAvail(it);
+    const oos=av&&av.state!=='ok';
+    const name=escHtml(it.name||draftProdName(it.productId));
+    return `<tr${oos?' style="background:rgba(220,60,60,.08)"':''}><td>${name}${oos?'<br><span style="color:var(--red);font-size:11px;font-weight:700">المنتج خلص من المخزون — متاح '+av.availableQty+' بس</span>':''}</td><td style="text-align:center">${it.qty||0}</td><td class="mn-t">${curr(it.price||0)}</td><td class="mn-t">${curr((it.price||0)*(it.qty||0))}</td></tr>`;
+  }).join('');
+  const total=draftCartTotal(d);
+  const sc=draftScore(d);
+  showInfoModal('طلب ناقص — '+(d.name||'(بدون اسم)'),
+   `<div style="font-size:13px;line-height:1.9">
+      <div>الحالة: <span class="ds ${stt==='converted'?'ds-ok':(stt==='dead'?'ds-bad':'ds-pend')}"><span class="ds-dot"></span>${DRAFT_STATUS_LABEL[stt]||stt}</span>${d.orderId?` · طلب محوّل #${String(d.orderId).slice(-6)}`:''}${mootId?` · العميل طلب قبل كده من الموقع <button class="btn btn-g btn-sm" onclick="showStoreOrderDetail('${mootId}')" title="فتح الطلب">طلب #${String(mootId).slice(-6)}</button>`:''}</div>
+      <div>اكتمال البيانات: <b>${sc}٪</b> · آخر تحديث: ${fbDateStr(d.lastSyncAt||d.createdAt)}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
+        <button class="btn btn-g btn-sm" onclick="draftCall('${escHtml(d.phone||'')}')">اتصال</button>
+        <button class="btn btn-g btn-sm" onclick="draftWhatsApp('${escHtml(d.phone||'')}')">واتساب</button>
+        ${d.phone2?`<button class="btn btn-g btn-sm" onclick="draftCall('${escHtml(d.phone2)}')">اتصال (تاني)</button><button class="btn btn-g btn-sm" onclick="draftWhatsApp('${escHtml(d.phone2)}')">واتساب (تاني)</button>`:''}
+        <button class="btn btn-g btn-sm" onclick="showJourneyDialog('${d.sessionId||d.id}')">رحلة العميل في المتجر</button>
+      </div>
+      <div class="fg">
+        <div class="fgr"><label>الاسم</label><input id="drName" value="${escHtml(d.name||'')}"></div>
+        <div class="fgr"><label>التليفون الأساسي</label><input id="drPhone" dir="ltr" style="text-align:left" value="${escHtml(d.phone||'')}"></div>
+        <div class="fgr"><label>تليفون تاني (اختياري)</label><input id="drPhone2" dir="ltr" style="text-align:left" value="${escHtml(d.phone2||'')}"></div>
+        <div class="fgr"><label>المحافظة</label><select id="drGov">${draftGovOptions(d.governorate)}</select></div>
+        <div class="fgr full"><label>العنوان بالتفصيل</label><input id="drAddr" value="${escHtml(d.detailedAddress||d.address||'')}"></div>
+      </div>
+      ${d.address&&!d.detailedAddress?`<div style="font-size:12px;color:var(--t3)">العنوان القديم المسجّل: ${escHtml(d.address)}</div>`:''}
+      <table style="margin-top:12px"><thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead><tbody>${lines||'<tr><td colspan="4">—</td></tr>'}</tbody></table>
+      <div style="margin-top:8px">إجمالي السلة: <b>${curr(total)}</b> (السعر النهائي بيتأكد وقت التحويل — سعر الموقع وقتها + رسوم التوصيل)</div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        ${terminal?'':`<button class="btn btn-p" onclick="convertDraftFromDetail('${d.id}')">تحويل لطلب حقيقي</button>
+        <button class="btn btn-g" onclick="setDraftStatus('${d.id}','contacted')">تم الاتصال</button>
+        <button class="btn btn-g" onclick="setDraftStatus('${d.id}','no-answer')">مردش</button>
+        <button class="btn btn-g" onclick="markDraftDead('${d.id}')" style="color:var(--red)">إغلاق كملغاة</button>`}
+        <button class="btn btn-g" onclick="deleteDraftCard('${d.id}')" style="color:var(--red)">حذف</button>
+      </div>
+      ${terminal?'<div style="font-size:12px;color:var(--t3);margin-top:8px">الطلب ده اتقفل — مينفعش يتعدّل أو يتحوّل تاني.</div>':''}
+    </div>`);
+}
+
+async function convertDraftFromDetail(id){
+  const d=(storeDrafts||[]).find(function(x){return x.id===id;});
+  if(!d) return;
+  const ok=await confirmAction('العميل أكد الطلب بالتلفون؟ التحويل بيعمل طلب حقيقي وبيحجز المخزون.',{ico:'phone',ok:'أيوه، أكد — حوّل'});
+  if(!ok) return;
+  const fb=window.StoreFB; if(!fb) return;
+  const input={
+    id:d.id,
+    customerName:($('drName')?.value||'').trim(),
+    customerPhone:($('drPhone')?.value||'').trim(),
+    customerPhone2:($('drPhone2')?.value||'').trim(),
+    governorate:$('drGov')?.value||'',
+    detailedAddress:($('drAddr')?.value||'').trim(),
+    customerAddress:($('drAddr')?.value||'').trim()
+  };
+  try{
+    const res=await fb.convertDraft(input);
+    if(res&&res.result==='ok'){ toast('تم تحويل الطلب — رقم الطلب #'+String(res.order.id).slice(-6)); $('mInfo').classList.add('hidden'); nav('orders'); }
+    else if(res&&res.result==='ALREADY_CONVERTED'){ toast('الطلب ده اتحوّل قبل كده'); $('mInfo').classList.add('hidden'); }
+    else if(res&&res.result==='MOOT'){ toast('العميل طلب من الموقع بنفسه — الطلب الناقص اتقفل','err'); $('mInfo').classList.add('hidden'); }
+    else if(res&&res.result==='PRICE_CHANGED'){ toast('السعر اتغيّر في الموقع — راجع السلة وحاول تاني','err'); }
+    else if(res&&res.result==='INSUFFICIENT_STOCK'){ toast('المخزون مش كافي — راجع الكميات','err'); }
+    else toast('تعذر التحويل','err');
+    rIncompleteOrders();
+  }catch(e){
+    toast(e.message||'تعذر التحويل','err');
+  }
+}
+
+async function setDraftStatus(id,to){
+  const fb=window.StoreFB; if(!fb) return;
+  try{
+    await fb.updateDraftStatus(id,to);
+    toast('تم تحديث الحالة');
+    $('mInfo').classList.add('hidden');
+    rIncompleteOrders();
+  }catch(e){ toast(e.message||'تعذر تحديث الحالة','err'); }
+}
+
+// Mark a draft dead ("not ordered") — terminal, but the record
+// stays in the list as a visible closed row, unlike Delete which
+// removes it. Confirmed first: dead can never convert again.
+async function markDraftDead(id){
+  const ok=await confirmAction('إغلاق الطلب الناقص ده كملغاة؟ مش هيتحوّل لطلب حقيقي بعد كده، بس هيفضل ظاهر في القايمة كسجل مقفول.',{ico:'trash',ok:'إغلاق كملغاة',danger:true});
+  if(!ok) return;
+  await setDraftStatus(id,'dead');
+}
+
+async function deleteDraftCard(id){
+  const ok=await confirmAction('حذف الطلب الناقص ده نهائياً؟',{ico:'trash',ok:'حذف',danger:true});
+  if(!ok) return;
+  const fb=window.StoreFB; if(!fb) return;
+  try{
+    await fb.deleteDraft(id);
+    toast('تم حذف الطلب الناقص');
+    $('mInfo').classList.add('hidden');
+    rIncompleteOrders();
+  }catch(e){ toast(e.message||'تعذر الحذف','err'); }
+}
+
+// Call / WhatsApp from the draft detail. The Electron preload bridge
+// (window.api.openExternal — same one the store-site link uses) opens
+// tel:/wa.me: links in the system dialer / browser; when it is not
+// available the link is copied so it is never a dead button.
+function openExternalOrCopy(url,label){
+  try{
+    if(window.api&&window.api.openExternal){ window.api.openExternal(url); return; }
+  }catch(e){}
+  if(navigator.clipboard) navigator.clipboard.writeText(url).then(function(){ toast('اتنسخ: '+label); },function(){ toast(label); });
+  else toast(label);
+}
+function draftCall(phone){
+  if(!phone) return;
+  openExternalOrCopy('tel:'+String(phone).replace(/[^0-9+]/g,''),phone);
+}
+function draftWhatsApp(phone){
+  if(!phone) return;
+  const digits=String(phone).replace(/\D/g,'');
+  const intl=digits.startsWith('20')?digits:(digits.startsWith('0')?'20'+digits.slice(1):digits);
+  openExternalOrCopy('https://wa.me/'+intl,'رابط واتساب: '+phone);
+}
+
+async function showJourneyDialog(sessionId){
+  const fb=window.StoreFB; if(!fb||!fb.getJourneySummary) return;
+  try{
+    const j=await fb.getJourneySummary(sessionId);
+    if(!j){ toast('مفيش بيانات رحلة مسجلة للعميل ده'); return; }
+    const F=window.StoreFBFactory;
+    const entries=(j.entries||[]).map(function(e){
+      const name=e.productId?draftProdName(e.productId):'—';
+      const action=F&&F.journeyActionLabel?F.journeyActionLabel(e.action):(e.action||'');
+      const dwell=e.dwellBand||'';
+      return `<tr><td>${escHtml(name)}</td><td>${escHtml(action)}</td><td style="text-align:center">${escHtml(dwell)}</td></tr>`;
+    }).join('');
+    // Total visit time as the dwell band (same tokens as the rows),
+    // not raw seconds.
+    const totalBand=F&&F.dwellBand?F.dwellBand(j.totalSeconds||0):((j.totalSeconds||0)+' ثانية');
+    showInfoModal('رحلة العميل في المتجر',
+      `<div style="font-size:13px;line-height:1.9">
+        <div>مدة الزيارة: <b>${totalBand}</b>${j.overflowCount?` · +${j.overflowCount} منتج زيادة مش معروضين (الحد 20)`:''}</div>
+        <table style="margin-top:12px"><thead><tr><th>المنتج</th><th>الإجراء</th><th>مدة المشاهدة</th></tr></thead><tbody>${entries||'<tr><td colspan="3">—</td></tr>'}</tbody></table>
+      </div>`);
+  }catch(e){ toast(e.message||'تعذر تحميل الرحلة','err'); }
+}
+
+// ---- Draft settings (governorates / deletion / quota) ----
+function renderGovernoratesSettings(){
+  const el=$('govList'); if(!el) return;
+  const F=window.StoreFBFactory;
+  let entries=(storeGovernorates&&storeGovernorates.entries)||[];
+  if(!entries.length&&F&&F.GOVERNORATES_27) entries=F.GOVERNORATES_27.map(function(g){return {id:g.id,name:g.name,active:true};});
+  const st=$('govStatus');
+  const active=entries.filter(function(g){return g.active!==false;}).length;
+  if(st) st.textContent=active+' مفعّلة من '+entries.length;
+  el.innerHTML=entries.map(function(g){
+    return `<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-gov="${g.id}"${g.active!==false?' checked':''}><span>${escHtml(g.name)}</span></label>`;
+  }).join('')||'<div style="font-size:12px;color:var(--t3)">لسه مفيش قايمة محافظات — احفظ مرة عشان تتسجّل.</div>';
+}
+async function saveGovernoratesSettings(){
+  const fb=window.StoreFB; if(!fb) return;
+  const F=window.StoreFBFactory;
+  let base=(storeGovernorates&&storeGovernorates.entries)||[];
+  if(!base.length&&F&&F.GOVERNORATES_27) base=F.GOVERNORATES_27.map(function(g){return {id:g.id,name:g.name,active:true};});
+  const entries=base.map(function(g){
+    const cb=document.querySelector('input[data-gov="'+g.id+'"]');
+    return {id:g.id,name:g.name,active:cb?cb.checked:(g.active!==false)};
+  });
+  try{
+    await fb.saveGovernorates(entries);
+    toast('تم حفظ المحافظات');
+  }catch(e){ toast(e.message||'تعذر الحفظ','err'); }
+}
+
+function renderDeletionSettings(){
+  const el=$('delDays'); if(!el) return;
+  el.value=(storeDeletion&&storeDeletion.autoDeleteDays!=null)?storeDeletion.autoDeleteDays:0;
+  const lr=$('delLastRun');
+  if(lr){
+    const last=storeDeletion&&storeDeletion.lastRun;
+    lr.textContent=last?('آخر حذف تلقائي: '+(last.at?fbDateStr(last.at):'—')+' — اتحذف '+((last.deleted!=null)?last.deleted:0)+' واتفضل '+((last.kept!=null)?last.kept:0)):'لسه مفيش حذف تلقائي اتنفذ.';
+  }
+}
+async function saveDeletionSettings(){
+  const fb=window.StoreFB; if(!fb) return;
+  const days=parseInt(($('delDays')?.value||'0'),10);
+  if(isNaN(days)||days<0||days>365){ toast('عدد الأيام لازم يكون بين 0 و 365','err'); return; }
+  try{
+    await fb.saveDeletionConfig(days);
+    toast('تم حفظ إعداد الحذف');
+  }catch(e){ toast(e.message||'تعذر الحفظ','err'); }
+}
+
+function renderQuotaSettings(){
+  const el=$('quotaInfo'); if(!el) return;
+  const fb=window.StoreFB;
+  const st=$('quotaStatus');
+  const cutoff=(storeQuota&&storeQuota.cutoffLevel)||'none';
+  const sel=$('quotaCutoff'); if(sel) sel.value=cutoff;
+  if(st) st.textContent=cutoff==='none'?'بدون إيقاف':(cutoff==='journeys'?'الزيارات متوقفة':'الزيارات + الناقصة متوقفين');
+  if(!fb||!fb.dailyWriteEstimate){ el.textContent='—'; return; }
+  fb.dailyWriteEstimate().then(function(est){
+    const writes=est?est.estimatedWrites:0;
+    const pct=Math.round((writes/20000)*100);
+    el.innerHTML=`<div>كتابات النهارده (طلبات ناقصة + زيارات): <b>${writes}</b> من 20,000 — <b>${pct}٪</b></div><div style="font-size:12px;color:var(--t3)">الحصّة دي للكتابة بس، والطلبات الحقيقية مش بتتأثر. الإيقاف هنا يدوي — لو الحصّة قربت تخلص، اختار مستوى الإيقاف من القايمة تحت.</div>`;
+  }).catch(function(){ el.textContent='تعذر حساب الكتابات.'; });
+}
+async function saveQuotaSettings(){
+  const fb=window.StoreFB; if(!fb) return;
+  const cutoff=$('quotaCutoff')?.value||'none';
+  try{
+    await fb.setQuotaCutoff(cutoff);
+    toast('تم حفظ إعداد الحصّة');
+  }catch(e){ toast(e.message||'تعذر الحفظ','err'); }
+}
+
+// Scheduled deletion runs once per program start (from
+// onStoreStateChange when connected) and is idempotent — the config
+// doc records lastRunAt, so a second start the same day skips it.
+async function runDraftDeletion(){
+  const fb=window.StoreFB;
+  if(!fb||!fb.state.connected||!fb.runDraftDeletion) return;
+  try{
+    const res=await fb.runDraftDeletion();
+    if(res&&!res.skipped&&res.deleted>0){
+      toast('تم حذف '+res.deleted+' طلب ناقص قديم تلقائياً');
+      logActivity('draft-deletion','deleted '+res.deleted+', kept '+res.kept);
+    }
+  }catch(e){ console.warn('draft deletion failed', e); }
+}
+
+function renderDraftFunnel(){
+  const el=$('draftFunnelBody'); if(!el) return;
+  const fb=window.StoreFB;
+  if(!fb||!fb.state.connected){
+    el.innerHTML='<span>سجّل دخول المتجر من شاشة الدخول عشان تشوف الطلبات الناقصة.</span>';
+    return;
+  }
+  const today=td();
+  const withPhone=(storeDrafts||[]).filter(function(d){
+    const dt=fbDate(d.lastSyncAt||d.createdAt);
+    return dt&&dt.toISOString().split('T')[0]===today&&(d.phone||'').trim();
+  }).length;
+  const ordersToday=(storeOrders||[]).filter(function(o){
+    const dt=fbDate(o.createdAt);
+    return dt&&dt.toISOString().split('T')[0]===today&&o.status!=='cancelled';
+  }).length;
+  const newDrafts=(storeDrafts||[]).filter(function(d){return (d.status||'new')==='new';}).length;
+  el.innerHTML=`<span>طلبات ناقصة جديدة: <b>${newDrafts}</b></span><span>ببيانات تواصل النهارده: <b>${withPhone}</b></span><span>طلبات حقيقية النهارده: <b>${ordersToday}</b></span><span style="color:var(--t3)">عدد زيارات الموقع بيظهر من Google Analytics بس — لازم محمد ينشئ خاصية GA4 ويلصق الـ ID في إعدادات الموقع الأول.</span><button class="btn btn-g btn-sm" onclick="openExternalOrCopy('https://analytics.google.com','رابط GA4')">افتح Google Analytics</button>`;
 }
 
 function showInfoModal(title,html){
@@ -3739,6 +4654,55 @@ function startStoreSweepTimer(){
 }
 function stopStoreSweepTimer(){
   if(storeSweepTimer){ clearInterval(storeSweepTimer); storeSweepTimer=null; }
+}
+
+// ════════════════════════════════════════
+// ORPHAN ORDERS — M1 audit-split recovery (orders page, store orders)
+// A crash between the order commit and the post-commit audit write
+// leaves an order with no matching audit entry. The check below
+// scans the 100 most recent orders; repair writes the missing entry
+// as the REPAIRING admin with a fresh timestamp (the audit-create
+// rule requires actor == request.auth.uid and timestamp ==
+// request.time — the order's creator / createdAt cannot be reused).
+// ════════════════════════════════════════
+let orphanOrdersCache=[];
+async function checkOrphanOrders(){
+  const fb=window.StoreFB; if(!fb) return;
+  const st=$('orphanStatus'), list=$('orphanList');
+  if(st) st.textContent='جارٍ الفحص…';
+  if(list) list.innerHTML='';
+  try{
+    const orphans=await fb.findOrphanOrders();
+    orphanOrdersCache=orphans||[];
+    if(st) st.textContent=orphans.length?('لقينا '+orphans.length+' طلب من غير قيد تدقيق'):'مفيش طلبات يتيمة في آخر 100 طلب — كله تمام';
+    if(list) list.innerHTML=orphans.length?orphans.map(function(o){
+      const c=storeCust(o);
+      return `<div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--bd)">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700">#${escHtml(String(o.id||'').slice(-6))} — ${escHtml(c.name||'-')}</div>
+          <div style="font-size:12px;color:var(--t3)">${curr(o.amountDue!=null?o.amountDue:(o.total||0))} · ${fbDateStr(o.createdAt)}</div>
+        </div>
+        <button class="btn btn-p btn-sm" onclick="repairOrphanOrderRow('${escHtml(o.id)}',this)">إصلاح القيد</button>
+      </div>`;
+    }).join(''):'';
+  }catch(e){
+    if(st) st.textContent='تعذر الفحص: '+(e.message||e);
+  }
+}
+async function repairOrphanOrderRow(orderId,btn){
+  const fb=window.StoreFB; if(!fb) return;
+  const o=orphanOrdersCache.find(function(x){return x.id===orderId;});
+  if(!o) return;
+  if(btn) btn.disabled=true;
+  try{
+    await fb.repairOrphanOrder(o);
+    orphanOrdersCache=orphanOrdersCache.filter(function(x){return x.id!==orderId;});
+    toast('تم إصلاح قيد الطلب');
+    checkOrphanOrders(); // re-run: the repaired order must disappear
+  }catch(e){
+    toast(e.message||'تعذر إصلاح القيد','err');
+    if(btn) btn.disabled=false;
+  }
 }
 
 // ════════════════════════════════════════
@@ -3819,6 +4783,13 @@ function printStoreOrder(id){
   const rows=(o.items||[]).map(function(item){
     return`<tr><td>${escHtml(item.name||item.productId)}</td><td style="text-align:center">${item.qty||0}</td><td style="text-align:center">${fmt(item.price||0)} ${cur}</td><td style="text-align:center">${fmt(item.subtotal||((item.price||0)*(item.qty||0)))} ${cur}</td></tr>`;
   }).join('')||'';
+  const saleSave=o.saleSavings||0;
+  const codeSave=(o.discountAmount!=null)?o.discountAmount:(d?d.amount||0:0);
+  // The box deducts cleanly: base subtotal (before the sale) −
+  // sale savings − code discount + fee = amount due. Legacy
+  // orders carry no saleSavings, so the base equals the subtotal.
+  const baseSubtotal=(o.subtotal||o.total||0)+saleSave;
+  const due=o.amountDue!=null?o.amountDue:(o.total||0);
   const html=`
   <div style="font-family:'Cairo',sans-serif;color:#000;max-width:700px;margin:auto;padding:32px 40px">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;border-bottom:2px solid #000;padding-bottom:16px">
@@ -3851,9 +4822,11 @@ function printStoreOrder(id){
     </table>
     <div style="display:flex;justify-content:flex-end">
       <div style="background:#f5f5f5;padding:16px 24px;border-radius:12px;min-width:220px">
-        <div style="display:flex;justify-content:space-between;gap:40px;font-size:13px;color:#666;margin-bottom:6px"><span>المجموع</span><span>${fmt(o.subtotal||o.total||0)} ${cur}</span></div>
-        ${d?`<div style="display:flex;justify-content:space-between;gap:40px;font-size:13px;color:#e84545;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #ddd"><span>خصم ${escHtml(d.code)} (${d.percent}%)</span><span>- ${fmt(d.amount||0)} ${cur}</span></div>`:''}
-        <div style="display:flex;justify-content:space-between;gap:40px;font-size:15px;font-weight:900"><span>الإجمالي</span><span>${fmt(o.total||0)} ${cur}</span></div>
+        <div style="display:flex;justify-content:space-between;gap:40px;font-size:13px;color:#666;margin-bottom:6px"><span>المجموع</span><span>${fmt(baseSubtotal)} ${cur}</span></div>
+        ${saleSave>0?`<div style="display:flex;justify-content:space-between;gap:40px;font-size:13px;color:#2e9e5b;margin-bottom:6px"><span>وفّرت من العرض</span><span>- ${fmt(saleSave)} ${cur}</span></div>`:''}
+        ${codeSave>0?`<div style="display:flex;justify-content:space-between;gap:40px;font-size:13px;color:#e84545;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #ddd"><span>خصم الكود${d?' '+escHtml(d.code):''}</span><span>- ${fmt(codeSave)} ${cur}</span></div>`:''}
+        ${o.deliveryFee!=null?`<div style="display:flex;justify-content:space-between;gap:40px;font-size:13px;color:#666;margin-bottom:6px"><span>رسوم التوصيل</span><span>${o.deliveryFee===0?'مجاني':fmt(o.deliveryFee)+' '+cur}</span></div>`:''}
+        <div style="display:flex;justify-content:space-between;gap:40px;font-size:15px;font-weight:900"><span>المبلغ المستحق</span><span>${fmt(due)} ${cur}</span></div>
       </div>
     </div>
     <div style="margin-top:32px;border-top:1px solid #eee;padding-top:16px"><div style="text-align:center;font-size:11px;color:#bbb">${cfg.invNote||('شكراً لتعاملكم معنا — '+escHtml(co))}</div></div>
@@ -3867,6 +4840,63 @@ function printStoreOrder(id){
     <style>body{margin:0;background:#fff}@media print{body{margin:0}}</style>
     </head><body>${html}<script>window.onload=()=>{window.print()}<\/script></body></html>`);
   pw.document.close();
+}
+
+// ════════════════════════════════════════
+// PRINT WAYBILL (بوليصة شحن) — approved shape, 2nd revision 2026-11-27.
+// printWaybill() opens an editable preview (same printStoreOrder
+// window pattern for the actual print); the customer address, phones,
+// governorate, shipping company and notes are contenteditable in the
+// preview, and doPrintWaybill() reads the edited values before
+// printing. Pure data + HTML live in waybill.js (window.Waybill).
+// ════════════════════════════════════════
+function printWaybill(id){
+  if(!window.Waybill){ toast('ملف البوليصة مش متحمل','err'); return; }
+  const o=storeOrders.find(function(x){return x.id===id;});
+  if(!o) return;
+  const d=Waybill.buildWaybillData(o, storeShipName(o.shippingCompanyId), {
+    dateStr: fbDateStr(o.createdAt),
+    govName: (typeof draftGovName==='function'?draftGovName(o.governorate):o.governorate),
+    currency: cfg.currency||'ج.م'
+  });
+  showInfoModal('بوليصة شحن #'+d.orderNo,
+    Waybill.waybillSheetHtml(d, true) +
+    `<div style="display:flex;gap:8px;margin-top:6px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-p" onclick="doPrintWaybill('${o.id}')">${icOrDot('printer')} طباعة البوليصة</button>
+    </div>
+    <div style="text-align:center;font-size:11px;color:var(--t3);margin-top:8px">اضغط على أي خانة بخط برتقالي متقطع عشان تعدّلها قبل الطباعة — العنوان والأرقام وشركة الشحن والملاحظات.</div>`);
+}
+function doPrintWaybill(id){
+  if(!window.Waybill) return;
+  const o=storeOrders.find(function(x){return x.id===id;});
+  if(!o) return;
+  // Read the (possibly edited) preview fields; fall back to the
+  // order's own data for anything the preview doesn't carry.
+  const sheet=$('wbSheet');
+  const get=function(k){
+    const el=sheet&&sheet.querySelector('[data-wb="'+k+'"]');
+    const v=el?el.textContent.trim():'';
+    return (v==='—'||v==='')?null:v;
+  };
+  // Notes keep their raw text: clearing them in the preview must
+  // print blank, not fall back to the order's notes.
+  const getRaw=function(k){
+    const el=sheet&&sheet.querySelector('[data-wb="'+k+'"]');
+    return el?el.textContent.trim():null;
+  };
+  const d=Waybill.buildWaybillData(o, storeShipName(o.shippingCompanyId), {
+    dateStr: fbDateStr(o.createdAt),
+    govName: (typeof draftGovName==='function'?draftGovName(o.governorate):o.governorate),
+    currency: cfg.currency||'ج.م',
+    name: get('name'), governorate: get('governorate'), address: get('address'),
+    phone: get('phone'), phone2: get('phone2'), shipco: get('shipco'), notes: getRaw('notes')
+  });
+  if(window.SFX&&SFX.print) SFX.print();
+  const pw=window.open('','_blank','width=750,height=900');
+  if(!pw){ toast('المتصفح منع نافذة الطباعة','err'); return; }
+  pw.document.write(Waybill.waybillPrintDoc(d));
+  pw.document.close();
+  $('mInfo').classList.add('hidden');
 }
 
 // ════════════════════════════════════════
@@ -3928,6 +4958,28 @@ function fillWebProductSelects(forceHero){
 }
 
 // ---- Website products ----
+// ---- Pricing display helpers (Technical Plan §8) — the % math
+// lives once in the factory (StoreFBFactory.salePercent) and is
+// reused here so the PC list shows exactly what the storefront
+// shows: the % badge is suppressed when rounded % × base ≠ the
+// exact saving (base 199 → 149 shows only "وفّر 50").
+function pcSalePercent(price, basePrice){
+  try { return window.StoreFBFactory.salePercent({ price: price, basePrice: basePrice }); }
+  catch(e){ return null; }
+}
+function pcTsToDate(v){
+  if(!v) return null;
+  if(typeof v.toDate==='function'){ try{ return v.toDate(); }catch(e){ return null; } }
+  if(v instanceof Date) return v;
+  if(typeof v==='number') return new Date(v);
+  if(typeof v==='string'){ const d=new Date(v); return isNaN(d)?null:d; }
+  if(v.seconds!=null) return new Date(v.seconds*1000);
+  return null;
+}
+function pcDiscountAgeDays(ts){
+  const d=pcTsToDate(ts); if(!d) return null;
+  return Math.max(0, Math.floor((Date.now()-d.getTime())/86400000));
+}
 function rWebsiteProducts(){
   const el=$('webProdList'); if(!el) return;
   const st=$('webProdStatus');
@@ -3947,7 +4999,7 @@ function rWebsiteProducts(){
       <td>${img?`<img src="${escHtml(img)}" style="width:44px;height:44px;object-fit:cover;border-radius:8px">`:'<span style="color:var(--t3)">—</span>'}</td>
       <td style="font-weight:700">${escHtml(p.name||p.id)}<br><span style="font-weight:400;font-size:11px;color:var(--t3)">${escHtml(p.description||'')}</span></td>
       <td><span class="bx bx-p">${escHtml(webCatName(p.categoryId||p.category))}</span></td>
-      <td class="mn-t mo2">${curr(p.price||0)}</td>
+      <td class="mn-t mo2">${(function(){const price=p.price||0;const base=(p.basePrice!=null&&Number(p.basePrice)>price)?Number(p.basePrice):null;if(base==null) return curr(price);const saving=base-price;const pct=pcSalePercent(price,base);const age=pcDiscountAgeDays(p.discountSetAt);return `<span style="text-decoration:line-through;color:var(--t3);font-size:11px">${curr(base)}</span> ${curr(price)}<br><span class="bx bx-g" style="font-size:11px">وفّر ${curr(saving)}</span>${pct!=null?` <span class="bx bx-p" style="font-size:11px">خصم ${pct}٪</span>`:''}${age!=null?`<br><span style="font-size:11px;color:var(--t3)">خصم نشط منذ ${age} يوم</span>`:''}`;})()}</td>
       <td>${avail==null?'<span style="color:var(--t3)">—</span>':`<span class="bx ${avail<=((p.minStock==null)?5:p.minStock)?'bx-r':'bx-g'}">${avail}</span>`}</td>
       <td><button class="btn btn-sm ${p.featured?'btn-p':'btn-g'}" onclick="toggleFeatured('${p.id}',${p.featured?1:0})" title="تبديل المميز">${p.featured?'مميز':'عادي'}</button></td>
       <td><div class="row-acts">
@@ -3959,7 +5011,7 @@ function rWebsiteProducts(){
 }
 function openWebProductM(){
   if(!window.StoreFB||!window.StoreFB.state.connected){ toast('سجّل دخول المتجر الأول','err'); return; }
-  $('wpId').value='';$('wpName').value='';$('wpPrice').value='';$('wpCost').value='';
+  $('wpId').value='';$('wpName').value='';$('wpPrice').value='';$('wpBasePrice').value='';$('wpCost').value='';
   $('wpStock').value='';$('wpMinStock').value='5';$('wpDesc').value='';$('wpImg').value='';
   $('wpImgPreview').innerHTML='';$('wpFeatured').checked=false;
   fillWebProductSelects();
@@ -3975,6 +5027,7 @@ function editWebProduct(id){
   $('wpName').value=p.name||'';
   $('wpCat').value=p.categoryId||p.category||'';
   $('wpPrice').value=p.price||'';
+  $('wpBasePrice').value=(p.basePrice!=null)?p.basePrice:'';
   $('wpCost').value=p.costPrice||'';
   const inv=storeInventoryMap[p.id]||{};
   $('wpStock').value=(inv.stock!=null)?inv.stock:'';
@@ -4010,8 +5063,30 @@ async function saveWebProduct(){
   if(!name){ toast('اسم المنتج مطلوب','err'); return; }
   const price=parseFloat($('wpPrice').value);
   if(!(price>0)){ toast('اكتب سعر صحيح أكبر من صفر','err'); return; }
+  // Sale price (Technical Plan §9): integer EGP, optional.
+  // basePrice == price means NO sale — the field is cleared, never
+  // a 0% badge; a base below the price is rejected.
+  const baseRaw=($('wpBasePrice').value||'').trim();
+  let basePrice=null;
+  if(baseRaw!==''){
+    basePrice=parseInt(baseRaw,10);
+    if(isNaN(basePrice)||basePrice<0){ toast('السعر قبل الخصم لازم يكون رقم صحيح ≥ صفر','err'); return; }
+    if(basePrice<price){ toast('السعر قبل الخصم لازم يكون أكبر من السعر أو يساويه','err'); return; }
+    if(basePrice===price) basePrice=null;
+  }
   const id=$('wpId').value||fb.newUuid();
   const cost=parseFloat($('wpCost').value)||0;
+  // Below-cost warning (decision D4): the saved price is below the
+  // recorded cost — explicit second confirmation, recorded in the
+  // audit. No warning when no cost is recorded. The cost is the one
+  // typed in this form, falling back to the inventory record.
+  const costForCheck=cost>0?cost:((storeInventoryMap[id]||{}).costPrice||0);
+  let belowCostConfirmed=false;
+  if(costForCheck>0&&price<costForCheck){
+    const ok=await confirmAction('السعر '+curr(price)+' أقل من سعر التكلفة ('+curr(costForCheck)+') — متأكد إنك عايز تحفظه كده؟',{ico:'alert',ok:'تأكيد السعر أقل من التكلفة',danger:true});
+    if(!ok) return;
+    belowCostConfirmed=true;
+  }
   const imgUrl=($('wpImg').value||'').trim();
   const featured=$('wpFeatured').checked;
   const minStock=parseInt($('wpMinStock').value,10);
@@ -4020,6 +5095,7 @@ async function saveWebProduct(){
   writes['products/'+id]={
     name: name,
     price: price,
+    basePrice: basePrice,
     costPrice: cost,
     description: ($('wpDesc').value||'').trim(),
     categoryId: $('wpCat').value||null,
@@ -4028,7 +5104,19 @@ async function saveWebProduct(){
     featured: featured,
     minStock: isNaN(minStock)?5:minStock
   };
-  sensitive['products/'+id]={ price: price, featured: featured };
+  // discountSetAt (Technical Plan §2): stamped when a discount is
+  // first saved, cleared when removed; re-saving a different
+  // discounted price does NOT reset it. Same resolve as the Flutter
+  // backend (Backend.resolveDiscountSetAt).
+  const existing=$('wpId').value?storeProducts.find(function(x){return x.id===id;}):null;
+  const oldBase=existing?existing.basePrice:null;
+  const oldOnSale=oldBase!=null&&Number(oldBase)>price;
+  const newOnSale=basePrice!=null;
+  if(newOnSale&&!oldOnSale) writes['products/'+id].discountSetAt=window.firebase.firestore.FieldValue.serverTimestamp();
+  else if(!newOnSale&&oldOnSale) writes['products/'+id].discountSetAt=null;
+  // FIX 1.1.2 lesson: basePrice is a SENSITIVE field — its new value
+  // must be recorded in the audit or the rules deny the write.
+  sensitive['products/'+id]={ price: price, basePrice: basePrice, featured: featured };
   const stockRaw=($('wpStock').value||'').trim();
   if(stockRaw===''){
     // A brand-new product with no stock given starts out of stock;
@@ -4051,7 +5139,9 @@ async function saveWebProduct(){
     sensitive['products/'+id].inStock=(stock-reserved)>0;
   }
   try{
-    await fb.auditedWrite({ writes: writes, sensitive: sensitive, operation: $('wpId').value?'product_update':'product_create', topNewValues: { productId: id } });
+    const topNewValues={ productId: id, basePrice: basePrice };
+    if(belowCostConfirmed) topNewValues.belowCostConfirmed=true;
+    await fb.auditedWrite({ writes: writes, sensitive: sensitive, operation: $('wpId').value?'product_update':'product_create', topNewValues: topNewValues });
     closeM('mWebProduct');
     toast('تم حفظ المنتج');
   }catch(e){
@@ -4165,6 +5255,13 @@ function renderWebsiteSettings(forceHero){
   // WhatsApp (skip the field the user is typing in right now).
   if(document.activeElement!==$('waEnabled')) $('waEnabled').checked=!!st.whatsappOrderEnabled;
   if(document.activeElement!==$('waNumber')) $('waNumber').value=st.whatsappNumber||'201557887719';
+  // Delivery fee + free-delivery threshold (pricing, Technical
+  // Plan §2/§9 + decision D3). Same skip-while-typing rule. An
+  // unset fee = free delivery (decision 2026-11-27).
+  const feeUnset=!(Number.isInteger(st.deliveryFee)&&st.deliveryFee>=0);
+  const feeSt=$('feeStatus'); if(feeSt) feeSt.textContent=feeUnset?'مجاني':curr(st.deliveryFee);
+  if(document.activeElement!==$('feeAmount')) $('feeAmount').value=feeUnset?'':st.deliveryFee;
+  if(document.activeElement!==$('feeThreshold')) $('feeThreshold').value=(st.freeDeliveryThreshold!=null)?st.freeDeliveryThreshold:'';
   // Homepage fields.
   if(document.activeElement!==$('hpTitle')) $('hpTitle').value=hp.heroTitle||'';
   if(document.activeElement!==$('hpSubtitle')) $('hpSubtitle').value=hp.heroSubtitle||'';
@@ -4177,6 +5274,13 @@ function renderWebsiteSettings(forceHero){
   if(document.activeElement!==$('hpDelSubtitle')) $('hpDelSubtitle').value=(hp.deliveryBanner&&hp.deliveryBanner.subtitle)||'';
   if(document.activeElement!==$('hpDelImage')) $('hpDelImage').value=(hp.deliveryBanner&&hp.deliveryBanner.imageUrl)||'';
   if(document.activeElement!==$('hpPromos')) $('hpPromos').value=JSON.stringify(hp.promoBanners||[],null,1);
+  if(document.activeElement!==$('hpPromos')) renderPromoEndDates();
+  // M42: the bundle hero wins — the homepage hero fields are dead
+  // controls while a non-classic template is live (never migrated,
+  // never deleted — classic still renders them).
+  const nonClassicLive=!!(window._storeLiveTemplateId&&window._storeLiveTemplateId!=='classic');
+  ['hpTitle','hpSubtitle','hpAccent'].forEach(function(id){ const el=$(id); if(el) el.disabled=nonClassicLive; });
+  const hpNote=$('hpHeroNote'); if(hpNote) hpNote.style.display=nonClassicLive?'block':'none';
   fillWebProductSelects(forceHero);
   if($('hpFeatured')) $('hpFeatured').value=hp.featuredProductId||'';
   // Design: announcement + section toggles.
@@ -4205,6 +5309,40 @@ async function uploadHeroImage(input){
     input.value='';
   }
 }
+// D2: one end-date field per promotion. Reads the JSON textarea (so
+// manual JSON edits are respected), renders a datetime-local input
+// per promo, and writes the Cairo-offset ISO value back into the JSON.
+function renderPromoEndDates(){
+  const box=$('hpPromoEndDates'); if(!box) return;
+  if(box.contains(document.activeElement)) return;
+  const F=window.StoreFBFactory;
+  let promos=[];
+  try{ promos=JSON.parse(($('hpPromos').value||'').trim()||'[]'); }catch(e){ box.innerHTML=''; return; }
+  if(!Array.isArray(promos)||!promos.length){ box.innerHTML=''; return; }
+  box.innerHTML=promos.map(function(p,i){
+    const title=(p&&p.title)||('عرض '+(i+1));
+    const val=(p&&p.endDate&&F)?F.isoToLocalInput(p.endDate):'';
+    return '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">'
+      +'<span style="font-size:12px;flex:1;min-width:120px">'+escHtml(title)+'</span>'
+      +'<input type="datetime-local" id="hpPromoEnd-'+i+'" value="'+escHtml(val)+'" onchange="setPromoEndDate('+i+',this.value)" style="padding:6px 8px;direction:ltr">'
+      +'<button class="btn btn-g btn-sm" onclick="setPromoEndDate('+i+',\'\')">مسح</button>'
+      +'</div>';
+  }).join('');
+}
+function setPromoEndDate(i,val){
+  const F=window.StoreFBFactory;
+  let promos=[];
+  try{ promos=JSON.parse(($('hpPromos').value||'').trim()||'[]'); }catch(e){ return; }
+  if(!Array.isArray(promos)||!promos[i]||typeof promos[i]!=='object') return;
+  if(!val){ delete promos[i].endDate; }
+  else{
+    const iso=F?F.promoEndDateToISO(val):null;
+    if(!iso){ toast('التاريخ ده مش صحيح','err'); return; }
+    promos[i].endDate=iso;
+  }
+  $('hpPromos').value=JSON.stringify(promos,null,1);
+  renderPromoEndDates();
+}
 async function saveWebsiteHomepage(){
   const fb=window.StoreFB; if(!fb||!fb.state.connected){ toast('سجّل دخول المتجر الأول','err'); return; }
   const heroIds=[];
@@ -4220,6 +5358,15 @@ async function saveWebsiteHomepage(){
       toast('بانرات الترويج لازم تكون JSON صحيح — مصفوفة','err');
       return;
     }
+  }
+  // D2: promoBanners[].endDate — ISO 8601 date-time, Africa/Cairo.
+  // The rules validation for it is the rules child's work; the editor
+  // refuses to save a malformed value.
+  const F=window.StoreFBFactory;
+  for(let i=0;i<promos.length;i++){
+    const p=promos[i];
+    const ed=p&&typeof p==='object'?p.endDate:null;
+    if(ed!=null&&ed!==''&&(!F||!F.isValidISODateTime(ed))){ toast('تاريخ انتهاء العرض رقم '+(i+1)+' لازم يكون تاريخ ووقت صحيح (ISO 8601)','err'); return; }
   }
   const accent=($('hpAccent').value||'').trim();
   if(accent&&!/^#[0-9a-fA-F]{6}$/.test(accent)){ toast('لون التمييز لازم يكون كود hex صحيح','err'); return; }
@@ -4278,120 +5425,46 @@ async function saveWhatsAppSettings(){
     toast(e.message||'تعذر الحفظ','err');
   }
 }
+// Delivery fee + free-delivery threshold (pricing, Technical Plan
+// §2/§9 + decision D3) on storeSettings/settings. Fee is integer
+// EGP ≥ 0 (0 = free delivery); threshold is optional integer ≥ 0,
+// empty clears the field (FieldValue.delete() — stored absent, not
+// null). The fee is recorded in the sensitive map (1.1.2 lesson).
+async function saveDeliveryFeeSettings(){
+  const fb=window.StoreFB; if(!fb||!fb.state.connected){ toast('سجّل دخول المتجر الأول','err'); return; }
+  const feeRaw=($('feeAmount').value||'').trim();
+  const fee=parseInt(feeRaw,10);
+  if(feeRaw===''||isNaN(fee)||fee<0){ toast('رسوم التوصيل لازم تكون رقم صحيح صفر أو أكتر','err'); return; }
+  const thrRaw=($('feeThreshold').value||'').trim();
+  let threshold=null;
+  if(thrRaw!==''){
+    threshold=parseInt(thrRaw,10);
+    if(isNaN(threshold)||threshold<0){ toast('حد التوصيل المجاني لازم يكون رقم صحيح صفر أو أكتر','err'); return; }
+  }
+  try{
+    const writes={ deliveryFee: fee };
+    if(threshold==null) writes.freeDeliveryThreshold=window.firebase.firestore.FieldValue.delete();
+    else writes.freeDeliveryThreshold=threshold;
+    await fb.auditedWrite({
+      writes: { 'storeSettings/settings': writes },
+      sensitive: { 'storeSettings/settings': { deliveryFee: fee, freeDeliveryThreshold: threshold } },
+      operation: 'settings_delivery_fee',
+      topNewValues: { deliveryFee: fee, freeDeliveryThreshold: threshold }
+    });
+    toast('تم حفظ رسوم التوصيل');
+  }catch(e){
+    toast(e.message||'تعذر الحفظ','err');
+  }
+}
 
 // ---- Storefront preview ----
 function reloadWebsitePreview(){
   const fr=$('webPreviewFrame');
   if(fr) fr.src='https://store-3384c.web.app';
+  fillTplPreviewSelect();
 }
 
-// ---- Discount codes ----
-function rDiscounts(){
-  const el=$('discList'); if(!el) return;
-  const st=$('discStatus');
-  if(!window.StoreFB||!window.StoreFB.state.connected){
-    if(st) st.textContent='غير متصل — سجّل دخول المتجر من شاشة الدخول عشان تشوف أكواد الخصم.';
-    el.innerHTML='';
-    return;
-  }
-  let l=[...storeDiscounts];
-  if(st) st.textContent=storeDiscounts.length?storeDiscounts.length+' كود':'لا توجد أكواد خصم بعد.';
-  el.innerHTML=l.length?l.map(function(d){
-    const exp=fbDate(d.expiresAt);
-    const expired=exp&&exp.getTime()<=Date.now();
-    const used=!!d.usedBy;
-    const stateTxt=used?'مستخدم':(!d.active?'موقوف':(expired?'منتهي':'مفعّل'));
-    const stateCls=used?'bx-r':(!d.active||expired?'bx-o':'bx-g');
-    const usedOrder=d.usedBy&&storeOrders.find(function(o){ return o.id===d.usedBy; });
-    const usedCell=d.usedBy
-      ? (usedOrder
-        ? `<button class="btn btn-g btn-sm" onclick="showStoreOrderDetail('${d.usedBy}')" title="فتح الطلب">#${String(d.usedBy).slice(-6)}</button>`
-        : `#${String(d.usedBy).slice(-6)}`)
-      : '—';
-    return`<tr>
-      <td style="font-weight:700;direction:ltr;text-align:right">${escHtml(d.code||d.id)}</td>
-      <td class="mn-t mo2">${d.percent||0}%</td>
-      <td><span class="bx ${stateCls}">${stateTxt}</span></td>
-      <td>${exp?fbDateStr(d.expiresAt):'—'}</td>
-      <td>${usedCell}</td>
-      <td><div class="row-acts">
-        <button class="btn btn-sm ${d.active?'btn-g':'btn-p'}" onclick="toggleDiscountActive('${d.code||d.id}',${d.active?1:0})">${d.active?'إيقاف':'تفعيل'}</button>
-        <button class="ra edit" onclick="editDiscount('${d.code||d.id}')" title="تعديل">${icOrDot('edit')}</button>
-        <button class="ra del" onclick="delDiscount('${d.code||d.id}')" title="حذف">${icOrDot('trash')}</button>
-      </div></td>
-    </tr>`;
-  }).join(''):'<tr><td colspan="6">'+es(icOrDot('tag'),'لا توجد أكواد خصم')+'</td></tr>';
-}
-function openDiscountM(){
-  if(!window.StoreFB||!window.StoreFB.state.connected){ toast('سجّل دخول المتجر الأول','err'); return; }
-  $('dcId').value='';$('dcCode').value='';$('dcPercent').value='';$('dcExpiry').value='';$('dcActive').checked=true;
-  $('dcCode').disabled=false;
-  $('mDiscountT').textContent='كود خصم جديد';
-  $('mDiscount').classList.remove('hidden');
-}
-function editDiscount(code){
-  const d=storeDiscounts.find(function(x){return (x.code||x.id)===code;});
-  if(!d) return;
-  $('dcId').value=d.code||d.id;
-  $('dcCode').value=d.code||d.id;
-  $('dcCode').disabled=true; // the code IS the document id — it never changes
-  $('dcPercent').value=d.percent||'';
-  const exp=fbDate(d.expiresAt);
-  $('dcExpiry').value=exp?exp.toISOString().slice(0,10):'';
-  $('dcActive').checked=d.active!==false;
-  $('mDiscountT').textContent='تعديل الكود';
-  $('mDiscount').classList.remove('hidden');
-}
-async function saveDiscount(){
-  const fb=window.StoreFB; if(!fb||!fb.state.connected){ toast('سجّل دخول المتجر الأول','err'); return; }
-  const code=(($('dcId').value||$('dcCode').value)||'').trim().toUpperCase();
-  if(!code){ toast('اكتب الكود','err'); return; }
-  const percent=parseInt($('dcPercent').value,10);
-  if(isNaN(percent)||percent<1||percent>100){ toast('النسبة لازم تكون من 1 لـ 100','err'); return; }
-  const expRaw=($('dcExpiry').value||'').trim();
-  try{
-    await fb.auditedWrite({
-      writes: { ['discounts/'+code]: {
-        code: code, percent: percent, active: $('dcActive').checked,
-        expiresAt: expRaw?new Date(expRaw+'T23:59:59'):null
-      } },
-      sensitive: { ['discounts/'+code]: { percent: percent } },
-      operation: $('dcId').value?'discount_update':'discount_create',
-      topNewValues: { code: code, percent: percent }
-    });
-    closeM('mDiscount');
-    toast('تم حفظ الكود');
-  }catch(e){
-    toast(e.message||'تعذر حفظ الكود','err');
-  }
-}
-async function toggleDiscountActive(code, currentlyActive){
-  const fb=window.StoreFB; if(!fb) return;
-  try{
-    await fb.auditedWrite({
-      writes: { ['discounts/'+code]: { active: !currentlyActive } },
-      sensitive: {},
-      operation: 'discount_update',
-      topNewValues: { code: code, active: !currentlyActive }
-    });
-    toast(!currentlyActive?'الكود بقى مفعّل':'الكود اتوقف');
-  }catch(e){
-    toast(e.message||'تعذر التعديل','err');
-  }
-}
-async function delDiscount(code){
-  const ok=await confirmAction('حذف كود الخصم ده؟',{ico:'trash',ok:'حذف',danger:true});
-  if(!ok) return;
-  const fb=window.StoreFB; if(!fb) return;
-  try{
-    await fb.deleteDiscount(code);
-    toast('تم حذف الكود');
-  }catch(e){
-    toast(e.message||'تعذر الحذف','err');
-  }
-}
-
-// ---- In-app update (Hosting manifest, /updates/) ----
+ (Hosting manifest, /updates/) ----
 let _updInfo=null;
 let _updProgSubscribed=false; // progress listener is attached once, not per click
 async function checkForUpdate(){
