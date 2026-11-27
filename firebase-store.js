@@ -428,7 +428,8 @@
   // Totals from DATABASE prices (never a client-supplied total).
   // lines: [{ price, basePrice (int|null), qty }].
   // opts: { deliveryFee (int|null — null means the settings doc has
-  //   no fee field: missing != 0, unset), freeDeliveryThreshold
+  //   no fee field: unset = free, treated as 0, decision 2026-11-27),
+  //   freeDeliveryThreshold
   //   (int|null — admin setting, decision D3: int > 0 waives the fee
   //   once the post-sale total reaches it; absent/null/0 = no waiver) }.
   // Returns every figure the storefront, review, transaction and
@@ -454,8 +455,11 @@
     var threshold = (Number.isInteger(o.freeDeliveryThreshold) && o.freeDeliveryThreshold > 0)
       ? o.freeDeliveryThreshold : null;
     var feeWaived = !feeUnset && threshold != null && total >= threshold;
-    var deliveryFee = feeUnset ? null : (feeWaived ? 0 : o.deliveryFee);
-    var amountDue = feeUnset ? null : total + deliveryFee;
+    // Unset fee = free (decision 2026-11-27): a missing fee is 0,
+    // exactly like an explicit 0. The threshold waiver only applies
+    // when a fee IS set.
+    var deliveryFee = feeUnset ? 0 : (feeWaived ? 0 : o.deliveryFee);
+    var amountDue = total + deliveryFee;
     return {
       perLine: perLine,
       baseSubtotal: baseSubtotal,
@@ -467,7 +471,7 @@
       feeWaived: feeWaived,
       amountDue: amountDue,
       savingTotal: saleSavings,
-      insteadOf: feeUnset ? null : baseSubtotal + deliveryFee
+      insteadOf: baseSubtotal + deliveryFee
     };
   }
 
@@ -1864,9 +1868,8 @@
             var settings = settingsSnap.exists ? (settingsSnap.data() || {}) : {};
             var fee = settings.deliveryFee;
             var threshold = settings.freeDeliveryThreshold;
-            if (!(Number.isInteger(fee) && fee >= 0)) {
-              throw _txError('FEE_NOT_SET', 'رسوم التوصيل غير محددة بعد — حدّدها من الإعدادات', {});
-            }
+            // Unset fee = free (decision 2026-11-27): no FEE_NOT_SET
+            // throw — computeOrderTotals treats a missing fee as 0.
             var totals = computeOrderTotals(priced, { deliveryFee: fee, freeDeliveryThreshold: threshold });
             if (seenTotal != null && Math.abs(seenTotal - totals.total) > 0.009) {
               throw _txError('TOTAL_CHANGED', 'اتغير الإجمالي — راجع الإجمالي وحاول تاني', { currentPrices: currentPrices, currentTotal: totals.total });
@@ -2114,9 +2117,8 @@
               var settings = settingsSnap.exists ? (settingsSnap.data() || {}) : {};
               var fee = settings.deliveryFee;
               var threshold = settings.freeDeliveryThreshold;
-              if (!(Number.isInteger(fee) && fee >= 0)) {
-                throw _txError('FEE_NOT_SET', 'رسوم التوصيل غير محددة بعد — حدّدها من الإعدادات', {});
-              }
+              // Unset fee = free (decision 2026-11-27): no FEE_NOT_SET
+              // throw — computeOrderTotals treats a missing fee as 0.
               var totals = computeOrderTotals(priced, { deliveryFee: fee, freeDeliveryThreshold: threshold });
               var auditId = newUuid();
               var opId = auditId;
